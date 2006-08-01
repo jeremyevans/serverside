@@ -1,1 +1,5 @@
 *SVN*
+
+* Implemented daemon and server cluster.
+
+* Basic configuration infrastructure is ready.
