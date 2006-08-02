@@ -28,13 +28,11 @@ class ServerDaemon < Daemon::Base
 
   def self.fork_server(port)
     fork do
-#      require 'lib/server'
-#      Reality::Model.connect(:production)
-#      server = Mongrel::HttpServer.new('0.0.0.0', port)
-#      server.register('/', RealityMongrelHandler.new('../static'))
-#      periodically(60) {server.reap_dead_workers}
+      server = Mongrel::HttpServer.new('0.0.0.0', port)
+      server.register('/', ServerSideHandler.new(File.join(APP_ROOT, 'static')))
+      periodically(60) {server.reap_dead_workers}
       trap('TERM') {exit}
-#      server.run.join
+      server.run.join
       loop do
         sleep(1)
       end
@@ -56,9 +54,7 @@ class ServerDaemon < Daemon::Base
   end
   
   def self.start
-    require '../config/boot'
     start_servers
-#    Reality::Model.connect(:production)
     loop do
 #      Channel.destroy_stale_channels
 #      Session.remove_expired_sessions

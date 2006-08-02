@@ -1,5 +1,9 @@
 *SVN*
 
+* Imported Mongrel code from Reality project.
+
+* Imported extensions from Reality project.
+
 * Implemented daemon and server cluster.
 
 * Basic configuration infrastructure is ready.

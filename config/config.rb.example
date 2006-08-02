@@ -20,3 +20,7 @@ DB_CONNECTIONS[:test] = {
   :username => 'postgres',
   :password => '240374'
 }
+
+$config[:mime_types] = {
+  '.svg' => 'image/svg+xml'
+}

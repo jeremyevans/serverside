@@ -1,6 +1,4 @@
 require 'rubygems'
-require 'active_record'
-require 'active_support/inflector'
 
 $config = {}
 
@@ -11,7 +9,7 @@ DB_CONNECTIONS = {
 }
 
 require 'config/config'
-#require 'lib/extensions'
+require 'lib/extensions'
 #require 'lib/errors'
 #require 'lib/logging'
 #require 'lib/controllers'
@@ -19,5 +17,7 @@ require 'config/config'
 #require 'lib/views'
 
 if DB_CONNECTIONS[ENVIRONMENT]
+  require 'active_record'
+  require 'active_support/inflector'
   ActiveRecord::Base.establish_connection(DB_CONNECTIONS[ENVIRONMENT])
 end
