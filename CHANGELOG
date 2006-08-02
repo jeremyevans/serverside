@@ -1,5 +1,7 @@
 *SVN*
 
+* Fixed location of daemon pid files.
+
 * Imported Mongrel code from Reality project.
 
 * Imported extensions from Reality project.

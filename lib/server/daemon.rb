@@ -1,7 +1,7 @@
 require 'fileutils'
 
 module Daemon
-  WorkingDirectory = File.expand_path(File.dirname(__FILE__))  
+  WorkingDirectory = File.join(APP_ROOT, 'script')  
 
   class Base
     def self.pid_fn
