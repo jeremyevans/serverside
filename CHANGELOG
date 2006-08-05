@@ -1,5 +1,7 @@
 *SVN*
 
+* Wrote unit tests for daemon module.
+
 * Wrote unit tests for controller routing code.
 
 * Refactored controller routing code.

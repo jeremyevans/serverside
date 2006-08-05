@@ -5,11 +5,17 @@ module Daemon
 
   class Base
     def self.pid_fn
-      File.join(WorkingDirectory, "#{name}.pid")
+      File.join(WorkingDirectory, "#{name.split('::').join('.').downcase}.pid")
     end
     
-    def self.daemonize
-      Controller.daemonize(self)
+    def self.inherited(c)
+      at_exit do
+        begin
+          Daemon.control(c)
+        rescue => e
+          puts e.message
+        end
+      end
     end
   end
   
@@ -19,49 +25,44 @@ module Daemon
     end
     
     def self.recall(daemon)
-      IO.read(daemon.pid_fn).to_i rescue nil
+      IO.read(daemon.pid_fn).to_i
+    rescue
+      raise 'Pid not found. Is the daemon started?'
     end
   end
   
-  module Controller
-    def self.daemonize(daemon)
-      case !ARGV.empty? && ARGV[0]
-      when 'start'
-        start(daemon)
-      when 'stop'
-        stop(daemon)
-      when 'restart'
-        stop(daemon)
-        start(daemon)
-      else
-        puts "Invalid command. Please specify start, stop or restart."
-        exit
-      end
+  def self.control(daemon, cmd = nil)
+    case (cmd || (!ARGV.empty? && ARGV[0]) || :nil).to_sym
+    when :start
+      start(daemon)
+    when :stop
+      stop(daemon)
+    when :restart
+      stop(daemon)
+      start(daemon)
+    else
+      raise 'Invalid command. Please specify start, stop or restart.'
     end
-    
-    def self.start(daemon)
-      fork do
-        Process.setsid
-        exit if fork
-        PidFile.store(daemon, Process.pid)
-        Dir.chdir WorkingDirectory
-        File.umask 0000
-        STDIN.reopen "/dev/null"
-        STDOUT.reopen "/dev/null", "a"
-        STDERR.reopen STDOUT
-        trap("TERM") {daemon.stop; exit}
-        daemon.start
-      end
-    end
+  end
   
-    def self.stop(daemon)
-      if !File.file?(daemon.pid_fn)
-        puts "Pid file not found. Is the daemon started?"
-        exit
-      end
-      pid = PidFile.recall(daemon)
-      FileUtils.rm(daemon.pid_fn)
-      pid && Process.kill("TERM", pid)
+  def self.start(daemon)
+    fork do
+      Process.setsid
+      exit if fork
+      PidFile.store(daemon, Process.pid)
+      Dir.chdir WorkingDirectory
+      File.umask 0000
+      STDIN.reopen "/dev/null"
+      STDOUT.reopen "/dev/null", "a"
+      STDERR.reopen STDOUT
+      trap("TERM") {daemon.stop; exit}
+      daemon.start
     end
+  end
+
+  def self.stop(daemon)
+    pid = PidFile.recall(daemon)
+    FileUtils.rm(daemon.pid_fn)
+    pid && Process.kill("TERM", pid)
   end
 end
