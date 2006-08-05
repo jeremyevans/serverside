@@ -1,5 +1,9 @@
 *SVN*
 
+* Imported unit tests for extensions.
+
+* Created Rakefile.
+
 * Prototypical routing code.
 
 * Fixed location of daemon pid files.

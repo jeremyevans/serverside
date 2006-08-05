@@ -1,4 +1,5 @@
 require 'time'
+require 'active_support'
 
 # Time extension methods.
 class Time

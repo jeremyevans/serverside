@@ -4,11 +4,12 @@ module Kernel
       last_time = Time.now
       loop do
         now = Time.now
-        if now - last_time >= last_time
+        if now - last_time >= period
           last_time = now
           block.call rescue nil
+        else
+          sleep 0.001
         end
-        sleep 0.1
       end
     end
   end
