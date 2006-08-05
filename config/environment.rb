@@ -9,10 +9,10 @@ DB_CONNECTIONS = {
 }
 
 require 'config/config'
-require 'lib/extensions'
+require_all 'lib/extensions'
 #require 'lib/errors'
 #require 'lib/logging'
-#require 'lib/controllers'
+require_all 'lib/controller'
 #require 'lib/models'
 #require 'lib/views'
 

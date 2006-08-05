@@ -1,5 +1,9 @@
 *SVN*
 
+* Wrote unit tests for controller routing code.
+
+* Refactored controller routing code.
+
 * Imported unit tests for extensions.
 
 * Created Rakefile.

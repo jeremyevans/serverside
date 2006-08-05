@@ -1,4 +1,3 @@
-#require_all 'lib/controller'
 require 'rubygems'
 require 'metaid'
 
@@ -33,22 +32,13 @@ module Controller
     end
   end
   
-  class Base
-    def process(req)
-      puts self.class
+  def self.mount(rule)
+    Class.new(Base) do
+      meta_def(:rule) {rule}
+      meta_def(:inherited) do |c|
+        Router.add_rule(c.rule, Proc.new{|req|c.new.process(req)})
+      end
     end
   end
-  
-  def self.mount(rule)
-    Class.new(Base) {
-      meta_def(:rule) {rule}
-      meta_def(:inherited) {|c|Router.add_rule(c.rule, Proc.new{|req|c.new.process(req)})}
-    }
-  end
 end
 
-class DefaultController < Controller.mount(:path => '/')
-end
-
-class HelpController < Controller.mount(:path => '^/help')
-end

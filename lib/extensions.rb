@@ -1,5 +1,0 @@
-require 'lib/extensions/array'
-require 'lib/extensions/kernel'
-require 'lib/extensions/string'
-require 'lib/extensions/symbol'
-require 'lib/extensions/time'

@@ -41,14 +41,14 @@ module Daemon
     
     def self.start(daemon)
       fork do
-        Process.setsid # Become session leader.
-        exit if fork # Zap session leader.
-        PidFile.store(daemon, Process.pid) # Store the pid
-        Dir.chdir WorkingDirectory # Change to working directory
-        File.umask 0000 # Ensure sensible umask. Adjust as needed.
-        STDIN.reopen "/dev/null" # Free file descriptors and
-        #STDOUT.reopen "/dev/null", "a" # point them somewhere sensible.
-        #STDERR.reopen STDOUT # STDOUT/ERR should better go to a logfile.
+        Process.setsid
+        exit if fork
+        PidFile.store(daemon, Process.pid)
+        Dir.chdir WorkingDirectory
+        File.umask 0000
+        STDIN.reopen "/dev/null"
+        STDOUT.reopen "/dev/null", "a"
+        STDERR.reopen STDOUT
         trap("TERM") {daemon.stop; exit}
         daemon.start
       end

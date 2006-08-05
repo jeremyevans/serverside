@@ -138,4 +138,3 @@ end
 if $config[:mime_types]
   $config[:mime_types].each {|k, v| Mongrel::DirHandler.add_mime_type(k, v)}
 end
-
