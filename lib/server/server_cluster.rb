@@ -28,9 +28,7 @@ class ServerDaemon < Daemon::Base
 
   def self.fork_server(port)
     fork do
-      server = Mongrel::HttpServer.new('0.0.0.0', port)
-      server.register('/', ServerSideHandler.new(File.join(APP_ROOT, 'static')))
-      periodically(60) {server.reap_dead_workers}
+      server = ServerSide.make_server(port)
       trap('TERM') {exit}
       server.run.join
       loop do

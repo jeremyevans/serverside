@@ -2,7 +2,7 @@ require File.dirname(__FILE__) + '/../test_helper'
 require 'stringio'
 
 class ControllersRequestTest < Test::Unit::TestCase
-  def test_request_new
+  def test_initialize
     env = {
       'REQUEST_METHOD' => 'GET',
       'PATH_INFO' => '/test',
@@ -10,7 +10,6 @@ class ControllersRequestTest < Test::Unit::TestCase
       'QUERY_STRING' => 'q=channel_events&id=3232',
       'REMOTE_ADDR' => '62.126.221.56'
     }
-  
     r = Controller::Request.new({}, env, {})
     
     assert_equal({}, r.req)
@@ -24,6 +23,22 @@ class ControllersRequestTest < Test::Unit::TestCase
     assert_equal '3232', r.params[:id]
     assert_equal 200, r.status
     assert_equal 'no-cache', r.headers['Cache-Control']
+  end
+  
+  def test_brackets
+    env = {
+      'REQUEST_METHOD' => 'GET',
+      'PATH_INFO' => '/test',
+#      'HTTP_COOKIE' => 'ws=3231; sharon=zohar',
+      'QUERY_STRING' => 'q=channel_events&id=3232',
+      'REMOTE_ADDR' => '62.126.221.56'
+    }
+    r = Controller::Request.new({}, env, {})
+    
+    assert_equal env, r[:env]
+    assert_equal :get, r[:method]
+    assert_equal '/test', r[:path]
+    assert_nil r[:invalid]
   end
   
   def test_parse_post_url_encoded

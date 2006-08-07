@@ -12,11 +12,8 @@ module Controller
       end
       
       def compile_rule(rule)
-        if rule[:path].kind_of?(String)
-          Proc.new {|req|req[:path] =~ Regexp.new(rule[:path])}
-        else
-          Proc.new {|req|req[:path] =~ rule[:path]}
-        end
+        r = (rule[:path].kind_of?(String)) ? Regexp.new(rule[:path]) : rule[:path]
+        Proc.new {|req |req[:path] =~ r}
       end
       
       def route(req)
@@ -24,7 +21,7 @@ module Controller
         @rules.each do |r|
           if r[0].call(req)
             r[1].call(req)
-            return
+            return true
           end
         end
         nil

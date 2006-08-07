@@ -40,6 +40,10 @@ module Controller
       @status = 200
       @headers = {Const::CacheControl => Const::NoCache}
     end
+    
+    def [](var)
+      instance_variable_get("@#{var}")
+    end
 
     # Parses the POST body.
     # Shamelessly appropriated from Why the Lucky Stiff's Camping framework.

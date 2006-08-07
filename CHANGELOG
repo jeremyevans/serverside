@@ -1,5 +1,7 @@
 *SVN*
 
+* Hooked Mongrel server to Controller::Router.
+
 * Imported request code with unit tests.
 
 * Wrote unit tests for daemon module.

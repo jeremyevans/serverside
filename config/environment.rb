@@ -16,6 +16,9 @@ require_all 'lib/controller'
 #require 'lib/models'
 #require 'lib/views'
 
+require_all 'app/models'
+require_all 'app/controllers'
+
 if DB_CONNECTIONS[ENVIRONMENT]
   require 'active_record'
   require 'active_support/inflector'

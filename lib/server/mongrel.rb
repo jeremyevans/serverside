@@ -1,6 +1,5 @@
-require 'stringio'
-require 'rubygems'
 require 'mongrel'
+require 'stringio'
 
 # Additions and overrides for Mongrel code.
 module Mongrel
@@ -29,25 +28,6 @@ module Mongrel
     end
   end
     
-  # Overrides for Mongrel::DirHandler.
-  class DirHandler
-    # Overrides the origianl method to remove the ETAG check and other crap.
-    def send_file(req_path, request, response, header_only=false)
-      stat = File.stat(req_path)
-      response.status = 200
-      dot_at = req_path.rindex('.')
-      if dot_at
-        response.header[Const::CONTENT_TYPE] = 
-          MIME_TYPES[req_path[dot_at .. -1]] || @default_content_type
-      end
-
-      # send a status with content length
-      response.send_status(stat.size)
-      response.send_header
-      response.send_file(req_path) unless header_only
-    end
-  end
-
   class HttpServer
     # Overrides the original run method with code that's a bit simpler.
     def run
@@ -82,60 +62,65 @@ module Mongrel
       mark = Time.now
       @workers.list.each do |w|
         if mark - w[:started_on] > 60
-          w.raise StopServer.new("Timed out.")
+          w.raise StopServer.new
         end
       end
     end
   end
 end
 
-# This class handles incoming Mongrel requests.
-class ServerSideHandler < Mongrel::DirHandler
-
-  # Processes incoming requests. If the specified path refers to a file in
-  # public, the file is rendered. Otherwise, calls process_dynamic.
-  def process(req, resp)
-    path = req.params[Mongrel::Const::PATH_INFO]
-    unless path =~ /^\/static\/(.*)/
-      process_dynamic(req, resp)
-    else
-      begin
-        fn = can_serve('/' + $1)
-        if fn.nil? || File.directory?(fn)
-          resp.start(404) do |head, out|
-            out << "File not found: #{$1}"
-          end
-          return
-        end
-        resp.header['Cache-Control'] = 'max-age=2592000' # 30 days
-        send_file(fn, req, resp)
-      rescue => e
-        Reality.log_error e
+module ServerSide
+  # This class handles incoming Mongrel requests.
+  class Handler < Mongrel::DirHandler
+  
+    # Processes incoming requests. If the specified path refers to a file in
+    # public, the file is rendered. Otherwise, calls process_dynamic.
+    def process(req, resp)
+      path = req.params[Mongrel::Const::PATH_INFO]
+      if (path =~ /^\/static\/(.*)/) || !process_dynamic(req, resp)
         begin
-          resp.reset
-          resp.start(403) do |head,out|
-            out << "Error accessing file: #{e.full_info}"
+          fn = can_serve('/' + $1)
+          if fn.nil? || File.directory?(fn)
+            resp.start(404) do |head, out|
+              out << "File not found: #{$1}"
+            end
+            return
           end
-        rescue
-          # At this stage there's nothing we can do anymore...
+          resp.header['Cache-Control'] = 'max-age=2592000' # 30 days
+          send_file(fn, req, resp)
+        rescue => e
+          Reality.log_error e
+          begin
+            resp.reset
+            resp.start(403) do |head,out|
+              out << "Error accessing file: #{e.message}"
+            end
+          rescue
+            # At this stage there's nothing we can do anymore...
+          end
         end
       end
     end
-  end
-
-  HTML = '<html><body>Hello there!</body></html>'.freeze  
   
-  # Processes dynamic requests.
-  def process_dynamic(req, resp)
-    begin
-      request = Controller::Request.new(req.body || StringIO.new(''), 
-        req.params, resp)
-      request.render(HTML)
+    HTML = '<html><body>Hello there!</body></html>'.freeze  
+    
+    # Processes dynamic requests.
+    def process_dynamic(req, resp)
+      request = Controller::Request.new(
+        req.body || StringIO.new, req.params, resp)
+      Controller::Router.route(request)
     rescue => e
       resp.start(200) do |head, out|
         out << e.message << "<br/>" << e.backtrace
       end
     end
+  end
+  
+  def self.make_server(port)
+    server = Mongrel::HttpServer.new('0.0.0.0', port)
+    server.register('/', Handler.new(File.join(APP_ROOT, 'static')))
+    periodically(60) {server.reap_dead_workers}
+    server
   end
 end
 
