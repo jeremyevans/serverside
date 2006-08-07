@@ -91,11 +91,11 @@ end
 
 # This class handles incoming Mongrel requests.
 class ServerSideHandler < Mongrel::DirHandler
-  
+
   # Processes incoming requests. If the specified path refers to a file in
   # public, the file is rendered. Otherwise, calls process_dynamic.
   def process(req, resp)
-    path = req.params['PATH_INFO']
+    path = req.params[Mongrel::Const::PATH_INFO]
     unless path =~ /^\/static\/(.*)/
       process_dynamic(req, resp)
     else
@@ -122,15 +122,19 @@ class ServerSideHandler < Mongrel::DirHandler
       end
     end
   end
+
+  HTML = '<html><body>Hello there!</body></html>'.freeze  
   
   # Processes dynamic requests.
   def process_dynamic(req, resp)
     begin
-      resp.start(200, true) do |head, body|
-        body << "Hello there!"
-      end
+      request = Controller::Request.new(req.body || StringIO.new(''), 
+        req.params, resp)
+      request.render(HTML)
     rescue => e
-      # log?
+      resp.start(200) do |head, out|
+        out << e.message << "<br/>" << e.backtrace
+      end
     end
   end
 end
