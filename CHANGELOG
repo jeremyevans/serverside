@@ -1,5 +1,7 @@
 *SVN*
 
+* Changed DirHandler to use frozen strings for cache header.
+
 * Hooked Mongrel server to Controller::Router.
 
 * Imported request code with unit tests.

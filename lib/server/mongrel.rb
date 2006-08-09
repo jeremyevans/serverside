@@ -75,6 +75,11 @@ module ServerSide
   
     # Processes incoming requests. If the specified path refers to a file in
     # public, the file is rendered. Otherwise, calls process_dynamic.
+    class Const
+      CacheControl = 'Cache-Control'.freeze
+      MaxAge = 'max-age=2592000'.freeze # 30 days
+    end
+    
     def process(req, resp)
       path = req.params[Mongrel::Const::PATH_INFO]
       if (path =~ /^\/static\/(.*)/) || !process_dynamic(req, resp)
@@ -86,7 +91,7 @@ module ServerSide
             end
             return
           end
-          resp.header['Cache-Control'] = 'max-age=2592000' # 30 days
+          resp.header[Const::CacheControl] = Const::MaxAge
           send_file(fn, req, resp)
         rescue => e
           Reality.log_error e
