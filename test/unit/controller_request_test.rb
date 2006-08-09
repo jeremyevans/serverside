@@ -38,7 +38,7 @@ class ControllersRequestTest < Test::Unit::TestCase
     assert_equal env, r[:env]
     assert_equal :get, r[:method]
     assert_equal '/test', r[:path]
-    assert_nil r[:invalid]
+    assert_raise(NoMethodError) {r[:invalid]}
   end
   
   def test_parse_post_url_encoded

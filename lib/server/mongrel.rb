@@ -3,16 +3,11 @@ require 'stringio'
 
 # Additions and overrides for Mongrel code.
 module Mongrel
-  # Additional mongrel constants.
-  module Const
-    # HTTP status format without Content-Length (for streaming responses). 
-    STREAM_STATUS_FORMAT =
-      "HTTP/1.1 %d %s\r\nConnection: close\r\n".freeze
-  end
-
   # Overrides for Mongrel::HttpResponse.
   class HttpResponse
     alias_method :orig_send_status, :send_status
+    
+    frozen :STREAM_STATUS_FORMAT => "HTTP/1.1 %d %s\r\nConnection: close\r\n"
   
     # Overrides the original method to send HTTP status without Content-Length
     # if @body is empty. This is used for streaming responses.
@@ -21,7 +16,7 @@ module Mongrel
       if (@body.length > 0) || content_length
         orig_send_status(content_length)
       else
-        @socket.write(Const::STREAM_STATUS_FORMAT %
+        @socket.write(Frozen::STREAM_STATUS_FORMAT %
           [@status, HTTP_STATUS_CODES[@status]])
         @status_sent = true
       end
@@ -73,31 +68,29 @@ module ServerSide
   # This class handles incoming Mongrel requests.
   class Handler < Mongrel::DirHandler
   
+    frozen :CacheControl => 'Cache-Control', 
+      :MaxAge => 'max-age=2592000' # 30 days
+
     # Processes incoming requests. If the specified path refers to a file in
     # public, the file is rendered. Otherwise, calls process_dynamic.
-    class Const
-      CacheControl = 'Cache-Control'.freeze
-      MaxAge = 'max-age=2592000'.freeze # 30 days
-    end
-    
     def process(req, resp)
       path = req.params[Mongrel::Const::PATH_INFO]
       if (path =~ /^\/static\/(.*)/) || !process_dynamic(req, resp)
         begin
           fn = can_serve('/' + $1)
           if fn.nil? || File.directory?(fn)
-            resp.start(404) do |head, out|
+            resp.start(404, true) do |head, out|
               out << "File not found: #{$1}"
             end
             return
           end
-          resp.header[Const::CacheControl] = Const::MaxAge
+          resp.header[Frozen::CacheControl] = Frozen::MaxAge
           send_file(fn, req, resp)
         rescue => e
           Reality.log_error e
           begin
             resp.reset
-            resp.start(403) do |head,out|
+            resp.start(403, true) do |head,out|
               out << "Error accessing file: #{e.message}"
             end
           rescue
@@ -107,15 +100,12 @@ module ServerSide
       end
     end
   
-    HTML = '<html><body>Hello there!</body></html>'.freeze  
-    
     # Processes dynamic requests.
     def process_dynamic(req, resp)
-      request = Controller::Request.new(
-        req.body || StringIO.new, req.params, resp)
-      Controller::Router.route(request)
+      Controller::Router.route(Controller::Request.new(
+        req.body || StringIO.new, req.params, resp))
     rescue => e
-      resp.start(200) do |head, out|
+      resp.start(200, true) do |head, out|
         out << e.message << "<br/>" << e.backtrace
       end
     end

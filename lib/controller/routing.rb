@@ -12,8 +12,17 @@ module Controller
       end
       
       def compile_rule(rule)
-        r = (rule[:path].kind_of?(String)) ? Regexp.new(rule[:path]) : rule[:path]
-        Proc.new {|req |req[:path] =~ r}
+        return rule if rule.kind_of?(Proc)
+        
+        tmp_rule = rule.clone
+        tmp_rule.each do |k, v|
+          tmp_rule[k] = Regexp.new(v) if v.kind_of?(String)
+        end
+        Proc.new do |req|
+          match = true
+          tmp_rule.each {|k, v| match &&= req[k] =~ v}
+          match
+        end
       end
       
       def route(req)
@@ -29,13 +38,12 @@ module Controller
     end
   end
   
-  def self.mount(rule)
+  def self.mount(rule = nil, &block)
     Class.new(Base) do
-      meta_def(:rule) {rule}
+      meta_def(:rule) {rule || block}
       meta_def(:inherited) do |c|
         Router.add_rule(c.rule, Proc.new{|req|c.new.process(req)})
       end
     end
   end
 end
-

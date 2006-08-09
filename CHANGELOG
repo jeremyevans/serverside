@@ -1,5 +1,13 @@
 *SVN*
 
+* Added host attribute to Controller::Request.
+
+* Added ability to create rules on any request attribute, not just path.
+
+* Added ability to mount controllers with a block for a rule.
+
+* Wrote object extensions to create frozen constants on the fly.
+
 * Changed DirHandler to use frozen strings for cache header.
 
 * Hooked Mongrel server to Controller::Router.
