@@ -1,127 +1,69 @@
-# Add your own tasks in files placed in lib/tasks ending in .rake,
-# for example lib/tasks/switchtower.rake, and they will automatically be available to Rake.
-
-require(File.join(File.dirname(__FILE__), 'config', 'boot'))
-
 require 'rake'
-require 'rake/testtask'
+require 'rake/clean'
+require 'rake/gempackagetask'
 require 'rake/rdoctask'
+require 'fileutils'
+include FileUtils
 
-##############################################################################
-# Testing
-##############################################################################
+NAME = "serverside"
+REV = File.read(".svn/entries")[/committed-rev="(\d+)"/, 1] rescue nil
+VERS = "0.1" + (REV ? ".#{REV}" : "")
+CLEAN.include ['**/.*.sw?', '*.gem', '.config']
+RDOC_OPTS = ['--quiet', '--title', "ServerSide Documentation",
+    "--opname", "index.html",
+    "--line-numbers", 
+#    "--main", "README",
+    "--inline-source"]
 
-TEST_CHANGES_SINCE = Time.now - 600
+desc "Packages up ServerSide."
+task :default => [:package]
+task :package => [:clean]
 
-# Look up tests for recently modified sources.
-def recent_tests(source_pattern, test_path, touched_since = 10.minutes.ago)
-  FileList[source_pattern].map do |path|
-    if File.mtime(path) > touched_since
-      test = "#{test_path}/#{File.basename(path, '.rb')}_test.rb"
-      test if File.exists?(test)
+task :doc => [:rdoc]
+
+Rake::RDocTask.new do |rdoc|
+    rdoc.rdoc_dir = 'doc/rdoc'
+    rdoc.options += RDOC_OPTS
+#    rdoc.main = "README"
+    rdoc.title = "ServerSide Documentation"
+    rdoc.rdoc_files.add ['CHANGELOG', 'lib/serverside.rb', 'lib/serverside/*.rb']
+end
+
+spec =
+    Gem::Specification.new do |s|
+        s.name = NAME
+        s.version = VERS
+        s.platform = Gem::Platform::RUBY
+        s.has_rdoc = true
+        s.extra_rdoc_files = ["CHANGELOG"]
+        s.rdoc_options += RDOC_OPTS + ['--exclude', '^(examples|extras)\/', '--exclude', 'lib/serverside.rb']
+        s.summary = "Performance-oriented web framework."
+        s.description = s.summary
+        s.author = "Sharon Rosner"
+        s.email = 'ciconia@gmail.com'
+        s.homepage = 'http://code.google.com/p/serverside/'
+        s.executables = ['serverside']
+
+        s.add_dependency('metaid')
+        s.required_ruby_version = '>= 1.8.2'
+
+        s.files = %w(Rakefile) +
+          Dir.glob("{bin,doc,test,lib}/**/*") 
+        
+        s.require_path = "lib"
+        s.bindir = "bin"
     end
-  end.compact
+
+Rake::GemPackageTask.new(spec) do |p|
+    p.need_tar = true
+    p.gem_spec = spec
 end
 
-
-# Recreated here from ActiveSupport because :uncommitted needs it before Rails is available
-module Kernel
-  def silence_stderr
-    old_stderr = STDERR.dup
-    STDERR.reopen(RUBY_PLATFORM =~ /mswin/ ? 'NUL:' : '/dev/null')
-    STDERR.sync = true
-    yield
-  ensure
-    STDERR.reopen(old_stderr)
-  end
+task :install do
+  sh %{rake package}
+  sh %{sudo gem install pkg/#{NAME}-#{VERS}}
 end
 
-desc 'Test all units and functionals'
-task :test do
-  Rake::Task['test_units'].invoke       rescue got_error = true
-  Rake::Task['test_functionals'].invoke rescue got_error = true
-
-  raise 'Test failures' if got_error
+task :uninstall => [:clean] do
+  sh %{sudo gem uninstall #{NAME}}
 end
-
-desc 'Test recent changes'
-Rake::TestTask.new('test_recent') do |t|
-  since = TEST_CHANGES_SINCE
-  touched = FileList['test/**/*_test.rb'].select { |path| File.mtime(path) > since } +
-    recent_tests('app/models/*.rb', 'test/unit', since) +
-    recent_tests('app/controllers/*.rb', 'test/functional', since)
-
-  t.libs << 'test'
-  t.verbose = true
-  t.test_files = touched.uniq
-end
-  
-desc 'Test changes since last checkin (only Subversion)'
-Rake::TestTask.new('test_uncommitted') do |t|
-  changed_since_checkin = silence_stderr { `svn status` }.map { |path| path.chomp[7 .. -1] }
-  models = changed_since_checkin.select { |path| path =~ /app\/models\/.*\.rb/ }
-  tests = models.map { |model| "test/unit/#{File.basename(model, '.rb')}_test.rb" }
-
-  t.libs << 'test'
-  t.verbose = true
-  t.test_files = tests.uniq
-end
-
-desc 'Run the unit tests in test/unit'
-Rake::TestTask.new('test_units') do |t|
-  t.libs << 'test'
-  t.pattern = 'test/unit/**/*_test.rb'
-  t.verbose = true
-end
-
-desc 'Run the functional tests in test/functional'
-Rake::TestTask.new('test_functionals') do |t|
-  t.libs << 'test'
-  t.pattern = 'test/functional/**/*_test.rb'
-  t.verbose = true
-end
-
-##############################################################################
-# Statistics
-##############################################################################
-
-STATS_DIRECTORIES = [
-  %w(Controllers        app/controllers), 
-  %w(Unit\ tests        test/unit),
-  %w(Functional\ tests  test/functional),
-  %w(Libraries          lib),
-  %w(Models             app/models)
-].collect { |name, dir| [ name, "#{APP_ROOT}/#{dir}" ] }.select { |name, dir| File.directory?(dir) }
-
-desc "Report code statistics (LOCs, etc) from the application"
-task :stats do
-  require 'extras/stats'
-  verbose = true
-  CodeStatistics.new(*STATS_DIRECTORIES).to_s
-end
-
-##############################################################################
-# SVN
-##############################################################################
-
-desc "Add new files to subversion"
-task :svn_add do
-   system "svn status | grep '^\?' | sed -e 's/? *//' | sed -e 's/ /\ /g' | xargs svn add"
-end
-
-##############################################################################
-# Documentation
-##############################################################################
-
-desc "Generate documentation for the application"
-Rake::RDocTask.new("doc") do |rdoc|
-  rdoc.rdoc_dir = 'doc/app'
-  rdoc.title    = "Reality Documentation"
-  rdoc.options << '--line-numbers' << '--inline-source'
-  rdoc.rdoc_files.include('doc/README') if File.file?('doc/README')
-  rdoc.rdoc_files.include('app/**/*.rb')
-end
-
-##############################################################################
-# Deployment
-##############################################################################

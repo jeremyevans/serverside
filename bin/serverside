@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'serverside'
+
+if File.file?('serverside_app.rb')
+  require 'serverside_app'
+else
+  # static server
+end
+
+ServerSide::Server.control
