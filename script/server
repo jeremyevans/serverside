@@ -1,4 +1,0 @@
-#!/usr/bin/env ruby
-
-require 'config/boot'
-require_all 'lib/server'
