@@ -1,0 +1,2 @@
+module ServerSide::Server
+end

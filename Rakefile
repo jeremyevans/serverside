@@ -2,6 +2,7 @@ require 'rake'
 require 'rake/clean'
 require 'rake/gempackagetask'
 require 'rake/rdoctask'
+require 'rake/testtask'
 require 'fileutils'
 include FileUtils
 
@@ -36,7 +37,8 @@ spec =
         s.platform = Gem::Platform::RUBY
         s.has_rdoc = true
         s.extra_rdoc_files = ["CHANGELOG"]
-        s.rdoc_options += RDOC_OPTS + ['--exclude', '^(examples|extras)\/', '--exclude', 'lib/serverside.rb']
+        s.rdoc_options += RDOC_OPTS + 
+          ['--exclude', '^(examples|extras)\/', '--exclude', 'lib/serverside.rb']
         s.summary = "Performance-oriented web framework."
         s.description = s.summary
         s.author = "Sharon Rosner"
@@ -67,3 +69,11 @@ end
 task :uninstall => [:clean] do
   sh %{sudo gem uninstall #{NAME}}
 end
+
+desc 'Run unit tests'
+Rake::TestTask.new('test') do |t|
+  t.libs << 'test'
+  t.pattern = 'test/unit/**/*_test.rb'
+  t.verbose = true
+end
+
