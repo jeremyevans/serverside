@@ -1,5 +1,7 @@
 *SVN*
 
+* More unit tests for application code.
+
 * Basic server code works with unit tests.
 
 * Started work on application code.

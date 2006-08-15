@@ -3,13 +3,18 @@ require 'metaid'
 
 module ServerSide
   module Application
+
     class Base
-      def self.config(options)
+      def self.configure(options)
         @config = options
       end
       
+      def self.configuration
+        @config
+      end
+      
       def initialize(host, port)
-        # ServerSide::Server.new(host, port, make_request_class)
+        ServerSide::Server.new(host, port, make_request_class)
       end
       
       def make_request_class
@@ -21,7 +26,7 @@ module ServerSide
     
     class StaticServer
       def initialize(host, port)
-        # ServerSide::Server.new(host, port, ServerSide::Request::Static)
+#        ServerSide::Server.new(host, port, ServerSide::Request::Static)
       end
     end
   end
