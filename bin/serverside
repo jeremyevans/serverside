@@ -1,12 +1,78 @@
 #!/usr/bin/env ruby
 
 require 'rubygems'
-require 'serverside'
+require_gem 'serverside'
+require 'optparse'
 
-if File.file?('serverside_app.rb')
-  require 'serverside_app'
-else
-  # static server
+$cmd_config = {
+  :host => '0.0.0.0',
+  :port => 8000..8000
+}
+
+opts = OptionParser.new do |opts|
+  opts.banner = "Usage: serverside start|stop|restart [app1 app2 ...]"
+  opts.define_head "ServerSide, a fast and simple web framework for ruby."
+  opts.separator ""
+  opts.separator "The supplied app paths can be directory or file references."
+  opts.separator ""
+  opts.separator "Options:"
+
+  opts.on("-h", "--host HOSTNAME", "Host to bind to (default is all IPs)") do |v|
+    $cmd_config[:host] = v
+  end
+  opts.on("-p", "--port NUM", "Port or port range (default is 8000)") do |v|
+    $cmd_config[:port] = (v =~ /\.\./) ? eval(v) : v.to_i..v_to_i 
+  end
+
+  # No argument, shows at tail.  This will print an options summary.
+  # Try it and see!
+  opts.on_tail("-?", "--help", "Show this message") do
+    puts opts
+    exit
+  end
+
+  # Another typical switch to print the version.
+  opts.on_tail("-v", "--version", "Show version") do
+    class << Gem; attr_accessor :loaded_specs; end
+    specs = Gem.loaded_specs['serverside']
+    puts "ServerSide #{specs.version} (#{specs.date.strftime '%Y-%m-%d'})"
+    exit
+  end
+
 end
 
-ServerSide::Server.control
+opts.parse! ARGV
+if ARGV.length < 1
+  puts opts
+  exit
+end
+
+cmd = ARGV.shift
+unless %w(start stop restart).include?(cmd)
+  puts "Invalid command specified. Known commands are: start, stop, restart."
+  exit
+end
+
+puts $cmd_config.inspect
+puts cmd
+
+ARGV << '.' if ARGV.empty?
+while path = ARGV.shift
+  if File.file?(path)
+    puts "Application file #{path}"
+    require path
+  else
+    fn = File.join(path, 'serverside.rb')
+    if File.file?(fn)
+      puts "Application file #{fn}"
+      require fn
+    else
+      puts "Static file server #{path}"
+      #ServerSide::Application::StaticServer.new(path)
+      break
+    end
+  end
+end
+
+#ServerSide::Application.start_all
+

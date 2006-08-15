@@ -1,5 +1,17 @@
 *SVN*
 
+* Added option parsing to serverside script.
+
+* Added daemon code and unit tests.
+
+* Created serverside script.
+
+* Created Gem spec.
+
+* Created directory structure.
+
+*Mongrel-based branch*
+
 * Added host attribute to Controller::Request.
 
 * Added ability to create rules on any request attribute, not just path.
