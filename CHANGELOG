@@ -1,5 +1,7 @@
 *SVN*
 
+* Started work on application code.
+
 * Added option parsing to serverside script.
 
 * Added daemon code and unit tests.

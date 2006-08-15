@@ -6,7 +6,7 @@ require 'optparse'
 
 $cmd_config = {
   :host => '0.0.0.0',
-  :port => 8000..8000
+  :ports => 8000..8000
 }
 
 opts = OptionParser.new do |opts|
@@ -21,7 +21,7 @@ opts = OptionParser.new do |opts|
     $cmd_config[:host] = v
   end
   opts.on("-p", "--port NUM", "Port or port range (default is 8000)") do |v|
-    $cmd_config[:port] = (v =~ /\.\./) ? eval(v) : v.to_i..v_to_i 
+    $cmd_config[:ports] = (v =~ /\.\./) ? eval(v) : v.to_i..v_to_i 
   end
 
   # No argument, shows at tail.  This will print an options summary.

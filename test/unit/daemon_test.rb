@@ -6,7 +6,7 @@ class Daemon::Base
   end
 end
 
-class ServerDaemonTest < Test::Unit::TestCase
+class DaemonTest < Test::Unit::TestCase
   class TestDaemon < Daemon::Base
     def self.start
       @count = 0
@@ -34,7 +34,7 @@ class ServerDaemonTest < Test::Unit::TestCase
     assert_equal File.join(Daemon::WorkingDirectory, 'daemon.base.pid'),
       Daemon::Base.pid_fn
     
-    assert_equal File.join(Daemon::WorkingDirectory, 'serverdaemontest.testdaemon.pid'),
+    assert_equal File.join(Daemon::WorkingDirectory, 'daemontest.testdaemon.pid'),
       TestDaemon.pid_fn
   end
   
