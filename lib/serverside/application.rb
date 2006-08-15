@@ -13,7 +13,7 @@ module ServerSide
       end
       
       def make_request_class
-#        Class.new(ServerSide::Application::Request) do
+#        Class.new(ServerSide::Request::Base) do
 #          define_method(:process, self.class.compile_routing)
 #        end
       end

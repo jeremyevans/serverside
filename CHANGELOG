@@ -1,5 +1,7 @@
 *SVN*
 
+* Basic server code works with unit tests.
+
 * Started work on application code.
 
 * Added option parsing to serverside script.
