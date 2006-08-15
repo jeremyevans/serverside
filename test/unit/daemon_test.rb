@@ -53,6 +53,7 @@ class DaemonTest < Test::Unit::TestCase
   def test_start_stop
     FileUtils.rm(TestDaemon.result_fn) rescue nil
     Daemon.control(TestDaemon, :start)
+    sleep 0.2
     assert_equal true, File.file?(TestDaemon.pid_fn)
     sleep 0.5
     assert_nothing_raised {Daemon::PidFile.recall(TestDaemon)}
