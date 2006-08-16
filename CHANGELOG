@@ -1,5 +1,7 @@
 *SVN*
 
+* Added HTTP parsing code with unit tests.
+
 * Started adding request code.
 
 * More unit tests for application code.
