@@ -1,0 +1,7 @@
+= about ServerSide =
+
+ServerSide is an HTTP server framework designed to be as fast as possible, and
+as easy as possible to use. ServerSide includes a full-featured HTTP server, a
+controller-view system and a bunch of other tools to easily create servers and
+clusters of servers.
+

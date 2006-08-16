@@ -13,7 +13,7 @@ CLEAN.include ['**/.*.sw?', '*.gem', '.config']
 RDOC_OPTS = ['--quiet', '--title', "ServerSide Documentation",
     "--opname", "index.html",
     "--line-numbers", 
-#    "--main", "README",
+    "--main", "README",
     "--inline-source"]
 
 desc "Packages up ServerSide."
@@ -25,9 +25,9 @@ task :doc => [:rdoc]
 Rake::RDocTask.new do |rdoc|
     rdoc.rdoc_dir = 'doc/rdoc'
     rdoc.options += RDOC_OPTS
-#    rdoc.main = "README"
+    rdoc.main = "README"
     rdoc.title = "ServerSide Documentation"
-    rdoc.rdoc_files.add ['CHANGELOG', 'lib/serverside.rb', 'lib/serverside/*.rb']
+    rdoc.rdoc_files.add ['README', 'CHANGELOG', 'COPYING', 'lib/serverside.rb', 'lib/serverside/*.rb']
 end
 
 spec =
@@ -36,7 +36,7 @@ spec =
         s.version = VERS
         s.platform = Gem::Platform::RUBY
         s.has_rdoc = true
-        s.extra_rdoc_files = ["CHANGELOG"]
+        s.extra_rdoc_files = ["README", "CHANGELOG", "COPYING"]
         s.rdoc_options += RDOC_OPTS + 
           ['--exclude', '^(examples|extras)\/', '--exclude', 'lib/serverside.rb']
         s.summary = "Performance-oriented web framework."
@@ -49,7 +49,7 @@ spec =
         s.add_dependency('metaid')
         s.required_ruby_version = '>= 1.8.2'
 
-        s.files = %w(Rakefile) +
+        s.files = %w(COPYING README Rakefile) +
           Dir.glob("{bin,doc,test,lib}/**/*") 
         
         s.require_path = "lib"
