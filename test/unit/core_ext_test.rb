@@ -17,8 +17,16 @@ class StringTest < Test::Unit::TestCase
   end
   
   def test_slash
-    assert_equal 'sharon/eylon', 'sharon'/'eylon'
-    assert_equal 'sharon/122', 'sharon'/122
+    assert_equal 'sharon/eylon', 'sharon'/'/eylon'
+    assert_equal 'sharon/122', 'sharon/'/122
     assert_equal 'test/schmest', 'test'/:schmest
+  end
+end
+
+class SymbolTest < Test::Unit::TestCase
+  def test_to_s
+    assert_equal 'hello', :hello.to_s
+    assert_equal 'yow_za', :yow_za.to_s
+    assert_equal :yow_za.to_s.object_id, :yow_za.to_s.object_id
   end
 end

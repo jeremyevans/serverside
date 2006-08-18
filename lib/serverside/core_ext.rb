@@ -11,9 +11,17 @@ class String
     tr('+', ' ').gsub(/((?:%[0-9a-fA-F]{2})+)/n){[$1.delete('%')].pack('H*')}
   end
   
-  # Concatenates a path
+  # Concatenates a path (do we really need this sugar?)
   def /(o)
-    to_s + '/' + o.to_s
+    File.join(self, o.to_s)
   end
 end
 
+# Symbol extensions and overrides.
+class Symbol
+  # A faster to_s method. This is called a lot, and memoization gives us
+  # performance between 10%-35% better.
+  def to_s
+    @_to_s || (@_to_s = id2name)
+  end
+end

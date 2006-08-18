@@ -1,5 +1,9 @@
 *SVN*
 
+* Added Request.send_response and stream.
+
+* Added faster Symbol.to_s to core_ext.
+
 * Added HTTP parsing code with unit tests.
 
 * Started adding request code.

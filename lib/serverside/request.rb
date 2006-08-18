@@ -1,26 +1,40 @@
 module ServerSide
   module Request
+    # A bunch of frozen constants to make the parsing of requests and rendering
+    # of responses faster than otherwise.
     module Const
       LineBreak = "\r\n".freeze
-      RequestRegexp = /([A-Za-z]+)\s(\/.*)\sHTTP\/(.+)\r/.freeze
+      # Here's a nice one - parses the first line of a request.
+      RequestRegexp = /([A-Za-z0-9]+)\s(\/[^\?]*)(\?(.*))?\sHTTP\/(.+)\r/.freeze
+      # Regexp for parsing headers.
       HeaderRegexp = /([^:]+):\s?(.*)\r\n/.freeze
       ContentLength = 'Content-Length'.freeze
       Version_1_1 = '1.1'.freeze
       Connection = 'Connection'.freeze
       Close = 'close'.freeze
-      QueryRegexp = /([^\?]+)(\?(.*))?/.freeze
       Ampersand = '&'.freeze
+      # Regexp for parsing URI parameters.
       ParameterRegexp = /(.+)=(.*)/.freeze
       EqualSign = '='.freeze
+      StatusClose = "HTTP/1.1 %d\r\nConnection: close\r\nContent-Type: %s\r\n%sContent-Length: %d\r\n\r\n".freeze
+      StatusStream = "HTTP/1.1 %d\r\nConnection: close\r\nContent-Type: %s\r\n%s\r\n".freeze
+      StatusPersist = "HTTP/1.1 %d\r\nContent-Type: %s\r\n%sContent-Length: %d\r\n\r\n".freeze
+      Header = "%s: %s\r\n".freeze
+      Empty = ''.freeze
     end
 
+    # This is the base request class. When a new request is created, it starts
+    # a thread in which it is parsed and processed.
     class Base
+      # Initializes the request instance. A new thread is created for
+      # processing requests.
       def initialize(conn)
         @conn = conn
         @thread = Thread.new {process}
         @thread[:time] = Time.now
       end
       
+      # Processes 
       def process
         while true
           break unless parse_request
@@ -34,10 +48,8 @@ module ServerSide
     
       def parse_request
         return nil unless @conn.gets =~ Const::RequestRegexp
-        @method, @query, @version = $1.downcase.to_sym, $2, $3
-        @query =~ Const::QueryRegexp
-        @path = $1
-        @parameters = $3 ? parse_parameters($3) : {}
+        @method, @path, @query, @version = $1.downcase.to_sym, $2, $4, $5
+        @parameters = @query ? parse_parameters(@query) : {}
         @headers = {}
         while (line = @conn.gets)
           break if line.nil? || (line == Const::LineBreak)
@@ -59,6 +71,28 @@ module ServerSide
         end
       end
     
+      def send_response(status, content_type, body = nil, content_length = nil, 
+        headers = nil)
+        h = headers ? 
+          headers.inject('') {|m, kv| m << (Const::Header % kv)} : Const::Empty
+
+        content_length = body.length if content_length.nil? && body
+        @persistent = false if content_length.nil?
+        
+        # Select the right format to use depending on circumstances: If there's
+        # no response body, it means we're in streaming mode, and therefore 
+        # don't persist. In streaming mode we don't send the content length.
+        @conn << ((@persistent ? Const::StatusPersist : 
+          (body ? Const::StatusClose : Const::StatusStream)) % 
+          [status, content_type, h, content_length])
+        (@conn << body if body)
+      rescue
+        @persistent = false
+      end
+      
+      def stream(body)
+        (@conn << body if body) rescue (@persistent = false)
+      end
     end
   end
 end
