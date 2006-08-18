@@ -1,3 +1,5 @@
+require 'socket'
+
 module ServerSide
   class Server
     def initialize(host, port, handler_class)

@@ -79,9 +79,7 @@ module ServerSide
         content_length = body.length if content_length.nil? && body
         @persistent = false if content_length.nil?
         
-        # Select the right format to use depending on circumstances: If there's
-        # no response body, it means we're in streaming mode, and therefore 
-        # don't persist. In streaming mode we don't send the content length.
+        # Select the right format to use according to circumstances.
         @conn << ((@persistent ? Const::StatusPersist : 
           (body ? Const::StatusClose : Const::StatusStream)) % 
           [status, content_type, h, content_length])

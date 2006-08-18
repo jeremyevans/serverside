@@ -1,5 +1,9 @@
 *SVN*
 
+* Added functional static server test.
+
+* Added test/functional for functional tests. Updated Rakefile.
+
 * Added Request.send_response and stream.
 
 * Added faster Symbol.to_s to core_ext.
