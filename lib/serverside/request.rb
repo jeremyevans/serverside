@@ -1,5 +1,5 @@
 module ServerSide
-  module Request
+  module Connection
     # A bunch of frozen constants to make the parsing of requests and rendering
     # of responses faster than otherwise.
     module Const

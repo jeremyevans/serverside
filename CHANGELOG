@@ -1,5 +1,7 @@
 *SVN*
 
+* Renamed ServerSide::Request to ServerSide::Connection. This is more appropriate.
+
 * Added functional static server test.
 
 * Added test/functional for functional tests. Updated Rakefile.

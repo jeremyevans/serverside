@@ -3,7 +3,7 @@ require 'net/http'
 
 class StaticServerTest < Test::Unit::TestCase
   
-  class StaticRequest < ServerSide::Request::Base
+  class StaticConnection < ServerSide::Connection::Base
     def respond
       status = 200
       body = IO.read('.'/@path)
@@ -16,7 +16,7 @@ class StaticServerTest < Test::Unit::TestCase
   end
   
   def test_basic
-    t = Thread.new {ServerSide::Server.new('0.0.0.0', 17654, StaticRequest)}
+    t = Thread.new {ServerSide::Server.new('0.0.0.0', 17654, StaticConnection)}
     sleep 0.1
 
     h = Net::HTTP.new('localhost', 17654)

@@ -18,7 +18,7 @@ module ServerSide
       end
       
       def make_request_class
-#        Class.new(ServerSide::Request::Base) do
+#        Class.new(ServerSide::Connection::Base) do
 #          define_method(:process, self.class.compile_routing)
 #        end
       end
@@ -26,7 +26,7 @@ module ServerSide
     
     class StaticServer
       def initialize(host, port)
-#        ServerSide::Server.new(host, port, ServerSide::Request::Static)
+#        ServerSide::Server.new(host, port, ServerSide::Connection::Static)
       end
     end
   end

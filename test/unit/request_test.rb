@@ -1,8 +1,8 @@
 require File.dirname(__FILE__) + '/../test_helper'
 require 'stringio'
 
-class RequestTest < Test::Unit::TestCase
-  class DummyRequest1 < ServerSide::Request::Base
+class ConnectionTest < Test::Unit::TestCase
+  class DummyConnection1 < ServerSide::Connection::Base
     attr_reader :count, :conn
     
     def process
@@ -12,7 +12,7 @@ class RequestTest < Test::Unit::TestCase
   end
 
   def test_new
-    r = DummyRequest1.new('hello')
+    r = DummyConnection1.new('hello')
     assert_equal 'hello', r.conn
     assert_equal 1, r.count
   end
@@ -29,7 +29,7 @@ class RequestTest < Test::Unit::TestCase
     end
   end
   
-  class DummyRequest2 < ServerSide::Request::Base
+  class DummyConnection2 < ServerSide::Connection::Base
     attr_accessor :count, :persistent
     
     def parse_request
@@ -44,24 +44,24 @@ class RequestTest < Test::Unit::TestCase
   
   def test_process
     c = DummyConnection.new
-    r = DummyRequest2.new(c)
+    r = DummyConnection2.new(c)
     sleep 0.2
     assert_equal false, c.opened
     assert_equal 1000, r.count
   end
   
-  class ServerSide::Request::Base 
+  class ServerSide::Connection::Base 
     attr_accessor :conn, :method, :query, :version, :path, :parameters,
       :headers, :persistent
   end
   
-  class DummyRequest3 < ServerSide::Request::Base
+  class DummyConnection3 < ServerSide::Connection::Base
     def initialize
     end
   end
   
   def test_parse_request_invalid
-    r = DummyRequest3.new
+    r = DummyConnection3.new
     r.conn = StringIO.new('POST /test')
     assert_nil r.parse_request
     r.conn = StringIO.new('invalid string')
@@ -79,7 +79,7 @@ class RequestTest < Test::Unit::TestCase
   end
   
   def test_parse_request
-    r = DummyRequest3.new
+    r = DummyConnection3.new
     r.conn = StringIO.new("POST /test HTTP/1.1\r\n\r\n")
     assert_kind_of Hash, r.parse_request
     assert_equal :post, r.method
@@ -114,7 +114,7 @@ class RequestTest < Test::Unit::TestCase
   end
   
   def test_send_response
-    r = DummyRequest3.new
+    r = DummyConnection3.new
     # simple case
     r.conn = StringIO.new
     r.persistent = true
@@ -164,7 +164,7 @@ class RequestTest < Test::Unit::TestCase
   end
   
   def test_stream
-    r = DummyRequest3.new
+    r = DummyConnection3.new
     r.conn = StringIO.new
     r.stream 'hey there'
     r.conn.rewind

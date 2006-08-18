@@ -2,7 +2,7 @@ require File.dirname(__FILE__) + '/../test_helper'
 require 'net/http'
 
 class ServerTest < Test::Unit::TestCase
-  class DummyHandler
+  class DummyConnection
     attr_reader :conn
     @@count = 0
     def initialize(conn)
@@ -14,7 +14,7 @@ class ServerTest < Test::Unit::TestCase
   end
 
   def test_server_creation
-    t = Thread.new {ServerSide::Server.new('0.0.0.0', 17543, DummyHandler)}
+    t = Thread.new {ServerSide::Server.new('0.0.0.0', 17543, DummyConnection)}
     sleep 0.1
 
     h = Net::HTTP.new('localhost', 17543)
