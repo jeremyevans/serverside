@@ -1,5 +1,7 @@
 *SVN*
 
+* Added static server functional test.
+
 * Added static file serving code.
 
 * Renamed ServerSide::Request to ServerSide::Connection. This is more appropriate.
