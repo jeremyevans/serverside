@@ -83,7 +83,7 @@ module ServerSide
         @conn << ((@persistent ? Const::StatusPersist : 
           (body ? Const::StatusClose : Const::StatusStream)) % 
           [status, content_type, h, content_length])
-        (@conn << body if body)
+        @conn << body if body
       rescue
         @persistent = false
       end

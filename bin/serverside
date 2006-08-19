@@ -68,7 +68,8 @@ while path = ARGV.shift
       require fn
     else
       puts "Static file server #{path}"
-      #ServerSide::Application::StaticServer.new(path)
+      ServerSide::Server.new('0.0.0.0', 8000, ServerSide::Connection::Static)}
+#      ServerSide::Application::StaticServer.new(path)
       break
     end
   end
