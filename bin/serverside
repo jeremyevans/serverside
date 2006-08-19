@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'rubygems'
-require_gem 'serverside'
+require 'serverside'
 require 'optparse'
 
 $cmd_config = {
@@ -68,7 +68,7 @@ while path = ARGV.shift
       require fn
     else
       puts "Static file server #{path}"
-      ServerSide::Server.new('0.0.0.0', 8000, ServerSide::Connection::Static)}
+      ServerSide::Server.new('0.0.0.0', 8000, ServerSide::Connection::Static)
 #      ServerSide::Application::StaticServer.new(path)
       break
     end

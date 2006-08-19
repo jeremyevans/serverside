@@ -1,5 +1,7 @@
 *SVN*
 
+* Added unit tests for static server.
+
 * Added static server functional test.
 
 * Added static file serving code.
