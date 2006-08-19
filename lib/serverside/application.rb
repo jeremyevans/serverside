@@ -1,10 +1,11 @@
 require 'rubygems'
 require 'metaid'
+require File.join(File.dirname(__FILE__), 'connection')
 
 module ServerSide
   module Application
 
-    class Base
+    class Base < ServerSide::Connection::Base
       def self.configure(options)
         @config = options
       end
@@ -16,18 +17,24 @@ module ServerSide
       def initialize(host, port)
         ServerSide::Server.new(host, port, make_request_class)
       end
-      
-      def make_request_class
-#        Class.new(ServerSide::Connection::Base) do
-#          define_method(:process, self.class.compile_routing)
-#        end
+    end
+    
+    class Static
+      def self.daemonize(config, cmd)
+        daemon_class = Class.new(Daemon::Cluster) do
+          meta_def(:server_loop) {|port|
+            puts "Start #{port}"
+            ServerSide::Server.new(config[:host], port, ServerSide::Connection::Static)
+          }
+          meta_def(:ports) {$cmd_config[:ports]}
+        end
+        
+        Daemon.control(daemon_class, cmd)
       end
     end
     
-    class StaticServer
-      def initialize(host, port)
-#        ServerSide::Server.new(host, port, ServerSide::Connection::Static)
-      end
+    def self.daemonize
+      
     end
   end
 end

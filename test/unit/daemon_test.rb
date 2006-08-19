@@ -1,11 +1,5 @@
 require File.dirname(__FILE__) + '/../test_helper'
 
-class Daemon::Base
-  def self.inherited(c)
-    # do nothing
-  end
-end
-
 class DaemonTest < Test::Unit::TestCase
   class TestDaemon < Daemon::Base
     def self.start

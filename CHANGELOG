@@ -1,5 +1,9 @@
 *SVN*
 
+* Added static application. Using the binary script in static mode works.
+
+* Added cluster class with unit tests.
+
 * Added unit tests for static server.
 
 * Added static server functional test.

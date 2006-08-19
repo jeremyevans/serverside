@@ -5,17 +5,7 @@ module Daemon
 
   class Base
     def self.pid_fn
-      File.join(WorkingDirectory, "#{name.split('::').join('.').downcase}.pid")
-    end
-    
-    def self.inherited(c)
-      at_exit do
-        begin
-          Daemon.control(c)
-        rescue => e
-          puts e.message
-        end
-      end
+      File.join(WorkingDirectory, "#{name.gsub('::', '.').downcase}.pid")
     end
   end
   
@@ -53,8 +43,8 @@ module Daemon
       Dir.chdir WorkingDirectory
       File.umask 0000
       STDIN.reopen "/dev/null"
-      STDOUT.reopen "/dev/null", "a"
-      STDERR.reopen STDOUT
+      #STDOUT.reopen "/dev/null", "a"
+      #STDERR.reopen STDOUT
       trap("TERM") {daemon.stop; exit}
       daemon.start
     end

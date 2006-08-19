@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
+require 'lib/serverside'
 require 'rubygems'
-require 'serverside'
 require 'optparse'
 
 $cmd_config = {
@@ -47,33 +47,28 @@ if ARGV.length < 1
   exit
 end
 
-cmd = ARGV.shift
-unless %w(start stop restart).include?(cmd)
+$cmd = ARGV.shift
+unless %w(start stop restart).include?($cmd)
   puts "Invalid command specified. Known commands are: start, stop, restart."
   exit
 end
 
 puts $cmd_config.inspect
-puts cmd
 
 ARGV << '.' if ARGV.empty?
-while path = ARGV.shift
-  if File.file?(path)
-    puts "Application file #{path}"
-    require path
+path = ARGV.shift
+if File.file?(path)
+  puts "Application file #{path}"
+  require path
+  ServerSide::Application.daemonize($cmd)
+else
+  fn = File.join(path, 'serverside.rb')
+  if File.file?(fn)
+    puts "Application file #{fn}"
+    require fn
+    ServerSide::Application.daemonize($cmd)
   else
-    fn = File.join(path, 'serverside.rb')
-    if File.file?(fn)
-      puts "Application file #{fn}"
-      require fn
-    else
-      puts "Static file server #{path}"
-      ServerSide::Server.new('0.0.0.0', 8000, ServerSide::Connection::Static)
-#      ServerSide::Application::StaticServer.new(path)
-      break
-    end
+    puts "Static file server #{path}"
+    ServerSide::Application::Static.daemonize($cmd_config, $cmd)
   end
 end
-
-#ServerSide::Application.start_all
-
