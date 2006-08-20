@@ -1,5 +1,9 @@
 *SVN*
 
+* Fixed require in serverside script to load the gem.
+
+* Fixed the Daemon pid file for static file server mode.
+
 * Added directory listing to static file server.
 
 * Fixed request header parsing Regexp so a trailing slash would be ignored. 

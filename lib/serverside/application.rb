@@ -22,10 +22,10 @@ module ServerSide
     class Static
       def self.daemonize(config, cmd)
         daemon_class = Class.new(Daemon::Cluster) do
-          meta_def(:server_loop) {|port|
-            puts "Start #{port}"
+          meta_def(:pid_fn) {Daemon::WorkingDirectory/'serverside.pid'}
+          meta_def(:server_loop) do |port|
             ServerSide::Server.new(config[:host], port, ServerSide::Connection::Static)
-          }
+          end
           meta_def(:ports) {$cmd_config[:ports]}
         end
         
