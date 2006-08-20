@@ -123,4 +123,21 @@ class ConnectionTest < Test::Unit::TestCase
     assert_equal stat.size.to_s,
       /Content-Length:\s(.*)\r\n/.match(resp)[1]
   end
+  
+  def test_serve_dir
+    dir = File.dirname(__FILE__)
+  
+    c = Dummy.new
+    c.conn = StringIO.new
+    Dummy.static_files.clear
+    c.path = dir
+    c.serve_dir(dir)
+    c.conn.rewind
+    resp = c.conn.read
+    
+    Dir.entries(dir).each do |fn|
+      next if fn == '.'
+      assert_not_nil resp =~ /<a href="#{dir/fn}">(#{fn})<\/a>/
+    end
+  end
 end

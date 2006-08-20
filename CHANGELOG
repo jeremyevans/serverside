@@ -1,5 +1,9 @@
 *SVN*
 
+* Added directory listing to static file server.
+
+* Fixed request header parsing Regexp so a trailing slash would be ignored. 
+
 * Added static application. Using the binary script in static mode works.
 
 * Added cluster class with unit tests.

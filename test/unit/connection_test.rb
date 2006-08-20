@@ -89,6 +89,18 @@ class ConnectionTest < Test::Unit::TestCase
     assert_equal({}, r.parameters)
     assert_equal({}, r.headers)
     assert_equal true, r.persistent
+
+    # trailing slash in path    
+    r = DummyConnection3.new
+    r.conn = StringIO.new("POST /test/asdf/qw/?time=24%20hours HTTP/1.1\r\n\r\n")
+    assert_kind_of Hash, r.parse_request
+    assert_equal :post, r.method
+    assert_equal '/test/asdf/qw', r.path
+    assert_equal 'time=24%20hours', r.query
+    assert_equal '1.1', r.version
+    assert_equal({:time => '24 hours'}, r.parameters)
+    assert_equal({}, r.headers)
+    assert_equal true, r.persistent
     
     r.conn = StringIO.new("GET /cex?q=node_state HTTP/1.1\r\n\r\n")
     assert_kind_of Hash, r.parse_request

@@ -23,6 +23,11 @@ module ServerSide
       NotModifiedClose = "HTTP/1.1 304 Not Modified\r\nConnection: close\r\nContent-Length: 0\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
       NotModifiedPersist = "HTTP/1.1 304 Not Modified\r\nContent-Length: 0\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
       TextPlain = 'text/plain'.freeze
+      MaxCacheFileSize = 100000.freeze # 100KB for the moment
+      
+      DirListingStart = '<html><head><title>Directory Listing for %s</title></head><body><h2>Directory listing for %s:</h2>'.freeze
+      DirListing = '<a href="%s">%s</a><br/>'.freeze
+      DirListingStop = '</body></html>'.freeze
     end
     
     @@mime_types = Hash.new {|h, k| ServerSide::StaticFiles::Const::TextPlain}
@@ -59,6 +64,14 @@ module ServerSide
     rescue => e
       send_response(404, Const::TextPlain, 'Error reading file.')
     end
+    
+    def serve_dir(dir)
+      html = (Const::DirListingStart % [@path, @path]) +
+        Dir.entries(dir).inject('') {|m, fn|
+          (fn == '.') ? m : m << Const::DirListing % [@path/fn, fn]
+        } + Const::DirListingStop
+      send_response(200, 'text/html', html)
+    end
   end
   
   module Connection
@@ -74,6 +87,8 @@ module ServerSide
         fn = './%s' % @path
         if File.file?(fn)
           serve_file(fn)
+        elsif File.directory?(fn)
+          serve_dir(fn)
         else
           send_response(404, 'text', Const::FileNotFound % @path)
         end

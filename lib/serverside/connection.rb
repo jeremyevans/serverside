@@ -5,7 +5,7 @@ module ServerSide
     module Const
       LineBreak = "\r\n".freeze
       # Here's a nice one - parses the first line of a request.
-      RequestRegexp = /([A-Za-z0-9]+)\s(\/[^\?]*)(\?(.*))?\sHTTP\/(.+)\r/.freeze
+      RequestRegexp = /([A-Za-z0-9]+)\s(\/[^\/\?]*(\/[^\/\?]+)*)\/?(\?(.*))?\sHTTP\/(.+)\r/.freeze
       # Regexp for parsing headers.
       HeaderRegexp = /([^:]+):\s?(.*)\r\n/.freeze
       ContentLength = 'Content-Length'.freeze
@@ -21,6 +21,7 @@ module ServerSide
       StatusPersist = "HTTP/1.1 %d\r\nContent-Type: %s\r\n%sContent-Length: %d\r\n\r\n".freeze
       Header = "%s: %s\r\n".freeze
       Empty = ''.freeze
+      Slash = '/'.freeze
     end
 
     # This is the base request class. When a new request is created, it starts
@@ -48,7 +49,7 @@ module ServerSide
     
       def parse_request
         return nil unless @conn.gets =~ Const::RequestRegexp
-        @method, @path, @query, @version = $1.downcase.to_sym, $2, $4, $5
+        @method, @path, @query, @version = $1.downcase.to_sym, $2, $5, $6
         @parameters = @query ? parse_parameters(@query) : {}
         @headers = {}
         while (line = @conn.gets)
