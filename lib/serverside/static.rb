@@ -1,19 +1,8 @@
 module ServerSide
+  # This module provides functionality for serving files and directory listings
+  # over HTTP. It is mainly used by ServerSide::Connection::Static.
   module StaticFiles
-    class Cache
-      @@cache = {}
-      
-      def self.store(fn, etag, content)
-        @@cache[fn] = [etag, content]
-        content
-      end
-
-      def self.recall(fn, etag)
-        r = @@cache[fn]
-        r && (r[0] == etag) && r[1]
-      end
-    end
-    
+    # Frozen constants to be used by the module.
     module Const
       ETag = 'ETag'.freeze
       ETagFormat = '%x:%x:%x'.inspect.freeze
@@ -44,6 +33,10 @@ module ServerSide
     
     @@static_files = {}
     
+    # Serves a file over HTTP. The file is cached in memory for later retrieval.
+    # If the If-None-Match header is included with an ETag, it is checked
+    # against the file's current ETag. If there's a match, a 304 response is
+    # rendered.
     def serve_file(fn)
       stat = File.stat(fn)
       etag = (Const::ETagFormat % [stat.mtime.to_i, stat.size, stat.ino]).freeze
@@ -65,6 +58,7 @@ module ServerSide
       send_response(404, Const::TextPlain, 'Error reading file.')
     end
     
+    # Serves a directory listing over HTTP in the form of an HTML page.
     def serve_dir(dir)
       html = (Const::DirListingStart % [@path, @path]) +
         Dir.entries(dir).inject('') {|m, fn|
@@ -80,9 +74,12 @@ module ServerSide
       FileNotFound = "Couldn't open file %s.".freeze
     end
     
+    # A connection type for serving static files.
     class Static < Base
       include StaticFiles
       
+      # Responds with a file's content or a directory listing. If the path
+      # does not exist, a 404 response is rendered.
       def respond
         fn = './%s' % @path
         if File.file?(fn)

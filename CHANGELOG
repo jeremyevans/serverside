@@ -1,5 +1,7 @@
 *SVN*
 
+* Added documentation.
+
 * Fixed require in serverside script to load the gem.
 
 * Fixed the Daemon pid file for static file server mode.

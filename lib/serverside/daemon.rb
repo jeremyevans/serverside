@@ -1,5 +1,6 @@
 require 'fileutils'
 
+# The Daemon module takes care of starting and stopping daemons.
 module Daemon
   WorkingDirectory = FileUtils.pwd
 
@@ -9,11 +10,15 @@ module Daemon
     end
   end
   
+  # Stores and recalls the daemon pid.
   module PidFile
+    # Stores the daemon pid.
     def self.store(daemon, pid)
       File.open(daemon.pid_fn, 'w') {|f| f << pid}
     end
     
+    # Recalls the daemon pid. If the pid can not be recalled, an error is 
+    # raised.
     def self.recall(daemon)
       IO.read(daemon.pid_fn).to_i
     rescue
@@ -21,6 +26,8 @@ module Daemon
     end
   end
   
+  # Controls a daemon according to the supplied command or command-line 
+  # parameter. If an invalid command is specified, an error is raised.
   def self.control(daemon, cmd = nil)
     case (cmd || (!ARGV.empty? && ARGV[0]) || :nil).to_sym
     when :start
@@ -35,6 +42,7 @@ module Daemon
     end
   end
   
+  # Starts the daemon by forking and bcoming session leader.
   def self.start(daemon)
     fork do
       Process.setsid
@@ -43,13 +51,14 @@ module Daemon
       Dir.chdir WorkingDirectory
       File.umask 0000
       STDIN.reopen "/dev/null"
-      #STDOUT.reopen "/dev/null", "a"
-      #STDERR.reopen STDOUT
+      STDOUT.reopen "/dev/null", "a"
+      STDERR.reopen STDOUT
       trap("TERM") {daemon.stop; exit}
       daemon.start
     end
   end
 
+  # Stops the daemon by sending it a TERM signal.
   def self.stop(daemon)
     pid = PidFile.recall(daemon)
     FileUtils.rm(daemon.pid_fn)

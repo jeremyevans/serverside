@@ -1,4 +1,9 @@
 module ServerSide
+  # The Connection module takes care of HTTP connection. While most HTTP servers
+  # (at least the OO ones) will define separate classes for request and 
+  # response, I chose to use the concept of a connection both for better
+  # performance, and also because a single connection might handle multiple
+  # requests, if using HTTP 1.1 persistent connection.
   module Connection
     # A bunch of frozen constants to make the parsing of requests and rendering
     # of responses faster than otherwise.
@@ -26,27 +31,36 @@ module ServerSide
 
     # This is the base request class. When a new request is created, it starts
     # a thread in which it is parsed and processed.
+    #
+    # Connection::Base is overriden by applications to create 
+    # application-specific behavior.
     class Base
       # Initializes the request instance. A new thread is created for
       # processing requests.
       def initialize(conn)
         @conn = conn
         @thread = Thread.new {process}
-        @thread[:time] = Time.now
       end
       
-      # Processes 
+      # Processes incoming requests by parsing them and then responding. If
+      # any error occurs, or the connection is not persistent, the connection is
+      # closed.
       def process
         while true
           break unless parse_request
           respond
           break unless @persistent
         end
-      rescue => e
+      rescue
+        # just close the connection.
       ensure
         @conn.close
       end
     
+      # Parses an HTTP request. If the request is not valid, nil is returned.
+      # Otherwise, the HTTP headers are returned. Also determines whether the
+      # connection is persistent (by checking the HTTP version and the 
+      # 'Connection' header).
       def parse_request
         return nil unless @conn.gets =~ Const::RequestRegexp
         @method, @path, @query, @version = $1.downcase.to_sym, $2, $5, $6
@@ -63,6 +77,8 @@ module ServerSide
         @headers
       end
       
+      # Parses query parameters by splitting the query string and unescaping
+      # parameter values.
       def parse_parameters(query)
         query.split(Const::Ampersand).inject({}) do |m, i|
           if i =~ Const::ParameterRegexp
@@ -72,6 +88,7 @@ module ServerSide
         end
       end
     
+      # Sends an HTTP response.
       def send_response(status, content_type, body = nil, content_length = nil, 
         headers = nil)
         h = headers ? 
@@ -89,6 +106,7 @@ module ServerSide
         @persistent = false
       end
       
+      # Streams additional data to the client.
       def stream(body)
         (@conn << body if body) rescue (@persistent = false)
       end
