@@ -1,5 +1,7 @@
 *SVN*
 
+* Added a profiled version of a static server - /test/functional/static_profile.rb.
+
 * Added freezing of HTTP headers.
 
 * Small change to documentation.
