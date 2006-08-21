@@ -6,7 +6,7 @@ module Daemon
   class Cluster < Base
     # Stores and recalls pids for the child processes.
     class PidFile
-      FN = 'server_cluster.pid'
+      FN = 'serverside_cluster.pid'
     
       # Deletes the cluster's pid file.
       def self.delete

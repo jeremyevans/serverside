@@ -1,5 +1,9 @@
 *SVN*
 
+* Small change to documentation.
+ 
+* Changed filename for cluster pid file to serverside_cluster.pid.
+
 * Added documentation.
 
 * Fixed require in serverside script to load the gem.
