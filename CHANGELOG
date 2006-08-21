@@ -1,5 +1,7 @@
 *SVN*
 
+* Added freezing of HTTP headers.
+
 * Small change to documentation.
  
 * Changed filename for cluster pid file to serverside_cluster.pid.

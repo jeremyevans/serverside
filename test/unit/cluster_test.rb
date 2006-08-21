@@ -5,7 +5,7 @@ class ClusterTest < Test::Unit::TestCase
   FN = Daemon::Cluster::PidFile::FN
   
   def test_pid_fn
-    assert_equal 'server_cluster.pid', Daemon::Cluster::PidFile::FN
+    assert_equal 'serverside_cluster.pid', Daemon::Cluster::PidFile::FN
   end
   
   def test_pid_delete

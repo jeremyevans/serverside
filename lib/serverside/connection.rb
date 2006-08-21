@@ -52,7 +52,7 @@ module ServerSide
           break unless @persistent
         end
       rescue
-        # just close the connection.
+        # We don't care. Just close the connection.
       ensure
         @conn.close
       end
@@ -69,7 +69,7 @@ module ServerSide
         while (line = @conn.gets)
           break if line.nil? || (line == Const::LineBreak)
           if line =~ Const::HeaderRegexp
-            @headers[$1] = $2
+            @headers[$1.freeze] = $2.freeze
           end
         end
         @persistent = (@version == Const::Version_1_1) && 
