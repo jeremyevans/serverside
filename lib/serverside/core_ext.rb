@@ -25,3 +25,18 @@ class Symbol
     @_to_s || (@_to_s = id2name)
   end
 end
+
+class Proc
+  # Returns a unique proc tag. This method is used by the router.
+  def proc_tag
+    'proc_' + object_id.to_s(36).sub('-', '_')
+  end
+end
+
+class Object
+  # Returns a unique tag for the object. This method is used by the router.
+  def const_tag
+    'C' + object_id.to_s(36).upcase.sub('-', '_')
+  end
+end
+

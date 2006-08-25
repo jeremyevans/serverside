@@ -17,6 +17,7 @@ module ServerSide
       DirListingStart = '<html><head><title>Directory Listing for %s</title></head><body><h2>Directory listing for %s:</h2>'.freeze
       DirListing = '<a href="%s">%s</a><br/>'.freeze
       DirListingStop = '</body></html>'.freeze
+      FileNotFound = 'File not found.'.freeze
     end
     
     @@mime_types = Hash.new {|h, k| ServerSide::StaticFiles::Const::TextPlain}
@@ -66,31 +67,16 @@ module ServerSide
         } + Const::DirListingStop
       send_response(200, 'text/html', html)
     end
-  end
-  
-  module Connection
-    module Const
-      WD = '.'.freeze
-      FileNotFound = "Couldn't open file %s.".freeze
-    end
     
-    # A connection type for serving static files.
-    class Static < Base
-      include StaticFiles
-      
-      # Responds with a file's content or a directory listing. If the path
-      # does not exist, a 404 response is rendered.
-      def respond
-        fn = './%s' % @path
-        if File.file?(fn)
-          serve_file(fn)
-        elsif File.directory?(fn)
-          serve_dir(fn)
-        else
-          send_response(404, 'text', Const::FileNotFound % @path)
-        end
+    # Serves static files and directory listings.
+    def serve_static(path)
+      if File.file?(path)
+        serve_file(path)
+      elsif File.directory?(path)
+        serve_dir(path)
+      else
+        send_response(404, 'text', Const::FileNotFound)
       end
     end
   end
 end
-

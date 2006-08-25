@@ -3,7 +3,7 @@ require 'stringio'
 require 'fileutils'
 
 class ConnectionTest < Test::Unit::TestCase
-  class Dummy < ServerSide::Connection::Static
+  class Dummy < ServerSide::Connection::Base
     def self.static_files
       @@static_files
     end
@@ -139,5 +139,38 @@ class ConnectionTest < Test::Unit::TestCase
       next if fn == '.'
       assert_not_nil resp =~ /<a href="#{dir/fn}">(#{fn})<\/a>/
     end
+  end
+  
+  def test_serve_static
+    dir = File.dirname(__FILE__)
+  
+    c = Dummy.new
+    c.conn = StringIO.new
+    c.path = dir
+    c.serve_static(dir)
+    c.conn.rewind
+    resp = c.conn.read
+    
+    Dir.entries(dir).each do |fn|
+      next if fn == '.'
+      assert_not_nil resp =~ /<a href="#{dir/fn}">(#{fn})<\/a>/
+    end
+
+    c.conn = StringIO.new
+    c.serve_file(__FILE__)
+    c.conn.rewind
+    resp = c.conn.read
+    
+    # normal response
+    assert_equal '200', /HTTP\/1.1\s(.*)\r\n/.match(resp)[1]
+    fc = IO.read(__FILE__)
+    stat = File.stat(__FILE__)
+    etag = (ServerSide::StaticFiles::Const::ETagFormat % 
+      [stat.mtime.to_i, stat.size, stat.ino])
+    assert_equal etag, /ETag:\s(.*)\r\n/.match(resp)[1]
+    assert_equal ServerSide::StaticFiles::Const::MaxAge,
+      /Cache-Control:\s(.*)\r\n/.match(resp)[1]
+    assert_equal stat.size.to_s,
+      /Content-Length:\s(.*)\r\n/.match(resp)[1]
   end
 end

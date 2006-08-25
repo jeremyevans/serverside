@@ -30,3 +30,17 @@ class SymbolTest < Test::Unit::TestCase
     assert_equal :yow_za.to_s.object_id, :yow_za.to_s.object_id
   end
 end
+
+class ProcTest < Test::Unit::TestCase
+  def test_proc_tag
+    l = lambda {puts "hello"}
+    assert_equal 'proc_' + l.object_id.to_s(36).sub('-', '_'), l.proc_tag
+  end
+end
+
+class ObjectTest < Test::Unit::TestCase
+  def test_const_tag
+    v = "mau mau"
+    assert_equal 'C' + v.object_id.to_s(36).upcase.sub('-', '_'), v.const_tag
+  end
+end

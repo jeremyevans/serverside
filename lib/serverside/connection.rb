@@ -1,3 +1,5 @@
+require File.join(File.dirname(__FILE__), 'static')
+
 module ServerSide
   # The Connection module takes care of HTTP connection. While most HTTP servers
   # (at least the OO ones) will define separate classes for request and 
@@ -37,6 +39,8 @@ module ServerSide
     # Connection::Base is overriden by applications to create 
     # application-specific behavior.
     class Base
+      include StaticFiles
+      
       # Initializes the request instance. A new thread is created for
       # processing requests.
       def initialize(conn)
@@ -53,7 +57,11 @@ module ServerSide
           respond
           break unless @persistent
         end
-      rescue
+      rescue => e
+        puts '*******************'
+        puts e.message
+        puts e.backtrace.first
+        puts '*******************'
         # We don't care. Just close the connection.
       ensure
         @conn.close
