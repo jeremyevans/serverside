@@ -1,5 +1,7 @@
 *SVN*
 
+* Learned about the (?:) modifier and fixed the request parsing regexp.
+
 * Added a profiled version of a static server - /test/functional/static_profile.rb.
 
 * Added freezing of HTTP headers.
