@@ -1,5 +1,7 @@
 *SVN*
 
+* Added Connection::Base.redirect.
+
 * Added routing code from /research/routing, implemented functional test.
 
 * Learned about the (?:) modifier and fixed the request parsing regexp.

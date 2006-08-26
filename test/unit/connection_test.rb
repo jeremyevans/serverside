@@ -190,4 +190,17 @@ class ConnectionTest < Test::Unit::TestCase
     assert_equal "HTTP/1.1 404\r\nConnection: close\r\nContent-Type: text/html\r\nSet-Cookie: abc=123\r\n\r\nhey there",
       r.conn.read
   end
+  
+  def test_redirect
+    r = DummyConnection3.new
+    r.conn = StringIO.new
+    r.redirect('http://mau.com/132')
+    r.conn.rewind
+    assert_equal "HTTP/1.1 302\r\nConnection: close\r\nLocation: http://mau.com/132\r\n\r\n", r.conn.read
+
+    r.conn = StringIO.new
+    r.redirect('http://www.google.com/search?q=meaning%20of%20life', true)
+    r.conn.rewind
+    assert_equal "HTTP/1.1 301\r\nConnection: close\r\nLocation: http://www.google.com/search?q=meaning%20of%20life\r\n\r\n", r.conn.read
+  end
 end

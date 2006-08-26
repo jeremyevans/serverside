@@ -28,9 +28,11 @@ module ServerSide
       StatusClose = "HTTP/1.1 %d\r\nConnection: close\r\nContent-Type: %s\r\n%sContent-Length: %d\r\n\r\n".freeze
       StatusStream = "HTTP/1.1 %d\r\nConnection: close\r\nContent-Type: %s\r\n%s\r\n".freeze
       StatusPersist = "HTTP/1.1 %d\r\nContent-Type: %s\r\n%sContent-Length: %d\r\n\r\n".freeze
+      StatusRedirect = "HTTP/1.1 %d\r\nConnection: close\r\nLocation: %s\r\n\r\n".freeze
       Header = "%s: %s\r\n".freeze
       Empty = ''.freeze
       Slash = '/'.freeze
+      Location = 'Location'
     end
 
     # This is the base request class. When a new request is created, it starts
@@ -113,6 +115,14 @@ module ServerSide
           [status, content_type, h, content_length])
         @conn << body if body
       rescue
+        @persistent = false
+      end
+      
+      # Send a redirect response.
+      def redirect(location, permanent = false)
+        @conn << (Const::StatusRedirect % [permanent ? 301 : 302, location])
+      rescue
+      ensure
         @persistent = false
       end
       
