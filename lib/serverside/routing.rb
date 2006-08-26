@@ -10,7 +10,7 @@ module ServerSide
       # Pattern values can also be arrays, in any array member is checked as a pattern.
       def self.route(rule, &block)
         @@rules ||= []
-        rule = {:path => rule} unless Hash === rule
+        rule = {:path => rule} unless (Hash === rule) || (Proc === rule)
         @@rules.unshift [rule, block]
         compile_rules
       end
