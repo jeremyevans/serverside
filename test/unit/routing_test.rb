@@ -8,6 +8,10 @@ class ServerSide::Connection::Router
     @@rules
   end
   
+  def self.remove_rules
+    @@rules = nil
+  end
+  
   def self.reset_rules
     @@rules = []
   end
@@ -19,6 +23,15 @@ end
 
 class RoutingTest < Test::Unit::TestCase
   R = ServerSide::Connection::Router
+  
+  def test_has_routes?
+    R.remove_rules
+    assert_nil R.has_routes?
+    R.reset_rules
+    assert_equal false, R.has_routes?
+    R.route('/controller/:action/:id') {}
+    assert_equal true, R.has_routes?
+  end
   
   def test_route
     l1 = lambda {1 + 1}
@@ -84,14 +97,16 @@ class RoutingTest < Test::Unit::TestCase
     
     l4 = lambda {4 + 4}
     s = R.rule_to_statement({:path => '/controller', :host => 'static'}, l4)
-    assert_not_nil s =~ /^return\s#{l4.proc_tag}\sif\s\(@path\s=~\s(.*)\)&&\(@host\s=~\s(.*)\)\n$/, s
+    assert_not_nil s =~ /^return\s#{l4.proc_tag}\sif\s\(.+\)&&\(.+\)\n$/
+    assert_not_nil s =~ /\(@path\s=~\s([^\)]+)\)/
     assert_equal /\/controller/, eval("R::#{$1}")
-    assert_equal /static/, eval("R::#{$2}")
+    assert_not_nil s =~ /\(@host\s=~\s([^\)]+)\)/
+    assert_equal /static/, eval("R::#{$1}")
     assert_equal true, r.respond_to?(l4.proc_tag)
     
     l5 = lambda {5 + 5}
     s = R.rule_to_statement({:path => ['/x', '/y']}, l5)
-    assert_not_nil s =~ /^return\s#{l5.proc_tag}\sif\s\(\(@path\s=~\s(.*)\)\|\|\(@path\s=~\s(.*)\)\)\n$/, s
+    assert_not_nil s =~ /^return\s#{l5.proc_tag}\sif\s\(\(@path\s=~\s(.*)\)\|\|\(@path\s=~\s(.*)\)\)\n$/
     assert_equal /\/x/, eval("R::#{$1}")
     assert_equal /\/y/, eval("R::#{$2}")
     assert_equal true, r.respond_to?(l5.proc_tag)

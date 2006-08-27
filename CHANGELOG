@@ -1,5 +1,9 @@
 *SVN*
 
+* Fixed routing unit tests.
+
+* Added Router.has_routes? method.
+
 * Finished unit tests for routing.
 
 * Added Connection::Base.redirect.

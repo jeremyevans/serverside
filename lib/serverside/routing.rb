@@ -4,6 +4,11 @@ module ServerSide
     # to different handlers based on rules that can be specified either by
     # lambdas or by hashes containing keys corresponding to patterns.
     class Router < Base
+      # Returns true if routes were defined.
+      def self.has_routes?
+        @@rules && !@@rules.empty?
+      end
+      
       # Adds a routing rule. The normalized rule is a hash containing keys (acting
       # as instance variable names) with patterns as values. If the rule is not a
       # hash, it is normalized into a pattern checked against the request path.
