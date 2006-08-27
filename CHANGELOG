@@ -1,5 +1,7 @@
 *SVN*
 
+* Added stats and svn_add rake tasks.
+
 * Fixed routing unit tests.
 
 * Added Router.has_routes? method.

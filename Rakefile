@@ -90,3 +90,30 @@ Rake::TestTask.new('test') do |t|
   t.pattern = 'test/**/*_test.rb'
   t.verbose = true
 end
+
+##############################################################################
+# Statistics
+##############################################################################
+
+STATS_DIRECTORIES = [
+  %w(Code               lib/),
+  %w(Unit\ tests        test/unit),
+  %w(Functional\ tests  test/functional)
+].collect { |name, dir| [ name, "./#{dir}" ] }.select { |name, dir| File.directory?(dir) }
+
+desc "Report code statistics (KLOCs, etc) from the application"
+task :stats do
+  require 'extra/stats'
+  verbose = true
+  CodeStatistics.new(*STATS_DIRECTORIES).to_s
+end
+
+##############################################################################
+# SVN
+##############################################################################
+
+desc "Add new files to subversion"
+task :svn_add do
+   system "svn status | grep '^\?' | sed -e 's/? *//' | sed -e 's/ /\ /g' | xargs svn add"
+end
+
