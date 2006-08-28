@@ -60,10 +60,6 @@ module ServerSide
           break unless @persistent
         end
       rescue => e
-        puts '*******************'
-        puts e.message
-        puts e.backtrace.first
-        puts '*******************'
         # We don't care. Just close the connection.
       ensure
         @conn.close

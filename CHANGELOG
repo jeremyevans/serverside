@@ -1,5 +1,7 @@
 *0.2.0*
 
+* Added a serve command to serverside script.
+
 * Changed substition of embedded parameters from (.*) to (.+).
 
 * Added rule compilation after setting the default handler.

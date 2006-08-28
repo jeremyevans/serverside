@@ -2,7 +2,22 @@ module ServerSide
   module Connection
     # The Router class defines a kind of connection that can route requests
     # to different handlers based on rules that can be specified either by
-    # lambdas or by hashes containing keys corresponding to patterns.
+    # lambdas or by hashes that contain variable names corresponding to patterns.
+    #
+    # The simplest form of a routing rule specifies a path pattern:
+    #
+    # <tt>ServerSide.route('/static') {serve_static('.'/@path)}</tt>
+    # 
+    # But you can also check for other attributes of the request:
+    #
+    # <tt> ServerSide.route(:path => '/static', :host => '^:subdomain\.mydomain') {serve_static(@parameters[:subdomain]/@path)}</tt>
+    # 
+    # It also possible to pass a lambda as a rule:
+    #
+    # <tt> ServerSide.route(lambda {@headers['Agent'] =~ /Moz/}) {serve_static('moz'/@path)}</tt>
+    #
+    # Routing rules are evaluated in backwards, so the rules should be ordered
+    # from the general to the specific.
     class Router < Base
       # Returns true if routes were defined.
       def self.has_routes?

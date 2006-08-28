@@ -10,10 +10,15 @@ $cmd_config = {
 }
 
 opts = OptionParser.new do |opts|
-  opts.banner = "Usage: serverside start|stop|restart [app1 app2 ...]"
+  opts.banner = "Usage: serverside start|stop|restart|serve [app1]"
   opts.define_head "ServerSide, a fast and simple web framework for ruby."
   opts.separator ""
-  opts.separator "The supplied app paths can be directory or file references."
+  opts.separator "The supplied app path can be directory or file references. \
+If the path refers to a directory the system will try to load serverside.rb in \
+that directory. If no path is given, the current working directory is assumed."
+  opts.separator ""
+  opts.separator "* The start, stop and restart commands are used to control the daemon."
+  opts.separator "* The serve command is used to start the server without forking."
   opts.separator ""
   opts.separator "Options:"
 
@@ -47,8 +52,8 @@ if ARGV.length < 1
 end
 
 $cmd = ARGV.shift
-unless %w(start stop restart).include?($cmd)
-  puts "Invalid command specified. Known commands are: start, stop, restart."
+unless %w(start stop restart serve).include?($cmd)
+  puts "Invalid command specified. Known commands are: start, stop, restart, serve."
   exit
 end
 
@@ -63,4 +68,15 @@ unless ServerSide::Connection::Router.has_routes?
   ServerSide.route_default {serve_static('.'/@path)}
 end
 
-ServerSide::Application.daemonize($cmd_config, $cmd)
+if $cmd == 'serve'
+  if $cmd_config[:ports].begin != $cmd_config[:ports].end
+    puts "Please specify a single port."
+    exit
+  end
+  puts "Serving at #{$cmd_config[:host]}:#{$cmd_config[:ports].begin}..."
+  trap('TERM') {exit}
+  ServerSide::Server.new($cmd_config[:host], $cmd_config[:ports].begin,
+    ServerSide::Connection::Router)
+else
+  ServerSide::Application.daemonize($cmd_config, $cmd)
+end
