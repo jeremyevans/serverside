@@ -1,5 +1,9 @@
 *SVN*
 
+* Changed substition of embedded parameters from (.*) to (.+).
+
+* Added rule compilation after setting the default handler.
+
 * Added doc_rforge rake task (for updating the docs on rubyforge.org).
 
 * Added stats and svn_add rake tasks.

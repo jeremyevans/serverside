@@ -38,7 +38,6 @@ opts = OptionParser.new do |opts|
     puts "ServerSide #{specs.version} (#{specs.date.strftime '%Y-%m-%d'})"
     exit
   end
-
 end
 
 opts.parse! ARGV
@@ -53,22 +52,15 @@ unless %w(start stop restart).include?($cmd)
   exit
 end
 
-puts $cmd_config.inspect
-
-ARGV << '.' if ARGV.empty?
-path = ARGV.shift
+path = ARGV.shift || '.'
 if File.file?(path)
-  puts "Application file #{path}"
   require path
-  ServerSide::Application.daemonize($cmd)
 else
   fn = File.join(path, 'serverside.rb')
-  if File.file?(fn)
-    puts "Application file #{fn}"
-    require fn
-    ServerSide::Application.daemonize($cmd)
-  else
-    puts "Static file server #{path}"
-    ServerSide::Application::Static.daemonize($cmd_config, $cmd)
-  end
+  require fn if File.file?(fn)
 end
+unless ServerSide::Connection::Router.has_routes?
+  ServerSide.route_default {serve_static('.'/@path)}
+end
+
+ServerSide::Application.daemonize($cmd_config, $cmd)

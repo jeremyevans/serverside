@@ -6,7 +6,7 @@ module ServerSide
     class Router < Base
       # Returns true if routes were defined.
       def self.has_routes?
-        @@rules && !@@rules.empty?
+        @@rules && !@@rules.empty? rescue false
       end
       
       # Adds a routing rule. The normalized rule is a hash containing keys (acting
@@ -23,6 +23,7 @@ module ServerSide
       # Compiles all rules into a respond method that is invoked when a request
       # is received.
       def self.compile_rules
+        @@rules ||= []
         code = @@rules.inject('lambda {') {|m, r| m << rule_to_statement(r[0], r[1])}
         code << 'default_handler}'
         define_method(:respond, &eval(code))
@@ -64,7 +65,7 @@ module ServerSide
           value = value.dup
           p_name = $1
           p_count += 1
-          value.sub!(ParamRegexp, '(.*)')
+          value.sub!(ParamRegexp, '(.+)')
           p_parse << "@parameters[:#{p_name}] = $#{p_count}\n"
         end
         cond = "(@#{key} =~ #{cache_constant(Regexp.new(value))})"
@@ -95,6 +96,7 @@ module ServerSide
       # Sets the default handler for incoming requests.
       def self.route_default(&block)
         define_method(:default_handler, &block)
+        compile_rules
       end
 
       def unhandled

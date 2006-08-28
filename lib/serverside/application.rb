@@ -4,6 +4,23 @@ require File.join(File.dirname(__FILE__), 'connection')
 
 module ServerSide
   module Application
+    @@config = nil
+  
+    def self.config=(c)
+      @@config = c
+    end
+  
+    def self.daemonize(config, cmd)
+      config = @@config.merge(config) if @@config
+      daemon_class = Class.new(Daemon::Cluster) do
+        meta_def(:pid_fn) {Daemon::WorkingDirectory/'serverside.pid'}
+        meta_def(:server_loop) do |port|
+          ServerSide::Server.new(config[:host], port, ServerSide::Connection::Router)
+        end
+        meta_def(:ports) {config[:ports]}
+      end
+      Daemon.control(daemon_class, cmd)
+    end
 
     class Base < ServerSide::Connection::Base
       def self.configure(options)
@@ -31,10 +48,6 @@ module ServerSide
         
         Daemon.control(daemon_class, cmd)
       end
-    end
-    
-    def self.daemonize
-      
     end
   end
 end
