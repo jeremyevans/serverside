@@ -1,4 +1,4 @@
-*SVN*
+*0.2.0*
 
 * Changed substition of embedded parameters from (.*) to (.+).
 

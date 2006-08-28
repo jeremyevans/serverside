@@ -7,8 +7,7 @@ require 'fileutils'
 include FileUtils
 
 NAME = "serverside"
-REV = File.read(".svn/entries")[/committed-rev="(\d+)"/, 1] rescue nil
-VERS = "0.2.0" + (REV ? ".#{REV}" : "")
+VERS = "0.2.0"
 CLEAN.include ['**/.*.sw?', '*.gem', '.config']
 RDOC_OPTS = ['--quiet', '--title', "ServerSide Documentation",
   "--opname", "index.html",
