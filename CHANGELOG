@@ -1,3 +1,7 @@
+*SVN*
+
+* Added /test/spec directory.
+
 *0.2.0*
 
 * Updated RFuzz script to work, but it doesn't still do anything interesting.
