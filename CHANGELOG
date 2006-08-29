@@ -1,5 +1,7 @@
 *0.2.0*
 
+* Updated RFuzz script to work, but it doesn't still do anything interesting.
+
 * Added a serve command to serverside script.
 
 * Changed substition of embedded parameters from (.*) to (.+).

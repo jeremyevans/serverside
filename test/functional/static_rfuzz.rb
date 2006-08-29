@@ -6,44 +6,6 @@ require 'rfuzz/client'
 require 'rfuzz/stats'
 include RFuzz
 
-class StatsTracker
-
-  def initialize
-    @stats = {}
-    @begins = {}
-    @error_count = 0
-  end
-
-  def mark(event)
-    @begins[event] = Time.now
-  end
-
-  def sample(event)
-    @stats[event] ||= Stats.new(event.to_s)
-    @stats[event].sample(Time.now - @begins[event])
-  end
-
-  def method_missing(event, *args)
-    case args[0]
-    when :begins
-      mark(:request) if event == :connect
-      mark(event)
-    when :ends
-      sample(:request) if event == :close
-      sample(event)
-    when :error
-      @error_count += 1
-    end
-  end
-
-  def to_s
-    request = @stats[:request]
-    @stats.delete :request
-    "#{request}\n----\n#{@stats.values.join("\n")}\nErrors: #@error_count"
-  end
-end
-
-
 if ARGV.length != 4
   STDERR.puts "usage:  ruby perftest.rb host port uri count"
   exit 1
@@ -59,7 +21,9 @@ count.times do
     code = resp.http_status.to_i
     codes[code] ||= 0
     codes[code] += 1
-  rescue Object
+  rescue => e
+    puts e.message
+    puts e.backtrace.first
   end
 end
 
