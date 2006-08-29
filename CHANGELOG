@@ -1,5 +1,9 @@
 *SVN*
 
+* Updated rakefile to include a spec task, as well as an rcov task. Updated test task to include spec and rcov tasks.
+
+* Started writing RSpec tests. This looks like a very interesting concept.
+
 * Added /test/spec directory.
 
 *0.2.0*

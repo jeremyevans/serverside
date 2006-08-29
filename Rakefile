@@ -59,7 +59,7 @@ Rake::GemPackageTask.new(spec) do |p|
 end
 
 task :install do
-  sh %{rake package}
+  Rake::Task['package'].execute
   sh %{sudo gem install pkg/#{NAME}-#{VERS}}
 end
 
@@ -68,7 +68,7 @@ task :uninstall => [:clean] do
 end
 
 task :doc_rforge do
-  sh %{rake doc}
+  Rake::Task['doc'].execute
   sh %{scp -r doc/rdoc/* ciconia@rubyforge.org:/var/www/gforge-projects/serverside}
 end
 
@@ -86,11 +86,27 @@ Rake::TestTask.new('test_functional') do |t|
   t.verbose = true
 end
 
+desc 'Run specification tests'
+task :spec do
+  sh %{spec test/spec/*_spec.rb}
+end
+
+desc 'Run rcov'
+task :rcov do
+  sh %{rcov test/unit/*_test.rb test/functional/*_test.rb}
+end
+
 desc 'Run all tests'
 Rake::TestTask.new('test') do |t|
   t.libs << 'test'
   t.pattern = 'test/**/*_test.rb'
   t.verbose = true
+end
+
+desc 'Run all tests, specs and finish with rcov'
+task :aok do
+  Rake::Task['rcov'].execute
+  Rake::Task['spec'].execute
 end
 
 ##############################################################################
