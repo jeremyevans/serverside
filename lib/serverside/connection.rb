@@ -30,9 +30,15 @@ module ServerSide
       StatusPersist = "HTTP/1.1 %d\r\nContent-Type: %s\r\n%sContent-Length: %d\r\n\r\n".freeze
       StatusRedirect = "HTTP/1.1 %d\r\nConnection: close\r\nLocation: %s\r\n\r\n".freeze
       Header = "%s: %s\r\n".freeze
-      Empty = ''.freeze
+      EmptyString = ''.freeze
+      EmptyHash = {}.freeze
       Slash = '/'.freeze
-      Location = 'Location'
+      Location = 'Location'.freeze
+      Cookie = 'Cookie'
+      SetCookie = "Set-Cookie: %s=%s; path=/; expires=%s\r\n".freeze
+      CookieSplit = /[;,] */n.freeze
+      CookieRegexp = /\s*(.+)=(.*)\s*/.freeze
+      CookieExpiredTime  = Time.at(0).freeze
     end
 
     # This is the base request class. When a new request is created, it starts
@@ -82,6 +88,9 @@ module ServerSide
         end
         @persistent = (@version == Const::Version_1_1) && 
           (@headers[Const::Connection] != Const::Close)
+        @cookies = @headers[Const::Cookie] ? parse_cookies : Const::EmptyHash
+        @response_cookies = nil
+        
         @headers
       end
       
@@ -95,13 +104,24 @@ module ServerSide
           m
         end
       end
+      
+      # Parses cookie values passed in the request
+      def parse_cookies
+        @headers[Const::Cookie].split(Const::CookieSplit).inject({}) do |m, i|
+          if i =~ Const::CookieRegexp
+            m[$1.to_sym] = $2.uri_unescape
+          end
+          m
+        end
+      end
     
       # Sends an HTTP response.
       def send_response(status, content_type, body = nil, content_length = nil, 
         headers = nil)
         h = headers ? 
-          headers.inject('') {|m, kv| m << (Const::Header % kv)} : Const::Empty
-
+          headers.inject('') {|m, kv| m << (Const::Header % kv)} : ''
+        (h << @response_cookies) if @response_cookies
+        
         content_length = body.length if content_length.nil? && body
         @persistent = false if content_length.nil?
         
@@ -125,6 +145,16 @@ module ServerSide
       # Streams additional data to the client.
       def stream(body)
         (@conn << body if body) rescue (@persistent = false)
+      end
+      
+      # Sets a cookie
+      def set_cookie(name, value, expires)
+        @response_cookies ||= ""
+        @response_cookies << (Const::SetCookie % [name, value.to_s.uri_escape, expires.rfc2822])
+      end
+      
+      def delete_cookie(name)
+        set_cookie(name, nil, Const::CookieExpiredTime)
       end
     end
   end

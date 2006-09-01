@@ -52,7 +52,7 @@ class ConnectionTest < Test::Unit::TestCase
   
   class ServerSide::Connection::Base 
     attr_accessor :conn, :method, :query, :version, :path, :parameters,
-      :headers, :persistent
+      :headers, :persistent, :cookies, :response_cookies
   end
   
   class DummyConnection3 < ServerSide::Connection::Base
@@ -88,6 +88,8 @@ class ConnectionTest < Test::Unit::TestCase
     assert_equal '1.1', r.version
     assert_equal({}, r.parameters)
     assert_equal({}, r.headers)
+    assert_equal({}, r.cookies)
+    assert_nil r.response_cookies
     assert_equal true, r.persistent
 
     # trailing slash in path    
@@ -100,6 +102,8 @@ class ConnectionTest < Test::Unit::TestCase
     assert_equal '1.1', r.version
     assert_equal({:time => '24 hours'}, r.parameters)
     assert_equal({}, r.headers)
+    assert_equal({}, r.cookies)
+    assert_nil r.response_cookies
     assert_equal true, r.persistent
     
     r.conn = StringIO.new("GET /cex?q=node_state HTTP/1.1\r\n\r\n")
@@ -108,10 +112,14 @@ class ConnectionTest < Test::Unit::TestCase
     assert_equal '/cex', r.path
     assert_equal 'q=node_state', r.query
     assert_equal({:q => 'node_state'}, r.parameters)
+    assert_equal({}, r.cookies)
+    assert_nil r.response_cookies
     
     r.conn = StringIO.new("GET / HTTP/1.0\r\n\r\n")
     assert_kind_of Hash, r.parse_request
     assert_equal false, r.persistent
+    assert_equal({}, r.cookies)
+    assert_nil r.response_cookies
 
     r.conn = StringIO.new("GET / HTTP/invalid\r\n\r\n")
     assert_kind_of Hash, r.parse_request
@@ -123,6 +131,13 @@ class ConnectionTest < Test::Unit::TestCase
     assert_equal '1.1', r.version
     assert_equal 'close', r.headers['Connection']
     assert_equal false, r.persistent
+    
+    # cookies
+    r.conn = StringIO.new("GET / HTTP/1.1\r\nConnection: close\r\nCookie: abc=1342; def=7%2f4\r\n\r\n")
+    assert_kind_of Hash, r.parse_request
+    assert_equal 'abc=1342; def=7%2f4', r.headers['Cookie']
+    assert_equal '1342', r.cookies[:abc]
+    assert_equal '7/4', r.cookies[:def]
   end
   
   def test_send_response
@@ -202,5 +217,26 @@ class ConnectionTest < Test::Unit::TestCase
     r.redirect('http://www.google.com/search?q=meaning%20of%20life', true)
     r.conn.rewind
     assert_equal "HTTP/1.1 301\r\nConnection: close\r\nLocation: http://www.google.com/search?q=meaning%20of%20life\r\n\r\n", r.conn.read
+  end
+  
+  def test_set_cookie
+    r = DummyConnection3.new
+    r.conn = StringIO.new
+    t = Time.now + 360
+    r.set_cookie(:session, "ABCDEFG", t)
+    assert_equal "Set-Cookie: session=ABCDEFG; path=/; expires=#{t.rfc2822}\r\n", r.response_cookies
+    r.send_response(200, 'text', 'Hi!')
+    r.conn.rewind
+    assert_equal "HTTP/1.1 200\r\nConnection: close\r\nContent-Type: text\r\nSet-Cookie: session=ABCDEFG; path=/; expires=#{t.rfc2822}\r\nContent-Length: 3\r\n\r\nHi!", r.conn.read
+  end
+  
+  def test_delete_cookie
+    r = DummyConnection3.new
+    r.conn = StringIO.new
+    r.delete_cookie(:session)
+    assert_equal "Set-Cookie: session=; path=/; expires=#{Time.at(0).rfc2822}\r\n", r.response_cookies
+    r.send_response(200, 'text', 'Hi!')
+    r.conn.rewind
+    assert_equal "HTTP/1.1 200\r\nConnection: close\r\nContent-Type: text\r\nSet-Cookie: session=; path=/; expires=#{Time.at(0).rfc2822}\r\nContent-Length: 3\r\n\r\nHi!", r.conn.read
   end
 end
