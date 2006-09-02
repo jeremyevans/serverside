@@ -6,15 +6,17 @@ module ServerSide
     #
     # The simplest form of a routing rule specifies a path pattern:
     #
-    # <tt>ServerSide.route('/static') {serve_static('.'/@path)}</tt>
+    #   ServerSide.route('/static') {serve_static('.'/@path)}
     # 
     # But you can also check for other attributes of the request:
     #
-    # <tt> ServerSide.route(:path => '/static', :host => '^:subdomain\.mydomain') {serve_static(@parameters[:subdomain]/@path)}</tt>
+    #   ServerSide.route(:path => '/static', :host => '^:subdomain\.mydomain') {
+    #     serve_static(@parameters[:subdomain]/@path)
+    #   }
     # 
     # It also possible to pass a lambda as a rule:
     #
-    # <tt> ServerSide.route(lambda {@headers['Agent'] =~ /Moz/}) {serve_static('moz'/@path)}</tt>
+    #   ServerSide.route(lambda {@headers['Agent'] =~ /Moz/}) {serve_static('moz'/@path)}
     #
     # Routing rules are evaluated in backwards, so the rules should be ordered
     # from the general to the specific.
@@ -27,7 +29,11 @@ module ServerSide
       # Adds a routing rule. The normalized rule is a hash containing keys (acting
       # as instance variable names) with patterns as values. If the rule is not a
       # hash, it is normalized into a pattern checked against the request path.
-      # Pattern values can also be arrays, in any array member is checked as a pattern.
+      # Pattern values can also be arrays, any member of which is checked as a
+      # pattern. The rule can also be a Proc or lambda which is run with the
+      # connection object's binding. A contrived example:
+      #
+      #   ServerSide.route(lambda{path = 'mypage'}) {serve_static('mypage.html')}
       def self.route(rule, &block)
         @@rules ||= []
         rule = {:path => rule} unless (Hash === rule) || (Proc === rule)

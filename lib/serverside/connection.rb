@@ -25,9 +25,9 @@ module ServerSide
       # Regexp for parsing URI parameters.
       ParameterRegexp = /(.+)=(.*)/.freeze
       EqualSign = '='.freeze
-      StatusClose = "HTTP/1.1 %d\r\nConnection: close\r\nContent-Type: %s\r\n%sContent-Length: %d\r\n\r\n".freeze
-      StatusStream = "HTTP/1.1 %d\r\nConnection: close\r\nContent-Type: %s\r\n%s\r\n".freeze
-      StatusPersist = "HTTP/1.1 %d\r\nContent-Type: %s\r\n%sContent-Length: %d\r\n\r\n".freeze
+      StatusClose = "HTTP/1.1 %d\r\nConnection: close\r\nContent-Type: %s\r\n%s%sContent-Length: %d\r\n\r\n".freeze
+      StatusStream = "HTTP/1.1 %d\r\nConnection: close\r\nContent-Type: %s\r\n%s%s\r\n".freeze
+      StatusPersist = "HTTP/1.1 %d\r\nContent-Type: %s\r\n%s%sContent-Length: %d\r\n\r\n".freeze
       StatusRedirect = "HTTP/1.1 %d\r\nConnection: close\r\nLocation: %s\r\n\r\n".freeze
       Header = "%s: %s\r\n".freeze
       EmptyString = ''.freeze
@@ -120,7 +120,6 @@ module ServerSide
         headers = nil)
         h = headers ? 
           headers.inject('') {|m, kv| m << (Const::Header % kv)} : ''
-        (h << @response_cookies) if @response_cookies
         
         content_length = body.length if content_length.nil? && body
         @persistent = false if content_length.nil?
@@ -128,7 +127,7 @@ module ServerSide
         # Select the right format to use according to circumstances.
         @conn << ((@persistent ? Const::StatusPersist : 
           (body ? Const::StatusClose : Const::StatusStream)) % 
-          [status, content_type, h, content_length])
+          [status, content_type, h, @response_cookies, content_length])
         @conn << body if body
       rescue
         @persistent = false

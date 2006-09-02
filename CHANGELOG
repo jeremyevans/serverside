@@ -1,5 +1,9 @@
 *SVN*
 
+* More documentation tweaks.
+
+* Changed how response cookies are formatted for somewhat better performance.
+
 * Updated documentation.
 
 * Removed deprecated code in lib/serverside/application.rb.

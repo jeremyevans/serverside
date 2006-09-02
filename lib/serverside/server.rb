@@ -6,7 +6,7 @@ module ServerSide
   # for applications which use Comet techniques.
   class Server
     # Creates a new server by opening a listening socket and starting an accept
-    # loop. When a new connection is accepted, a new instance of the the 
+    # loop. When a new connection is accepted, a new instance of the 
     # supplied connection class is instantiated and passed the connection for
     # processing.
     def initialize(host, port, connection_class)
