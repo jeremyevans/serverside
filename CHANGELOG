@@ -1,5 +1,7 @@
 *SVN*
 
+* Updated documentation.
+
 * Removed deprecated code in lib/serverside/application.rb.
 
 * Added HTTP cookie functionality (parse, set and delete.)

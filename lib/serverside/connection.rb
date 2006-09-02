@@ -147,12 +147,13 @@ module ServerSide
         (@conn << body if body) rescue (@persistent = false)
       end
       
-      # Sets a cookie
+      # Sets a cookie to be included in the response.
       def set_cookie(name, value, expires)
         @response_cookies ||= ""
         @response_cookies << (Const::SetCookie % [name, value.to_s.uri_escape, expires.rfc2822])
       end
       
+      # Marks a cookie as deleted. The cookie is given an expires stamp in the past.
       def delete_cookie(name)
         set_cookie(name, nil, Const::CookieExpiredTime)
       end

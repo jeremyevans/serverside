@@ -5,47 +5,52 @@ as easy as possible to use. ServerSide includes a full-featured HTTP server, a
 controller-view system and a bunch of other tools to easily create servers and
 clusters of servers.
 
+== Resources
+
+* {Project page}[http://code.google.com/p/serverside/]
+* {Source code}[http://serverside.googlecode.com/svn/]
+* {Bug tracking}[http://code.google.com/p/serverside/issues/list]
+* {RubyForge page}[http://rubyforge.org/projects/serverside/]
+
 == Installation
 
-<tt>sudo gem install serverside</tt>
+  sudo gem install serverside
 
-== Source Code
-
-http://serverside.googlecode.com/svn/
-
-== The Daemon
+== Usage
 
 Once you have the ServerSide gem installed, you can use the <tt>serverside</tt>
 script to control servers. For example:
 
-<tt>serverside -p 8000 start .</tt>
+  serverside start .
 
-will start an HTTP server, serving the content of the working directory. You can
-stop the server by running <tt>serverside stop .</tt>
+will start an HTTP server on port 8000, serving the content of the working 
+directory. You can stop the server by running <tt>serverside stop .</tt>
+
+To run the server without forking, use the 'serve' command:
+
+  serverside serve .
  
 == Serving Dynamic Content
 
-You can use the ServerSide::Application and ServerSide::Controller classes to
-create dynamic web applications. The ServerSide framework also lets you route
-requests based on any attribute of incoming requests, such as host name, path,
-URL parameters etc.
+By default ServerSide serves static files, but you can change the behavior by
+creating custom {routing rules}[classes/ServerSide/Connection/Router.html].
+Here's a simple routing rule:
 
-To start your app, you can either supply the <tt>serverside</tt> script with 
-your Ruby code file:
+  ServerSide.route(:path => '/hello/:name') {
+    send_response(200, 'text', "Hello #{@parameters[:name]}!")
+  }
 
-<tt>serverside start ~/myapp/myapp.rb</tt>
+The ServerSide framework also lets you route requests based on any attribute of
+incoming requests, such as host name, path, URL parameters etc.
 
-Or you can put your code in a file called <tt>serverside.rb</tt> and tell the
-<tt>serverside</tt> script the directory path:
+To run your custom rules, you can either put them in a file called serverside.rb,
+or tell serverside to explicitly load a specific file:
 
-<tt>serverside start /home/nc/reality/production</tt>
-
-The script will then load <tt>/home/nc/reality/production/serverside.rb</tt> and
-take care of everything else.
+  serverside start ~/myapp/myapp.rb
 
 == Running a Cluster of Servers
 
 ServerSide makes it easy to control a cluster of servers. Just supply a range of
 ports instead of a single port:
 
-<tt>serverside -p 8000..8009 start .</tt>
+  serverside -p 8000..8009 start .
