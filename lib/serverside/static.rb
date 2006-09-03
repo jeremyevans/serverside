@@ -12,12 +12,14 @@ module ServerSide
       NotModifiedClose = "HTTP/1.1 304 Not Modified\r\nConnection: close\r\nContent-Length: 0\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
       NotModifiedPersist = "HTTP/1.1 304 Not Modified\r\nContent-Length: 0\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
       TextPlain = 'text/plain'.freeze
+      TextHTML = 'text/html'.freeze
       MaxCacheFileSize = 100000.freeze # 100KB for the moment
       
       DirListingStart = '<html><head><title>Directory Listing for %s</title></head><body><h2>Directory listing for %s:</h2>'.freeze
       DirListing = '<a href="%s">%s</a><br/>'.freeze
       DirListingStop = '</body></html>'.freeze
       FileNotFound = 'File not found.'.freeze
+      RHTML = /\.rhtml$/.freeze
     end
     
     @@mime_types = Hash.new {|h, k| ServerSide::StaticFiles::Const::TextPlain}
@@ -68,15 +70,25 @@ module ServerSide
       send_response(200, 'text/html', html)
     end
     
+    def serve_template(fn, b = nil)
+      if (fn =~ Const::RHTML) || (File.file?(fn = fn + '.rhtml'))
+        send_response(200, Const::TextHTML, Template.render(fn, b || binding))
+      end
+    end
+    
     # Serves static files and directory listings.
     def serve_static(path)
       if File.file?(path)
         serve_file(path)
+      elsif serve_template(path)
+        return
       elsif File.directory?(path)
         serve_dir(path)
       else
         send_response(404, 'text', Const::FileNotFound)
       end
+    rescue => e
+      send_response(500, 'text', e.message)
     end
   end
 end

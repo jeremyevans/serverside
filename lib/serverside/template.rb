@@ -9,10 +9,16 @@ module ServerSide
     # file,) and the template object itself.  
     @@templates = {}
     
+    # Stores a template for later use. The stamp parameter is used only when
+    # the content of a template file is stored.
     def self.set(name, body, stamp = nil)
       @@templates[name] = [stamp, ERB.new(body)]
     end
-    
+
+    # Renders a template. If the template name is not found, attemps to load
+    # the template from file. If the template has a non-nil stamp, the render
+    # method compares it to the file stamp, and reloads the template content
+    # if necessary.
     def self.render(name, binding)
       t = @@templates[name]
       return t[1].result(binding) if t && t[0].nil?

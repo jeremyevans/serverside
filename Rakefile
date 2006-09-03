@@ -7,7 +7,7 @@ require 'fileutils'
 include FileUtils
 
 NAME = "serverside"
-VERS = "0.2.0"
+VERS = "0.2.5"
 CLEAN.include ['**/.*.sw?', '*.gem', '.config']
 RDOC_OPTS = ['--quiet', '--title', "ServerSide Documentation",
   "--opname", "index.html",
@@ -59,7 +59,7 @@ Rake::GemPackageTask.new(spec) do |p|
 end
 
 task :install do
-  Rake::Task['package'].execute
+  sh %{rake package}
   sh %{sudo gem install pkg/#{NAME}-#{VERS}}
 end
 

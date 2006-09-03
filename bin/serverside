@@ -74,7 +74,7 @@ if $cmd == 'serve'
     exit
   end
   puts "Serving at #{$cmd_config[:host]}:#{$cmd_config[:ports].begin}..."
-  trap('TERM') {exit}
+  trap('INT') {exit}
   ServerSide::Server.new($cmd_config[:host], $cmd_config[:ports].begin,
     ServerSide::Connection::Router)
 else

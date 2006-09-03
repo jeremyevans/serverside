@@ -12,6 +12,10 @@ clusters of servers.
 * {Bug tracking}[http://code.google.com/p/serverside/issues/list]
 * {RubyForge page}[http://rubyforge.org/projects/serverside/]
 
+To check out the repository, just perform:
+  
+  svn co {http://serverside.googlecode.com/svn/}[http://serverside.googlecode.com/svn/]
+
 == Installation
 
   sudo gem install serverside
@@ -29,6 +33,14 @@ directory. You can stop the server by running <tt>serverside stop .</tt>
 To run the server without forking, use the 'serve' command:
 
   serverside serve .
+
+== Serving ERb Templates
+
+ServerSide can render ERb[http://www.ruby-doc.org/stdlib/libdoc/erb/rdoc/] 
+templates in a fashion similar to PHP. You can store templates in .rhtml files, 
+and ServerSide takes care of all the rest. ServerSide is also smart enough to 
+allow you to use nice looking URL's with your templates, and automatically adds 
+the .rhtml extension if the file is there.
  
 == Serving Dynamic Content
 

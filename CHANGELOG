@@ -1,5 +1,7 @@
 *SVN*
 
+* Added template serving to static file module.
+
 * Wrote a simple ERB template system.
 
 * More documentation tweaks.
