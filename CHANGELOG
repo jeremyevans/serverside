@@ -1,5 +1,7 @@
 *SVN*
 
+* Wrote a simple ERB template system.
+
 * More documentation tweaks.
 
 * Changed how response cookies are formatted for somewhat better performance.
