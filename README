@@ -12,9 +12,9 @@ clusters of servers.
 * {Bug tracking}[http://code.google.com/p/serverside/issues/list]
 * {RubyForge page}[http://rubyforge.org/projects/serverside/]
 
-To check out the repository, just perform:
+To check out the repository:
   
-  svn co {http://serverside.googlecode.com/svn/}[http://serverside.googlecode.com/svn/]
+  svn co http://serverside.googlecode.com/svn/trunk
 
 == Installation
 
