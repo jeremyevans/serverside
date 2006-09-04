@@ -68,7 +68,7 @@ task :uninstall => [:clean] do
 end
 
 task :doc_rforge do
-  Rake::Task['doc'].execute
+  sh %{rake doc}
   sh %{scp -r doc/rdoc/* ciconia@rubyforge.org:/var/www/gforge-projects/serverside}
 end
 
@@ -105,8 +105,8 @@ end
 
 desc 'Run all tests, specs and finish with rcov'
 task :aok do
-  Rake::Task['rcov'].execute
-  Rake::Task['spec'].execute
+  sh %{rake rcov}
+  sh %{rake spec}
 end
 
 ##############################################################################

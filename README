@@ -12,7 +12,7 @@ clusters of servers.
 * {Bug tracking}[http://code.google.com/p/serverside/issues/list]
 * {RubyForge page}[http://rubyforge.org/projects/serverside/]
 
-To check out the repository:
+To check out the source code:
   
   svn co http://serverside.googlecode.com/svn/trunk
 

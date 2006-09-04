@@ -1,5 +1,9 @@
 *SVN*
 
+* Another small change to docs.
+
+* Fixed small error in Rakefile that prevented doc_rforge task from updating the docs.
+
 * Fixed minor documentation error.
 
 *0.2.5*
