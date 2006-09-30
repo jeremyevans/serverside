@@ -1,5 +1,7 @@
 *SVN*
 
+* Refactored HTTP-related code into a new HTTP::Request class and a simplified HTTP::Connection.
+
 * Another small change to docs.
 
 * Fixed small error in Rakefile that prevented doc_rforge task from updating the docs.

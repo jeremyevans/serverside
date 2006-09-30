@@ -3,7 +3,7 @@ require 'net/http'
 
 class StaticServerTest < Test::Unit::TestCase
   
-  class StaticConnection < ServerSide::Connection::Base
+  class StaticRequest < ServerSide::HTTP::Request
     def respond
       begin
 #        set_cookie(:hello, 'world', Time.now + 30) if @cookies[:test] == 'hello'
@@ -21,7 +21,7 @@ class StaticServerTest < Test::Unit::TestCase
   end
   
   def test_basic
-    @t = Thread.new {ServerSide::Server.new('0.0.0.0', 17654, StaticConnection)}
+    @t = Thread.new {ServerSide::HTTP::Server.new('0.0.0.0', 17654, StaticRequest)}
     sleep 0.1
 
     h = Net::HTTP.new('localhost', 17654)
@@ -40,7 +40,7 @@ class StaticServerTest < Test::Unit::TestCase
   end
   
   def test_cookies
-    @t = Thread.new {ServerSide::Server.new('0.0.0.0', 17655, StaticConnection)}
+    @t = Thread.new {ServerSide::HTTP::Server.new('0.0.0.0', 17655, StaticRequest)}
     sleep 0.1
 
     h = Net::HTTP.new('localhost', 17655)

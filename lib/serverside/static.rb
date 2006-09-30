@@ -1,6 +1,6 @@
 module ServerSide
   # This module provides functionality for serving files and directory listings
-  # over HTTP. It is mainly used by ServerSide::Connection::Static.
+  # over HTTP.
   module StaticFiles
     # Frozen constants to be used by the module.
     module Const

@@ -11,4 +11,4 @@ ServerSide.route(:path => '/xml/:flavor/feed.xml') do
   redirect('http://feeds.feedburner.com/RobbyOnRails')
 end
 
-ServerSide::Server.new('0.0.0.0', 8000, ServerSide::Connection::Router)
+ServerSide::HTTP::Server.new('0.0.0.0', 8000, ServerSide::Router)

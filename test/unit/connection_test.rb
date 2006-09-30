@@ -2,241 +2,47 @@ require File.dirname(__FILE__) + '/../test_helper'
 require 'stringio'
 
 class ConnectionTest < Test::Unit::TestCase
-  class DummyConnection1 < ServerSide::Connection::Base
-    attr_reader :count, :conn
+  class ServerSide::HTTP::Connection
+    attr_reader :conn, :request_class, :thread
+  end
+  
+  class DummyRequest1 < ServerSide::HTTP::Request
+    @@instance_count = 0
+    
+    def initialize(conn)
+      @@instance_count += 1
+      super(conn)
+    end
+    
+    def self.instance_count
+      @@instance_count
+    end
     
     def process
-      @count ||= 0
-      @count += 1
+      @conn[:count] ||= 0
+      @conn[:count] += 1
+      @conn[:count] < 1000
     end
+  end
+  
+  class DummyConn < Hash
+    attr_accessor :closed
+    def close; @closed = true; end
   end
 
   def test_new
-    r = DummyConnection1.new('hello')
+    r = ServerSide::HTTP::Connection.new('hello', ServerSide::HTTP::Request)
+    sleep 0.1
     assert_equal 'hello', r.conn
-    assert_equal 1, r.count
-  end
-  
-  class DummyConnection
-    attr_reader :opened
+    assert_equal ServerSide::HTTP::Request, r.request_class
+    assert_equal false, r.thread.alive?
     
-    def initialize
-      @opened = true
-    end
-    
-    def close
-      @opened = false
-    end
-  end
-  
-  class DummyConnection2 < ServerSide::Connection::Base
-    attr_accessor :count, :persistent
-    
-    def parse_request
-      @count ||= 0
-      @count += 1
-      @persistent = @count < 1000
-    end
-    
-    def respond
-    end
-  end
-  
-  def test_process
-    c = DummyConnection.new
-    r = DummyConnection2.new(c)
-    sleep 0.2
-    assert_equal false, c.opened
-    assert_equal 1000, r.count
-  end
-  
-  class ServerSide::Connection::Base 
-    attr_accessor :conn, :method, :query, :version, :path, :parameters,
-      :headers, :persistent, :cookies, :response_cookies
-  end
-  
-  class DummyConnection3 < ServerSide::Connection::Base
-    def initialize
-    end
-  end
-  
-  def test_parse_request_invalid
-    r = DummyConnection3.new
-    r.conn = StringIO.new('POST /test')
-    assert_nil r.parse_request
-    r.conn = StringIO.new('invalid string')
-    assert_nil r.parse_request
-    r.conn = StringIO.new('GET HTTP/1.1')
-    assert_nil r.parse_request
-    r.conn = StringIO.new('GET /test http')
-    assert_nil r.parse_request
-    r.conn = StringIO.new('GET /test HTTP')
-    assert_nil r.parse_request
-    r.conn = StringIO.new('GET /test HTTP/')
-    assert_nil r.parse_request
-    r.conn = StringIO.new('POST /test HTTP/1.1')
-    assert_nil r.parse_request
-  end
-  
-  def test_parse_request
-    r = DummyConnection3.new
-    r.conn = StringIO.new("POST /test HTTP/1.1\r\n\r\n")
-    assert_kind_of Hash, r.parse_request
-    assert_equal :post, r.method
-    assert_equal '/test', r.path
-    assert_nil r.query
-    assert_equal '1.1', r.version
-    assert_equal({}, r.parameters)
-    assert_equal({}, r.headers)
-    assert_equal({}, r.cookies)
-    assert_nil r.response_cookies
-    assert_equal true, r.persistent
-
-    # trailing slash in path    
-    r = DummyConnection3.new
-    r.conn = StringIO.new("POST /test/asdf/qw/?time=24%20hours HTTP/1.1\r\n\r\n")
-    assert_kind_of Hash, r.parse_request
-    assert_equal :post, r.method
-    assert_equal '/test/asdf/qw', r.path
-    assert_equal 'time=24%20hours', r.query
-    assert_equal '1.1', r.version
-    assert_equal({:time => '24 hours'}, r.parameters)
-    assert_equal({}, r.headers)
-    assert_equal({}, r.cookies)
-    assert_nil r.response_cookies
-    assert_equal true, r.persistent
-    
-    r.conn = StringIO.new("GET /cex?q=node_state HTTP/1.1\r\n\r\n")
-    assert_kind_of Hash, r.parse_request
-    assert_equal :get, r.method
-    assert_equal '/cex', r.path
-    assert_equal 'q=node_state', r.query
-    assert_equal({:q => 'node_state'}, r.parameters)
-    assert_equal({}, r.cookies)
-    assert_nil r.response_cookies
-    
-    r.conn = StringIO.new("GET / HTTP/1.0\r\n\r\n")
-    assert_kind_of Hash, r.parse_request
-    assert_equal false, r.persistent
-    assert_equal({}, r.cookies)
-    assert_nil r.response_cookies
-
-    r.conn = StringIO.new("GET / HTTP/invalid\r\n\r\n")
-    assert_kind_of Hash, r.parse_request
-    assert_equal 'invalid', r.version
-    assert_equal false, r.persistent
-    
-    r.conn = StringIO.new("GET / HTTP/1.1\r\nConnection: close\r\n\r\n")
-    assert_kind_of Hash, r.parse_request
-    assert_equal '1.1', r.version
-    assert_equal 'close', r.headers['Connection']
-    assert_equal false, r.persistent
-    
-    # cookies
-    r.conn = StringIO.new("GET / HTTP/1.1\r\nConnection: close\r\nCookie: abc=1342; def=7%2f4\r\n\r\n")
-    assert_kind_of Hash, r.parse_request
-    assert_equal 'abc=1342; def=7%2f4', r.headers['Cookie']
-    assert_equal '1342', r.cookies[:abc]
-    assert_equal '7/4', r.cookies[:def]
-  end
-  
-  def test_send_response
-    r = DummyConnection3.new
-    # simple case
-    r.conn = StringIO.new
-    r.persistent = true
-    r.send_response(200, 'text', 'Hello there!')
-    r.conn.rewind
-    assert_equal "HTTP/1.1 200\r\nContent-Type: text\r\nContent-Length: 12\r\n\r\nHello there!",
-      r.conn.read
-
-    # include content-length    
-    r.conn = StringIO.new
-    r.persistent = true
-    r.send_response(404, 'text/html', '<h1>404!</h1>', 10) # incorrect length
-    r.conn.rewind
-    assert_equal "HTTP/1.1 404\r\nContent-Type: text/html\r\nContent-Length: 10\r\n\r\n<h1>404!</h1>",
-      r.conn.read
-
-    # headers
-    r.conn = StringIO.new
-    r.persistent = true
-    r.send_response(404, 'text/html', '<h1>404!</h1>', nil, {'ETag' => 'xxyyzz'})
-    r.conn.rewind
-    assert_equal "HTTP/1.1 404\r\nContent-Type: text/html\r\nETag: xxyyzz\r\nContent-Length: 13\r\n\r\n<h1>404!</h1>",
-      r.conn.read
-
-    # no body
-    r.conn = StringIO.new
-    r.persistent = true
-    r.send_response(404, 'text/html', nil, nil, {'Set-Cookie' => 'abc=123'})
-    r.conn.rewind
-    assert_equal "HTTP/1.1 404\r\nConnection: close\r\nContent-Type: text/html\r\nSet-Cookie: abc=123\r\n\r\n",
-      r.conn.read
-    assert_equal false, r.persistent
-
-    # not persistent
-    r.conn = StringIO.new
-    r.persistent = false
-    r.send_response(200, 'text', 'Hello there!')
-    r.conn.rewind
-    assert_equal "HTTP/1.1 200\r\nConnection: close\r\nContent-Type: text\r\nContent-Length: 12\r\n\r\nHello there!",
-      r.conn.read
-      
-    # socket error
-    r.conn = nil
-    r.persistent = true
-    assert_nothing_raised {r.send_response(200, 'text', 'Hello there!')}
-    assert_equal false, r.persistent
-  end
-  
-  def test_stream
-    r = DummyConnection3.new
-    r.conn = StringIO.new
-    r.stream 'hey there'
-    r.conn.rewind
-    assert_equal 'hey there', r.conn.read
-    
-    r.conn = StringIO.new
-    r.persistent = true
-    r.send_response(404, 'text/html', nil, nil, {'Set-Cookie' => 'abc=123'})
-    r.stream('hey there')
-    r.conn.rewind
-    assert_equal "HTTP/1.1 404\r\nConnection: close\r\nContent-Type: text/html\r\nSet-Cookie: abc=123\r\n\r\nhey there",
-      r.conn.read
-  end
-  
-  def test_redirect
-    r = DummyConnection3.new
-    r.conn = StringIO.new
-    r.redirect('http://mau.com/132')
-    r.conn.rewind
-    assert_equal "HTTP/1.1 302\r\nConnection: close\r\nLocation: http://mau.com/132\r\n\r\n", r.conn.read
-
-    r.conn = StringIO.new
-    r.redirect('http://www.google.com/search?q=meaning%20of%20life', true)
-    r.conn.rewind
-    assert_equal "HTTP/1.1 301\r\nConnection: close\r\nLocation: http://www.google.com/search?q=meaning%20of%20life\r\n\r\n", r.conn.read
-  end
-  
-  def test_set_cookie
-    r = DummyConnection3.new
-    r.conn = StringIO.new
-    t = Time.now + 360
-    r.set_cookie(:session, "ABCDEFG", t)
-    assert_equal "Set-Cookie: session=ABCDEFG; path=/; expires=#{t.rfc2822}\r\n", r.response_cookies
-    r.send_response(200, 'text', 'Hi!')
-    r.conn.rewind
-    assert_equal "HTTP/1.1 200\r\nConnection: close\r\nContent-Type: text\r\nSet-Cookie: session=ABCDEFG; path=/; expires=#{t.rfc2822}\r\nContent-Length: 3\r\n\r\nHi!", r.conn.read
-  end
-  
-  def test_delete_cookie
-    r = DummyConnection3.new
-    r.conn = StringIO.new
-    r.delete_cookie(:session)
-    assert_equal "Set-Cookie: session=; path=/; expires=#{Time.at(0).rfc2822}\r\n", r.response_cookies
-    r.send_response(200, 'text', 'Hi!')
-    r.conn.rewind
-    assert_equal "HTTP/1.1 200\r\nConnection: close\r\nContent-Type: text\r\nSet-Cookie: session=; path=/; expires=#{Time.at(0).rfc2822}\r\nContent-Length: 3\r\n\r\nHi!", r.conn.read
+    c = DummyConn.new
+    r = ServerSide::HTTP::Connection.new(c, DummyRequest1)
+    assert_equal DummyRequest1, r.request_class
+    r.thread.join
+    assert_equal 1000, c[:count]
+    assert_equal 1000, DummyRequest1.instance_count
+    assert_equal true, c.closed
   end
 end

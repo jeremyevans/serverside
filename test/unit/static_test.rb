@@ -3,7 +3,7 @@ require 'stringio'
 require 'fileutils'
 
 class ConnectionTest < Test::Unit::TestCase
-  class Dummy < ServerSide::Connection::Base
+  class Dummy < ServerSide::HTTP::Request
     def self.static_files
       @@static_files
     end

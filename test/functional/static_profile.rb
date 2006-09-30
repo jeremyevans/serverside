@@ -7,7 +7,7 @@ FileUtils.cd(File.dirname(__FILE__))
 pid = fork do
   trap('TERM') {exit}
   require 'profile'
-  ServerSide::Server.new('0.0.0.0', 8000, ServerSide::Connection::Static)
+  ServerSide::HTTP::Server.new('0.0.0.0', 8000, nil)
 end
 
 puts "Please wait..."

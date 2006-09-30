@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/../test_helper'
 require 'stringio'
 
-class ServerSide::Connection::Router
+class ServerSide::Router
   attr_accessor :t, :parameters
   
   def self.rules
@@ -22,7 +22,7 @@ class ServerSide::Connection::Router
 end
 
 class RoutingTest < Test::Unit::TestCase
-  R = ServerSide::Connection::Router
+  R = ServerSide::Router
   
   def test_has_routes?
     R.remove_rules
@@ -158,14 +158,14 @@ class RoutingTest < Test::Unit::TestCase
   
   def test_serverside_route
     R.reset_rules
-    ServerSide.route(:path => 'abc') {1 + 1}
+    ServerSide::Router.route(:path => 'abc') {1 + 1}
     assert_equal 1, R.rules.length
     assert_equal({:path => 'abc'}, R.rules[0][0])
     assert_equal 2, R.rules[0][1].call
   end
   
   def test_serverside_route_default
-    ServerSide.route_default {1234}
+    ServerSide::Router.route_default {1234}
     assert_equal 1234, R.new(StringIO.new).default_handler
   end
 end

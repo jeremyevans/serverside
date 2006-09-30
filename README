@@ -48,7 +48,7 @@ By default ServerSide serves static files, but you can change the behavior by
 creating custom {routing rules}[classes/ServerSide/Connection/Router.html].
 Here's a simple routing rule:
 
-  ServerSide.route(:path => '/hello/:name') {
+  ServerSide::Router.route(:path => '/hello/:name') {
     send_response(200, 'text', "Hello #{@parameters[:name]}!")
   }
 

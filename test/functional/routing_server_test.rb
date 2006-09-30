@@ -9,7 +9,7 @@ class StaticServerTest < Test::Unit::TestCase
       redirect('http://feeds.feedburner.com/RobbyOnRails')
     end
     
-    t = Thread.new {ServerSide::Server.new('0.0.0.0', 17654, ServerSide::Connection::Router)}
+    t = Thread.new {ServerSide::HTTP::Server.new('0.0.0.0', 17654, ServerSide::Router)}
     sleep 0.1
 
     h = Net::HTTP.new('localhost', 17654)

@@ -64,8 +64,8 @@ else
   fn = File.join(path, 'serverside.rb')
   require fn if File.file?(fn)
 end
-unless ServerSide::Connection::Router.has_routes?
-  ServerSide.route_default {serve_static('.'/@path)}
+unless ServerSide::Router.has_routes?
+  ServerSide::Router.route_default {serve_static('.'/@path)}
 end
 
 if $cmd == 'serve'
@@ -75,8 +75,8 @@ if $cmd == 'serve'
   end
   puts "Serving at #{$cmd_config[:host]}:#{$cmd_config[:ports].begin}..."
   trap('INT') {exit}
-  ServerSide::Server.new($cmd_config[:host], $cmd_config[:ports].begin,
-    ServerSide::Connection::Router)
+  ServerSide::HTTP::Server.new($cmd_config[:host], $cmd_config[:ports].begin,
+    ServerSide::Router)
 else
   ServerSide::Application.daemonize($cmd_config, $cmd)
 end
