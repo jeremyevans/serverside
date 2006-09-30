@@ -1,4 +1,4 @@
-*SVN*
+*0.2.6*
 
 * Refactored HTTP-related code into a new HTTP::Request class and a simplified HTTP::Connection.
 
