@@ -26,7 +26,7 @@ that directory. If no path is given, the current working directory is assumed."
     $cmd_config[:host] = v
   end
   opts.on("-p", "--port NUM", "Port or port range (default is 8000)") do |v|
-    $cmd_config[:ports] = (v =~ /\.\./) ? eval(v) : v.to_i..v_to_i 
+    $cmd_config[:ports] = (v =~ /\.\./) ? eval(v) : v.to_i..v.to_i 
   end
 
   # No argument, shows at tail.  This will print an options summary.

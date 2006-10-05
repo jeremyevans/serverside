@@ -1,3 +1,7 @@
+*SVN*
+
+* Fixed bug in serverside script that caused an exception when specifying port number.
+
 *0.2.6*
 
 * Refactored HTTP-related code into a new HTTP::Request class and a simplified HTTP::Connection.
