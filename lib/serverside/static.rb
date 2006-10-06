@@ -44,6 +44,8 @@ module ServerSide
       stat = File.stat(fn)
       etag = (Const::ETagFormat % [stat.mtime.to_i, stat.size, stat.ino]).freeze
       unless etag == @headers[Const::IfNoneMatch]
+        puts "IfNoneMatch: #{@headers[Const::IfNoneMatch]}"
+        puts "etag: #{etag}"
         if @@static_files[fn] && (@@static_files[fn][0] == etag)
           content = @@static_files[fn][1]
         else
@@ -54,6 +56,7 @@ module ServerSide
         send_response(200, @@mime_types[File.extname(fn)], content, stat.size, 
           {Const::ETag => etag, Const::CacheControl => Const::MaxAge})
       else
+        puts "not modified"
         @conn << ((@persistent ? Const::NotModifiedPersist : 
           Const::NotModifiedClose) % etag)
       end
