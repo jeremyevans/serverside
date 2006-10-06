@@ -52,13 +52,10 @@ module ServerSide
       etag_match = @headers[Const::IfNoneMatch]
       last_date = @headers[Const::IfModifiedSince]
       
-      modified = (etag_match && (etag != etag_match)) ||
-        (last_date && (last_date != date)) || !(etag_match || last_date)
+      modified = (!etag_match && !last_date) || 
+        (etag_match && (etag != etag_match)) || (last_date && (last_date != date))
       
-      puts "etag: #{etag.inspect} (#{etag_match.inspect})"
-      puts "date: #{date.inspect} (#{last_date.inspect})"
       if modified
-        puts "modified"
         if @@static_files[fn] && (@@static_files[fn][0] == etag)
           content = @@static_files[fn][1]
         else
@@ -72,7 +69,6 @@ module ServerSide
           Const::CacheControl => Const::MaxAge
         })
       else
-        puts "not modified"
         @conn << ((@persistent ? Const::NotModifiedPersist : 
           Const::NotModifiedClose) % [Time.now.httpdate, date, etag, stat.size])
       end
