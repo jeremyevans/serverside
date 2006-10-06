@@ -9,6 +9,7 @@ module ServerSide
       CacheControl = 'Cache-Control'.freeze
       MaxAge = "max-age=#{86400 * 30}".freeze
       IfNoneMatch = 'If-None-Match'.freeze
+      LastModified = "Last-Modified".freeze
       NotModifiedClose = "HTTP/1.1 304 Not Modified\r\nConnection: close\r\nContent-Length: 0\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
       NotModifiedPersist = "HTTP/1.1 304 Not Modified\r\nContent-Length: 0\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
       TextPlain = 'text/plain'.freeze
@@ -53,8 +54,11 @@ module ServerSide
           @@static_files[fn] = [etag.freeze, content]
         end
         
-        send_response(200, @@mime_types[File.extname(fn)], content, stat.size, 
-          {Const::ETag => etag, Const::CacheControl => Const::MaxAge})
+        send_response(200, @@mime_types[File.extname(fn)], content, stat.size, {
+          Const::ETag => etag, 
+          Const::LastModified => stat.mtime.httpdate, 
+          Const::CacheControl => Const::MaxAge
+        })
       else
         puts "not modified"
         @conn << ((@persistent ? Const::NotModifiedPersist : 
