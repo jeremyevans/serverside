@@ -13,8 +13,8 @@ module ServerSide
       IfNoneMatch = 'If-None-Match'.freeze
       IfModifiedSince = 'If-Modified-Since'.freeze
       LastModified = "Last-Modified".freeze
-      NotModifiedClose = "HTTP/1.1 304 Not Modified\r\nConnection: close\r\nContent-Length: 0\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
-      NotModifiedPersist = "HTTP/1.1 304 Not Modified\r\nContent-Length: 0\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
+      NotModifiedClose = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nConnection: close\r\nContent-Length: 0\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
+      NotModifiedPersist = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nContent-Length: 0\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
       TextPlain = 'text/plain'.freeze
       TextHTML = 'text/html'.freeze
       MaxCacheFileSize = 100000.freeze # 100KB for the moment
@@ -73,7 +73,7 @@ module ServerSide
       else
         puts "not modified"
         @conn << ((@persistent ? Const::NotModifiedPersist : 
-          Const::NotModifiedClose) % etag)
+          Const::NotModifiedClose) % [Time.now.httpdate, etag])
       end
     rescue => e
       send_response(404, Const::TextPlain, 'Error reading file.')
