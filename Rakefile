@@ -109,6 +109,12 @@ task :aok do
   sh %{rake spec}
 end
 
+desc 'Update docs and upload to rubyforge.org'
+task :doc_rforge do
+  sh %{rake doc}
+  sh "scp -C -r * ciconia@rubyforge.org:/var/www/gforge-projects/serverside/"
+end
+
 ##############################################################################
 # Statistics
 ##############################################################################

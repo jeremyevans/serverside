@@ -1,5 +1,7 @@
 *SVN*
 
+* Added Date to response headers. This is needed for caching to work correctly.
+
 * Fixed bug in serverside script that caused an exception when specifying port number.
 
 *0.2.6*

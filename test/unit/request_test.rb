@@ -153,7 +153,7 @@ class RequestTest < Test::Unit::TestCase
     r.persistent = true
     r.send_response(200, 'text', 'Hello there!')
     r.conn.rewind
-    assert_equal "HTTP/1.1 200\r\nContent-Type: text\r\nContent-Length: 12\r\n\r\nHello there!",
+    assert_equal "HTTP/1.1 200\r\nDate: #{Time.now.httpdate}\r\nContent-Type: text\r\nContent-Length: 12\r\n\r\nHello there!",
       r.conn.read
 
     # include content-length    
@@ -161,7 +161,7 @@ class RequestTest < Test::Unit::TestCase
     r.persistent = true
     r.send_response(404, 'text/html', '<h1>404!</h1>', 10) # incorrect length
     r.conn.rewind
-    assert_equal "HTTP/1.1 404\r\nContent-Type: text/html\r\nContent-Length: 10\r\n\r\n<h1>404!</h1>",
+    assert_equal "HTTP/1.1 404\r\nDate: #{Time.now.httpdate}\r\nContent-Type: text/html\r\nContent-Length: 10\r\n\r\n<h1>404!</h1>",
       r.conn.read
 
     # headers
@@ -169,7 +169,7 @@ class RequestTest < Test::Unit::TestCase
     r.persistent = true
     r.send_response(404, 'text/html', '<h1>404!</h1>', nil, {'ETag' => 'xxyyzz'})
     r.conn.rewind
-    assert_equal "HTTP/1.1 404\r\nContent-Type: text/html\r\nETag: xxyyzz\r\nContent-Length: 13\r\n\r\n<h1>404!</h1>",
+    assert_equal "HTTP/1.1 404\r\nDate: #{Time.now.httpdate}\r\nContent-Type: text/html\r\nETag: xxyyzz\r\nContent-Length: 13\r\n\r\n<h1>404!</h1>",
       r.conn.read
 
     # no body
@@ -177,7 +177,7 @@ class RequestTest < Test::Unit::TestCase
     r.persistent = true
     r.send_response(404, 'text/html', nil, nil, {'Set-Cookie' => 'abc=123'})
     r.conn.rewind
-    assert_equal "HTTP/1.1 404\r\nConnection: close\r\nContent-Type: text/html\r\nSet-Cookie: abc=123\r\n\r\n",
+    assert_equal "HTTP/1.1 404\r\nDate: #{Time.now.httpdate}\r\nConnection: close\r\nContent-Type: text/html\r\nSet-Cookie: abc=123\r\n\r\n",
       r.conn.read
     assert_equal false, r.persistent
 
@@ -186,7 +186,7 @@ class RequestTest < Test::Unit::TestCase
     r.persistent = false
     r.send_response(200, 'text', 'Hello there!')
     r.conn.rewind
-    assert_equal "HTTP/1.1 200\r\nConnection: close\r\nContent-Type: text\r\nContent-Length: 12\r\n\r\nHello there!",
+    assert_equal "HTTP/1.1 200\r\nDate: #{Time.now.httpdate}\r\nConnection: close\r\nContent-Type: text\r\nContent-Length: 12\r\n\r\nHello there!",
       r.conn.read
       
     # socket error
@@ -208,7 +208,7 @@ class RequestTest < Test::Unit::TestCase
     r.send_response(404, 'text/html', nil, nil, {'Set-Cookie' => 'abc=123'})
     r.stream('hey there')
     r.conn.rewind
-    assert_equal "HTTP/1.1 404\r\nConnection: close\r\nContent-Type: text/html\r\nSet-Cookie: abc=123\r\n\r\nhey there",
+    assert_equal "HTTP/1.1 404\r\nDate: #{Time.now.httpdate}\r\nConnection: close\r\nContent-Type: text/html\r\nSet-Cookie: abc=123\r\n\r\nhey there",
       r.conn.read
   end
   
@@ -217,12 +217,12 @@ class RequestTest < Test::Unit::TestCase
     r.conn = StringIO.new
     r.redirect('http://mau.com/132')
     r.conn.rewind
-    assert_equal "HTTP/1.1 302\r\nConnection: close\r\nLocation: http://mau.com/132\r\n\r\n", r.conn.read
+    assert_equal "HTTP/1.1 302\r\nDate: #{Time.now.httpdate}\r\nConnection: close\r\nLocation: http://mau.com/132\r\n\r\n", r.conn.read
 
     r.conn = StringIO.new
     r.redirect('http://www.google.com/search?q=meaning%20of%20life', true)
     r.conn.rewind
-    assert_equal "HTTP/1.1 301\r\nConnection: close\r\nLocation: http://www.google.com/search?q=meaning%20of%20life\r\n\r\n", r.conn.read
+    assert_equal "HTTP/1.1 301\r\nDate: #{Time.now.httpdate}\r\nConnection: close\r\nLocation: http://www.google.com/search?q=meaning%20of%20life\r\n\r\n", r.conn.read
   end
   
   def test_set_cookie
@@ -233,7 +233,7 @@ class RequestTest < Test::Unit::TestCase
     assert_equal "Set-Cookie: session=ABCDEFG; path=/; expires=#{t.rfc2822}\r\n", r.response_cookies
     r.send_response(200, 'text', 'Hi!')
     r.conn.rewind
-    assert_equal "HTTP/1.1 200\r\nConnection: close\r\nContent-Type: text\r\nSet-Cookie: session=ABCDEFG; path=/; expires=#{t.rfc2822}\r\nContent-Length: 3\r\n\r\nHi!", r.conn.read
+    assert_equal "HTTP/1.1 200\r\nDate: #{Time.now.httpdate}\r\nConnection: close\r\nContent-Type: text\r\nSet-Cookie: session=ABCDEFG; path=/; expires=#{t.rfc2822}\r\nContent-Length: 3\r\n\r\nHi!", r.conn.read
   end
   
   def test_delete_cookie
@@ -243,6 +243,6 @@ class RequestTest < Test::Unit::TestCase
     assert_equal "Set-Cookie: session=; path=/; expires=#{Time.at(0).rfc2822}\r\n", r.response_cookies
     r.send_response(200, 'text', 'Hi!')
     r.conn.rewind
-    assert_equal "HTTP/1.1 200\r\nConnection: close\r\nContent-Type: text\r\nSet-Cookie: session=; path=/; expires=#{Time.at(0).rfc2822}\r\nContent-Length: 3\r\n\r\nHi!", r.conn.read
+    assert_equal "HTTP/1.1 200\r\nDate: #{Time.now.httpdate}\r\nConnection: close\r\nContent-Type: text\r\nSet-Cookie: session=; path=/; expires=#{Time.at(0).rfc2822}\r\nContent-Length: 3\r\n\r\nHi!", r.conn.read
   end
 end
