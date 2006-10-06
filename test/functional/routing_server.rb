@@ -3,7 +3,7 @@ require 'fileutils'
 
 FileUtils.cd(File.dirname(__FILE__))
 
-trap('TERM') {exit}
+trap('INT') {exit}
 
 ServerSide::Router.route(:path => '^/static/:path') {serve_static('.'/@parameters[:path])}
 ServerSide::Router.route(:path => '/hello$') {send_response(200, 'text', 'Hello world!')}
