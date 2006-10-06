@@ -44,6 +44,7 @@ module ServerSide
     def serve_file(fn)
       stat = File.stat(fn)
       etag = (Const::ETagFormat % [stat.mtime.to_i, stat.size, stat.ino]).freeze
+      puts @headers.inspect
       unless etag == @headers[Const::IfNoneMatch]
         puts "IfNoneMatch: #{@headers[Const::IfNoneMatch]}"
         puts "etag: #{etag}"
