@@ -14,7 +14,7 @@ module ServerSide
       IfModifiedSince = 'If-Modified-Since'.freeze
       LastModified = "Last-Modified".freeze
       NotModifiedClose = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nConnection: close\r\nContent-Length: 0\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
-      NotModifiedPersist = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nContent-Length: 0\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
+      NotModifiedPersist = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
       TextPlain = 'text/plain'.freeze
       TextHTML = 'text/html'.freeze
       MaxCacheFileSize = 100000.freeze # 100KB for the moment
