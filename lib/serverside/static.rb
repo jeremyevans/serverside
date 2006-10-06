@@ -48,14 +48,16 @@ module ServerSide
       stat = File.stat(fn)
       etag = (Const::ETagFormat % [stat.mtime.to_i, stat.size, stat.ino]).freeze
       
-      modified = (etag != @headers[Const::IfNoneMatch]) ||
+      etag_match = nil
+      last_date = nil
+      
+      modified = ((etag_match = @headers[Const::IfNoneMatch]) && (etag != etag_match)) ||
         ((last_date = @headers[Const::IfModifiedSince]) && (Time.parse(last_date) < stat.mtime))
       
+      puts "etag: #{etag.inspect} (#{etag_match.inspect})"
+      puts "date: #{stat.mtime.inspect} (#{last_date.inspect})"
       if modified
-        puts "IfNoneMatch: #{@headers[Const::IfNoneMatch]}"
-        puts "IfModifiedSince: #{@headers[Const::IfModifiedSince]}"
-        puts "etag: #{etag}"
-        puts "date: #{stat.mtime.httpdate}"
+        puts "modified"
         if @@static_files[fn] && (@@static_files[fn][0] == etag)
           content = @@static_files[fn][1]
         else
