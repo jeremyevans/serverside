@@ -1,3 +1,5 @@
+require 'time'
+
 module ServerSide
   # This module provides functionality for serving files and directory listings
   # over HTTP.
@@ -9,6 +11,7 @@ module ServerSide
       CacheControl = 'Cache-Control'.freeze
       MaxAge = "max-age=#{86400 * 30}".freeze
       IfNoneMatch = 'If-None-Match'.freeze
+      IfModifiedSince = 'If-Modified-Since'.freeze
       LastModified = "Last-Modified".freeze
       NotModifiedClose = "HTTP/1.1 304 Not Modified\r\nConnection: close\r\nContent-Length: 0\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
       NotModifiedPersist = "HTTP/1.1 304 Not Modified\r\nContent-Length: 0\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
@@ -44,10 +47,15 @@ module ServerSide
     def serve_file(fn)
       stat = File.stat(fn)
       etag = (Const::ETagFormat % [stat.mtime.to_i, stat.size, stat.ino]).freeze
-      puts @headers.inspect
-      unless etag == @headers[Const::IfNoneMatch]
+      
+      modified = (etag != @headers[Const::IfNoneMatch]) ||
+        ((last_date = @headers[Const::IfModifiedSince]) && (Time.parse(last_date) < stat.mtime))
+      
+      if modified
         puts "IfNoneMatch: #{@headers[Const::IfNoneMatch]}"
+        puts "IfModifiedSince: #{@headers[Const::IfModifiedSince]}"
         puts "etag: #{etag}"
+        puts "date: #{stat.mtime.httpdate}"
         if @@static_files[fn] && (@@static_files[fn][0] == etag)
           content = @@static_files[fn][1]
         else
