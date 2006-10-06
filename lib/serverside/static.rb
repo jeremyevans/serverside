@@ -13,8 +13,8 @@ module ServerSide
       IfNoneMatch = 'If-None-Match'.freeze
       IfModifiedSince = 'If-Modified-Since'.freeze
       LastModified = "Last-Modified".freeze
-      NotModifiedClose = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nConnection: close\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
-      NotModifiedPersist = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
+      NotModifiedClose = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nConnection: close\r\nLast-Modified: %s\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
+      NotModifiedPersist = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nLast-Modified: %s\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
       TextPlain = 'text/plain'.freeze
       TextHTML = 'text/html'.freeze
       MaxCacheFileSize = 100000.freeze # 100KB for the moment
@@ -47,15 +47,16 @@ module ServerSide
     def serve_file(fn)
       stat = File.stat(fn)
       etag = (Const::ETagFormat % [stat.mtime.to_i, stat.size, stat.ino]).freeze
+      date = stat.mtime.httpdate
       
       etag_match = nil
       last_date = nil
       
       modified = ((etag_match = @headers[Const::IfNoneMatch]) && (etag != etag_match)) ||
-        ((last_date = @headers[Const::IfModifiedSince]) && (Time.parse(last_date) < stat.mtime))
+        ((last_date = @headers[Const::IfModifiedSince]) && (last_date != date))
       
       puts "etag: #{etag.inspect} (#{etag_match.inspect})"
-      puts "date: #{stat.mtime.inspect} (#{last_date.inspect})"
+      puts "date: #{date.inspect} (#{last_date.inspect})"
       if modified
         puts "modified"
         if @@static_files[fn] && (@@static_files[fn][0] == etag)
@@ -67,13 +68,13 @@ module ServerSide
         
         send_response(200, @@mime_types[File.extname(fn)], content, stat.size, {
           Const::ETag => etag, 
-          Const::LastModified => stat.mtime.httpdate, 
+          Const::LastModified => date, 
           Const::CacheControl => Const::MaxAge
         })
       else
         puts "not modified"
         @conn << ((@persistent ? Const::NotModifiedPersist : 
-          Const::NotModifiedClose) % [Time.now.httpdate, etag])
+          Const::NotModifiedClose) % [Time.now.httpdate, date, etag])
       end
     rescue => e
       send_response(404, Const::TextPlain, 'Error reading file.')
