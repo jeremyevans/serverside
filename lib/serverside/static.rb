@@ -49,11 +49,11 @@ module ServerSide
       etag = (Const::ETagFormat % [stat.mtime.to_i, stat.size, stat.ino]).freeze
       date = stat.mtime.httpdate
       
-      etag_match = nil
-      last_date = nil
+      etag_match = @headers[Const::IfNoneMatch]
+      last_date = @headers[Const::IfModifiedSince]
       
-      modified = ((etag_match = @headers[Const::IfNoneMatch]) && (etag != etag_match)) ||
-        ((last_date = @headers[Const::IfModifiedSince]) && (last_date != date))
+      modified = (etag_match && (etag != etag_match)) ||
+        (last_date && (last_date != date)) || !(etag_match || last_date)
       
       puts "etag: #{etag.inspect} (#{etag_match.inspect})"
       puts "date: #{date.inspect} (#{last_date.inspect})"
