@@ -1,5 +1,7 @@
 *SVN*
 
+* Wrote functional test for request body (but at least some of the testing should be in a unit test.)
+
 * Added request body parsing (both URL-encoded and multipart.)
 
 * Moved all HTTP::Const constants into HTTP::Request.
