@@ -1,5 +1,7 @@
 *SVN*
 
+* Added request body parsing (both URL-encoded and multipart.)
+
 * Moved all HTTP::Const constants into HTTP::Request.
 
 * Added Date to response headers. This is needed for caching to work correctly.

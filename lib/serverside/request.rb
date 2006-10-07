@@ -40,11 +40,14 @@ module ServerSide
       COOKIE_SPLIT = /[;,] */n.freeze
       COOKIE_REGEXP = /\s*(.+)=(.*)\s*/.freeze
       COOKIE_EXPIRED_TIME  = Time.at(0).freeze
+      CONTENT_TYPE = "Content-Type".freeze
+      CONTENT_TYPE_URL_ENCODED = 'application/x-www-form-urlencoded'.freeze
       
       include StaticFiles
       
       attr_reader :conn, :method, :path, :query, :version, :parameters,
-        :headers, :persistent, :cookies, :response_cookies
+        :headers, :persistent, :cookies, :response_cookies, :body,
+        :content_length, :content_type
       
       # Initializes the request instance. Any descendants of HTTP::Request
       # which override the initialize method must receive conn as the
@@ -78,6 +81,12 @@ module ServerSide
         @cookies = @headers[COOKIE] ? parse_cookies : EMPTY_HASH
         @response_cookies = nil
         
+        if @content_length = @headers[CONTENT_LENGTH].to_i
+          @content_type = @headers[CONTENT_TYPE] || CONTENT_TYPE_URL_ENCODED
+          @body = @conn.read(@content_length) rescue nil
+          parse_body
+        end
+        
         @headers
       end
       
@@ -99,6 +108,38 @@ module ServerSide
             m[$1.to_sym] = $2.uri_unescape
           end
           m
+        end
+      end
+      
+      MULTIPART_REGEXP = /multipart\/form-data.*boundary=\"?([^\";,]+)/n.freeze
+      CONTENT_DISPOSITION_REGEXP = /^Content-Disposition: form-data;([^\r]*)/m.freeze
+      FIELD_ATTRIBUTE_REGEXP = /\s*(\w+)=\"([^\"]*)/.freeze
+      CONTENT_TYPE_REGEXP = /^Content-Type: ([^\r]*)/m.freeze
+
+      # parses the body, either by using
+      def parse_body
+        if @content_type == CONTENT_TYPE_URL_ENCODED
+          @parameters.merge! parse_parameters(@body)
+        elsif @content_type =~ MULTIPART_REGEXP
+          boundary = "--#$1"
+          @body.split(/(?:\r?\n|\A)#{Regexp::quote(boundary)}(?:--)?\r\n/m).each do |pt|
+            headers, payload = pt.split("\r\n\r\n", 2)
+            atts = {}
+            if headers =~ CONTENT_DISPOSITION_REGEXP
+              $1.split(';').map {|part|
+                if part =~ FIELD_ATTRIBUTE_REGEXP
+                  atts[$1.to_sym] = $2
+                end
+              }
+            end
+            if headers =~ CONTENT_TYPE_REGEXP
+              atts[:type] = $1
+            end
+            if name = atts[:name]
+              atts[:content] = payload
+              @parameters[name.to_sym] = atts[:filename] ? atts : atts[:content]
+            end
+          end
         end
       end
     
