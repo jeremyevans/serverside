@@ -102,7 +102,6 @@ class ConnectionTest < Test::Unit::TestCase
     assert_equal etag, /ETag:\s(.*)\r\n/.match(resp)[1]
     assert_equal ServerSide::StaticFiles::Const::MaxAge,
       /Cache-Control:\s(.*)\r\n/.match(resp)[1]
-    assert_equal '0', /Content-Length:\s(.*)\r\n/.match(resp)[1]
     
     FileUtils.touch(__FILE__)
     c.conn = StringIO.new
