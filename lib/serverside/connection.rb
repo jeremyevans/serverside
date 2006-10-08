@@ -10,8 +10,8 @@ module ServerSide
     class Connection
       # Initializes the request instance. A new thread is created for
       # processing requests.
-      def initialize(conn, request_class)
-        @conn, @request_class = conn, request_class
+      def initialize(socket, request_class)
+        @socket, @request_class = socket, request_class
         @thread = Thread.new {process}
       end
       
@@ -20,12 +20,14 @@ module ServerSide
       # is closed.
       def process
         while true
-          break unless @request_class.new(@conn).process
+          # the process function is expected to return true or a non-nil value
+          # if the connection is to persist.
+          break unless @request_class.new(@socket).process
         end
       rescue => e
         # We don't care. Just close the connection.
       ensure
-        @conn.close
+        @socket.close
       end
     end
   end

@@ -2,7 +2,7 @@ require File.dirname(__FILE__) + '/../test_helper'
 require 'stringio'
 require 'fileutils'
 
-class ConnectionTest < Test::Unit::TestCase
+class StaticTest < Test::Unit::TestCase
   class Dummy < ServerSide::HTTP::Request
     def self.static_files
       @@static_files
@@ -12,7 +12,7 @@ class ConnectionTest < Test::Unit::TestCase
       @@mime_types
     end
     
-    attr_accessor :conn, :path, :headers
+    attr_accessor :path, :socket, :headers
     
     def initialize
       @headers = {}
@@ -23,7 +23,7 @@ class ConnectionTest < Test::Unit::TestCase
     assert_kind_of Hash, Dummy.static_files
     Dummy.static_files.clear
     c = Dummy.new
-    c.conn = StringIO.new
+    c.socket = StringIO.new
     assert_nil Dummy.static_files[__FILE__]
     c.serve_file(__FILE__)
     cache = Dummy.static_files[__FILE__]
@@ -50,10 +50,10 @@ class ConnectionTest < Test::Unit::TestCase
   
   def test_serve_file_normal
     c = Dummy.new
-    c.conn = StringIO.new
+    c.socket = StringIO.new
     c.serve_file(__FILE__)
-    c.conn.rewind
-    resp = c.conn.read
+    c.socket.rewind
+    resp = c.socket.read
     
     assert_equal '200', /HTTP\/1.1\s(.*)\r\n/.match(resp)[1]
     fc = IO.read(__FILE__)
@@ -69,11 +69,11 @@ class ConnectionTest < Test::Unit::TestCase
   
   def test_serve_file_etags
     c = Dummy.new
-    c.conn = StringIO.new
+    c.socket = StringIO.new
     Dummy.static_files.clear
     c.serve_file(__FILE__)
-    c.conn.rewind
-    resp = c.conn.read
+    c.socket.rewind
+    resp = c.socket.read
     
     # normal response
     assert_equal '200', /HTTP\/1.1\s(.*)\r\n/.match(resp)[1]
@@ -87,11 +87,11 @@ class ConnectionTest < Test::Unit::TestCase
     assert_equal stat.size.to_s,
       /Content-Length:\s(.*)\r\n/.match(resp)[1]
       
-    c.conn = StringIO.new
+    c.socket = StringIO.new
     c.headers[ServerSide::StaticFiles::Const::IfNoneMatch] = etag
     c.serve_file(__FILE__)
-    c.conn.rewind
-    resp = c.conn.read
+    c.socket.rewind
+    resp = c.socket.read
     
     # not modified response
     assert_equal '304 Not Modified', /HTTP\/1.1\s(.*)\r\n/.match(resp)[1]
@@ -104,11 +104,11 @@ class ConnectionTest < Test::Unit::TestCase
       /Cache-Control:\s(.*)\r\n/.match(resp)[1]
     
     FileUtils.touch(__FILE__)
-    c.conn = StringIO.new
+    c.socket = StringIO.new
     c.headers[ServerSide::StaticFiles::Const::IfNoneMatch] = etag
     c.serve_file(__FILE__)
-    c.conn.rewind
-    resp = c.conn.read
+    c.socket.rewind
+    resp = c.socket.read
     
     # modified response
     assert_equal '200', /HTTP\/1.1\s(.*)\r\n/.match(resp)[1]
@@ -127,12 +127,12 @@ class ConnectionTest < Test::Unit::TestCase
     dir = File.dirname(__FILE__)
   
     c = Dummy.new
-    c.conn = StringIO.new
+    c.socket = StringIO.new
     Dummy.static_files.clear
     c.path = dir
     c.serve_dir(dir)
-    c.conn.rewind
-    resp = c.conn.read
+    c.socket.rewind
+    resp = c.socket.read
     
     Dir.entries(dir).each do |fn|
       next if fn == '.'
@@ -144,21 +144,21 @@ class ConnectionTest < Test::Unit::TestCase
     dir = File.dirname(__FILE__)
   
     c = Dummy.new
-    c.conn = StringIO.new
+    c.socket = StringIO.new
     c.path = dir
     c.serve_static(dir)
-    c.conn.rewind
-    resp = c.conn.read
+    c.socket.rewind
+    resp = c.socket.read
     
     Dir.entries(dir).each do |fn|
       next if fn == '.'
       assert_not_nil resp =~ /<a href="#{dir/fn}">(#{fn})<\/a>/
     end
 
-    c.conn = StringIO.new
+    c.socket = StringIO.new
     c.serve_file(__FILE__)
-    c.conn.rewind
-    resp = c.conn.read
+    c.socket.rewind
+    resp = c.socket.read
     
     # normal response
     assert_equal '200', /HTTP\/1.1\s(.*)\r\n/.match(resp)[1]

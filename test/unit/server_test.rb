@@ -4,7 +4,7 @@ require 'net/http'
 class ServerTest < Test::Unit::TestCase
   class DummyRequest < ServerSide::HTTP::Request
     def respond
-      @conn << "HTTP/1.1 200\r\nContent-Length: 9\r\n\r\nHi there!"
+      @socket << "HTTP/1.1 200\r\nContent-Length: 9\r\n\r\nHi there!"
     end
   end
 

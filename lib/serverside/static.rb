@@ -69,7 +69,7 @@ module ServerSide
           Const::CacheControl => Const::MaxAge
         })
       else
-        @conn << ((@persistent ? Const::NotModifiedPersist : 
+        @socket << ((@persistent ? Const::NotModifiedPersist : 
           Const::NotModifiedClose) % [Time.now.httpdate, date, etag, stat.size])
       end
     rescue => e

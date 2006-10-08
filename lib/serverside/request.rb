@@ -45,15 +45,15 @@ module ServerSide
       
       include StaticFiles
       
-      attr_reader :conn, :method, :path, :query, :version, :parameters,
+      attr_reader :socket, :method, :path, :query, :version, :parameters,
         :headers, :persistent, :cookies, :response_cookies, :body,
         :content_length, :content_type
       
       # Initializes the request instance. Any descendants of HTTP::Request
-      # which override the initialize method must receive conn as the
-      # single argument, and copy it to @conn.
-      def initialize(conn)
-        @conn = conn
+      # which override the initialize method must receive socket as the
+      # single argument, and copy it to @socket.
+      def initialize(socket)
+        @socket = socket
       end
 
       # Processes the request by parsing it and then responding.      
@@ -66,11 +66,11 @@ module ServerSide
       # connection is persistent (by checking the HTTP version and the 
       # 'Connection' header).
       def parse
-        return nil unless @conn.gets =~ REQUEST_REGEXP
+        return nil unless @socket.gets =~ REQUEST_REGEXP
         @method, @path, @query, @version = $1.downcase.to_sym, $2, $3, $4
         @parameters = @query ? parse_parameters(@query) : {}
         @headers = {}
-        while (line = @conn.gets)
+        while (line = @socket.gets)
           break if line.nil? || (line == LINE_BREAK)
           if line =~ HEADER_REGEXP
             @headers[$1.freeze] = $2.freeze
@@ -83,7 +83,7 @@ module ServerSide
         
         if @content_length = @headers[CONTENT_LENGTH].to_i
           @content_type = @headers[CONTENT_TYPE] || CONTENT_TYPE_URL_ENCODED
-          @body = @conn.read(@content_length) rescue nil
+          @body = @socket.read(@content_length) rescue nil
           parse_body
         end
         
@@ -153,17 +153,18 @@ module ServerSide
         @persistent = false if content_length.nil?
         
         # Select the right format to use according to circumstances.
-        @conn << ((@persistent ? STATUS_PERSIST : 
+        @socket << ((@persistent ? STATUS_PERSIST : 
           (body ? STATUS_CLOSE : STATUS_STREAM)) % 
           [status, Time.now.httpdate, content_type, h, @response_cookies, content_length])
-        @conn << body if body
+        @socket << body if body
       rescue
         @persistent = false
       end
       
       # Send a redirect response.
       def redirect(location, permanent = false)
-        @conn << (STATUS_REDIRECT % [permanent ? 301 : 302, Time.now.httpdate, location])
+        @socket << (STATUS_REDIRECT % 
+          [permanent ? 301 : 302, Time.now.httpdate, location])
       rescue
       ensure
         @persistent = false
@@ -171,7 +172,7 @@ module ServerSide
       
       # Streams additional data to the client.
       def stream(body)
-        (@conn << body if body) rescue (@persistent = false)
+        (@socket << body if body) rescue (@persistent = false)
       end
       
       # Sets a cookie to be included in the response.

@@ -60,9 +60,28 @@ context "Proc.proc_tag" do
     @l1.proc_tag.should_equal @l1.proc_tag
   end
   
-  specify "should return the object_hash in base 36 prefixed with 'proc_'" do
+  specify "should return the object id in base 36 prefixed with 'proc_'" do
     @l1.proc_tag.should_equal 'proc_' + @l1.object_id.to_s(36).sub('-', '_')
   end
 end
 
+context "Object.const_tag" do
+  setup do
+    @o1 = Object.new
+    @o2 = Object.new
+  end
 
+  specify "should return a unique tag for the object" do
+    @o1.const_tag.should_not_equal @o2.const_tag
+  end
+  
+  specify "should return the same tag always" do
+    @o1.const_tag.should_equal @o1.const_tag
+    @o2.const_tag.should_equal @o2.const_tag
+  end
+  
+  specify "should return the object id in base 36 (upcase) prefixed with 'C'" do
+    @o1.const_tag.should_equal 'C' + @o1.object_id.to_s(36).upcase.sub('-', '_')
+    @o2.const_tag.should_equal 'C' + @o2.object_id.to_s(36).upcase.sub('-', '_')
+  end
+end
