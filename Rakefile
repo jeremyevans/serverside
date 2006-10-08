@@ -120,9 +120,10 @@ end
 ##############################################################################
 
 STATS_DIRECTORIES = [
-  %w(Code               lib/),
-  %w(Unit\ tests        test/unit),
-  %w(Functional\ tests  test/functional)
+  %w(Code                 lib/),
+  %w(Unit\ tests          test/unit),
+  %w(Functional\ tests    test/functional),
+  %w(Specification\ tests test/spec)
 ].collect { |name, dir| [ name, "./#{dir}" ] }.select { |name, dir| File.directory?(dir) }
 
 desc "Report code statistics (KLOCs, etc) from the application"

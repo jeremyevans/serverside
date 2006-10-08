@@ -1,5 +1,7 @@
 *SVN*
 
+* Added spec files to rake stats reporting.
+
 * Changed @conn to @socket in both HTTP::Connection and HTTP::Request for better readability.
 
 * Wrote functional test for request body (but at least some of the testing should be in a unit test.)
