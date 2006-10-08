@@ -1,5 +1,7 @@
 *SVN*
 
+* Wrote spec for HTTP::Connection.
+
 * Added spec files to rake stats reporting.
 
 * Changed @conn to @socket in both HTTP::Connection and HTTP::Request for better readability.
