@@ -1,4 +1,4 @@
-*SVN*
+==0.2.7
 
 * Wrote spec for HTTP::Connection.
 
@@ -16,7 +16,7 @@
 
 * Fixed bug in serverside script that caused an exception when specifying port number.
 
-*0.2.6*
+==0.2.6
 
 * Refactored HTTP-related code into a new HTTP::Request class and a simplified HTTP::Connection.
 
@@ -26,7 +26,7 @@
 
 * Fixed minor documentation error.
 
-*0.2.5*
+==0.2.5
 
 * Added template serving to static file module.
 
@@ -48,7 +48,7 @@
 
 * Added /test/spec directory.
 
-*0.2.0*
+==0.2.0
 
 * Updated RFuzz script to work, but it doesn't still do anything interesting.
 
@@ -114,25 +114,15 @@
 
 * Added HTTP parsing code with unit tests.
 
-* Started adding request code.
-
 * More unit tests for application code.
 
 * Basic server code works with unit tests.
-
-* Started work on application code.
 
 * Added option parsing to serverside script.
 
 * Added daemon code and unit tests.
 
-* Created serverside script.
-
-* Created Gem spec.
-
-* Created directory structure.
-
-*Mongrel-based branch*
+==0.1
 
 * Added host attribute to Controller::Request.
 
@@ -167,5 +157,3 @@
 * Imported extensions from Reality project.
 
 * Implemented daemon and server cluster.
-
-* Basic configuration infrastructure is ready.
