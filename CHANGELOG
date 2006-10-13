@@ -1,3 +1,11 @@
+==SVN
+
+* Refactored ServerSide::Static constants.
+
+* Renamed ServerSide::StaticFiles to ServerSide::Static.
+
+* Added static_server.rb script.
+
 ==0.2.7
 
 * Wrote spec for HTTP::Connection.

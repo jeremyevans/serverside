@@ -43,7 +43,7 @@ module ServerSide
       CONTENT_TYPE = "Content-Type".freeze
       CONTENT_TYPE_URL_ENCODED = 'application/x-www-form-urlencoded'.freeze
       
-      include StaticFiles
+      include Static
       
       attr_reader :socket, :method, :path, :query, :version, :parameters,
         :headers, :persistent, :cookies, :response_cookies, :body,

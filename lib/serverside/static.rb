@@ -3,30 +3,27 @@ require 'time'
 module ServerSide
   # This module provides functionality for serving files and directory listings
   # over HTTP.
-  module StaticFiles
-    # Frozen constants to be used by the module.
-    module Const
-      ETag = 'ETag'.freeze
-      ETagFormat = '%x:%x:%x'.inspect.freeze
-      CacheControl = 'Cache-Control'.freeze
-      MaxAge = "max-age=#{86400 * 30}".freeze
-      IfNoneMatch = 'If-None-Match'.freeze
-      IfModifiedSince = 'If-Modified-Since'.freeze
-      LastModified = "Last-Modified".freeze
-      NotModifiedClose = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nConnection: close\r\nLast-Modified: %s\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
-      NotModifiedPersist = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nLast-Modified: %s\r\nETag: %s\r\nCache-Control: #{MaxAge}\r\n\r\n".freeze
-      TextPlain = 'text/plain'.freeze
-      TextHTML = 'text/html'.freeze
-      MaxCacheFileSize = 100000.freeze # 100KB for the moment
-      
-      DirListingStart = '<html><head><title>Directory Listing for %s</title></head><body><h2>Directory listing for %s:</h2>'.freeze
-      DirListing = '<a href="%s">%s</a><br/>'.freeze
-      DirListingStop = '</body></html>'.freeze
-      FileNotFound = 'File not found.'.freeze
-      RHTML = /\.rhtml$/.freeze
-    end
+  module Static
+    ETAG = 'ETag'.freeze
+    ETAG_FORMAT = '%x:%x:%x'.inspect.freeze
+    CACHE_CONTROL = 'Cache-Control'.freeze
+    MAX_AGE = "max-age=#{86400 * 30}".freeze
+    IF_NONE_MATCH = 'If-None-Match'.freeze
+    IF_MODIFIED_SINCE = 'If-Modified-Since'.freeze
+    LAST_MODIFIED = "Last-Modified".freeze
+    NOT_MODIFIED_CLOSE = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nConnection: close\r\nLast-Modified: %s\r\nETag: %s\r\nCache-Control: #{MAX_AGE}\r\n\r\n".freeze
+    NOT_MODIFIED_PERSIST = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nLast-Modified: %s\r\nETag: %s\r\nCache-Control: #{MAX_AGE}\r\n\r\n".freeze
+    TEXT_PLAIN = 'text/plain'.freeze
+    TEXT_HTML = 'text/html'.freeze
+    MAX_CACHE_FILE_SIZE = 100000.freeze # 100KB for the moment
     
-    @@mime_types = Hash.new {|h, k| ServerSide::StaticFiles::Const::TextPlain}
+    DIR_LISTING_START = '<html><head><title>Directory Listing for %s</title></head><body><h2>Directory listing for %s:</h2>'.freeze
+    DIR_LISTING = '<a href="%s">%s</a><br/>'.freeze
+    DIR_LISTING_STOP = '</body></html>'.freeze
+    FILE_NOT_FOUND = 'File not found.'.freeze
+    RHTML = /\.rhtml$/.freeze
+    
+    @@mime_types = Hash.new {|h, k| TEXT_PLAIN}
     @@mime_types.merge!({
       '.html'.freeze => 'text/html'.freeze,
       '.css'.freeze => 'text/css'.freeze,
@@ -46,11 +43,11 @@ module ServerSide
     # rendered.
     def serve_file(fn)
       stat = File.stat(fn)
-      etag = (Const::ETagFormat % [stat.mtime.to_i, stat.size, stat.ino]).freeze
+      etag = (ETAG_FORMAT % [stat.mtime.to_i, stat.size, stat.ino]).freeze
       date = stat.mtime.httpdate
       
-      etag_match = @headers[Const::IfNoneMatch]
-      last_date = @headers[Const::IfModifiedSince]
+      etag_match = @headers[IF_NONE_MATCH]
+      last_date = @headers[IF_MODIFIED_SINCE]
       
       modified = (!etag_match && !last_date) || 
         (etag_match && (etag != etag_match)) || (last_date && (last_date != date))
@@ -64,30 +61,32 @@ module ServerSide
         end
         
         send_response(200, @@mime_types[File.extname(fn)], content, stat.size, {
-          Const::ETag => etag, 
-          Const::LastModified => date, 
-          Const::CacheControl => Const::MaxAge
+          ETAG => etag, 
+          LAST_MODIFIED => date, 
+          CACHE_CONTROL => MAX_AGE
         })
       else
-        @socket << ((@persistent ? Const::NotModifiedPersist : 
-          Const::NotModifiedClose) % [Time.now.httpdate, date, etag, stat.size])
+        @socket << ((@persistent ? NOT_MODIFIED_PERSIST : 
+          NOT_MODIFIED_CLOSE) % [Time.now.httpdate, date, etag, stat.size])
       end
     rescue => e
-      send_response(404, Const::TextPlain, 'Error reading file.')
+      send_response(404, TEXT_PLAIN, 'Error reading file.')
     end
     
     # Serves a directory listing over HTTP in the form of an HTML page.
     def serve_dir(dir)
-      html = (Const::DirListingStart % [@path, @path]) +
-        Dir.entries(dir).inject('') {|m, fn|
-          (fn == '.') ? m : m << Const::DirListing % [@path/fn, fn]
-        } + Const::DirListingStop
+      entries = Dir.entries(dir)
+      entries.reject! {|fn| fn =~ /^\./}
+      entries.unshift('..') if dir != './'
+      html = (DIR_LISTING_START % [@path, @path]) +
+        entries.inject('') {|m, fn| m << DIR_LISTING % [@path/fn, fn]} +
+        DIR_LISTING_STOP
       send_response(200, 'text/html', html)
     end
     
     def serve_template(fn, b = nil)
-      if (fn =~ Const::RHTML) || (File.file?(fn = fn + '.rhtml'))
-        send_response(200, Const::TextHTML, Template.render(fn, b || binding))
+      if (fn =~ RHTML) || (File.file?(fn = fn + '.rhtml'))
+        send_response(200, TEXT_HTML, Template.render(fn, b || binding))
       end
     end
     
@@ -100,7 +99,7 @@ module ServerSide
       elsif File.directory?(path)
         serve_dir(path)
       else
-        send_response(404, 'text', Const::FileNotFound)
+        send_response(404, 'text', FILE_NOT_FOUND)
       end
     rescue => e
       send_response(500, 'text', e.message)
