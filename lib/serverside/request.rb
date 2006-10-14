@@ -47,13 +47,14 @@ module ServerSide
       
       attr_reader :socket, :method, :path, :query, :version, :parameters,
         :headers, :persistent, :cookies, :response_cookies, :body,
-        :content_length, :content_type
+        :content_length, :content_type, :response_headers
       
       # Initializes the request instance. Any descendants of HTTP::Request
       # which override the initialize method must receive socket as the
       # single argument, and copy it to @socket.
       def initialize(socket)
         @socket = socket
+        @response_headers = {}
       end
 
       # Processes the request by parsing it and then responding.      
@@ -146,9 +147,12 @@ module ServerSide
       # Sends an HTTP response.
       def send_response(status, content_type, body = nil, content_length = nil, 
         headers = nil)
-        h = headers ? 
-          headers.inject('') {|m, kv| m << (HEADER % kv)} : ''
+        @response_headers.merge!(headers) if headers
+        h = @response_headers.inject('') {|m, kv| m << (HEADER % kv)}
         
+        # calculate content_length if needed. if we dont have the content_length,
+        # we consider the response as a streaming response, and so the connection
+        # will not be persistent.
         content_length = body.length if content_length.nil? && body
         @persistent = false if content_length.nil?
         

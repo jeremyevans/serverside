@@ -42,7 +42,7 @@ class RequestTest < Test::Unit::TestCase
   end
   
   class ServerSide::HTTP::Request
-    attr_writer :socket, :persistent
+    attr_writer :socket, :persistent, :response_headers
   end
   
   def test_process_result
@@ -149,6 +149,7 @@ class RequestTest < Test::Unit::TestCase
   def test_send_response
     r = ServerSide::HTTP::Request.new(nil)
     # simple case
+    r.response_headers = {}
     r.socket = StringIO.new
     r.persistent = true
     r.send_response(200, 'text', 'Hello there!')
@@ -157,6 +158,7 @@ class RequestTest < Test::Unit::TestCase
       r.socket.read
 
     # include content-length    
+    r.response_headers = {}
     r.socket = StringIO.new
     r.persistent = true
     r.send_response(404, 'text/html', '<h1>404!</h1>', 10) # incorrect length
@@ -165,6 +167,7 @@ class RequestTest < Test::Unit::TestCase
       r.socket.read
 
     # headers
+    r.response_headers = {}
     r.socket = StringIO.new
     r.persistent = true
     r.send_response(404, 'text/html', '<h1>404!</h1>', nil, {'ETag' => 'xxyyzz'})
@@ -173,6 +176,7 @@ class RequestTest < Test::Unit::TestCase
       r.socket.read
 
     # no body
+    r.response_headers = {}
     r.socket = StringIO.new
     r.persistent = true
     r.send_response(404, 'text/html', nil, nil, {'Set-Cookie' => 'abc=123'})
@@ -182,6 +186,7 @@ class RequestTest < Test::Unit::TestCase
     assert_equal false, r.persistent
 
     # not persistent
+    r.response_headers = {}
     r.socket = StringIO.new
     r.persistent = false
     r.send_response(200, 'text', 'Hello there!')
@@ -190,6 +195,7 @@ class RequestTest < Test::Unit::TestCase
       r.socket.read
       
     # socket error
+    r.response_headers = {}
     r.socket = nil
     r.persistent = true
     assert_nothing_raised {r.send_response(200, 'text', 'Hello there!')}
@@ -219,6 +225,7 @@ class RequestTest < Test::Unit::TestCase
     r.socket.rewind
     assert_equal "HTTP/1.1 302\r\nDate: #{Time.now.httpdate}\r\nConnection: close\r\nLocation: http://mau.com/132\r\n\r\n", r.socket.read
 
+    r.response_headers = {}
     r.socket = StringIO.new
     r.redirect('http://www.google.com/search?q=meaning%20of%20life', true)
     r.socket.rewind
@@ -244,5 +251,28 @@ class RequestTest < Test::Unit::TestCase
     r.send_response(200, 'text', 'Hi!')
     r.socket.rewind
     assert_equal "HTTP/1.1 200\r\nDate: #{Time.now.httpdate}\r\nConnection: close\r\nContent-Type: text\r\nSet-Cookie: session=; path=/; expires=#{Time.at(0).rfc2822}\r\nContent-Length: 3\r\n\r\nHi!", r.socket.read
+  end
+  
+  def test_response_headers
+    r = ServerSide::HTTP::Request.new(nil)
+    r.socket = StringIO.new
+    assert_equal({}, r.response_headers)
+    r.response_headers = {'A' => '1', 'B' => 2}
+    r.send_response(200, 'text', 'Hi!')
+    r.socket.rewind
+    resp = r.socket.read
+    assert_not_nil resp.match("A: 1\r\n")
+    assert_not_nil resp.match("B: 2\r\n")
+    
+    r.response_headers = {}
+    r.socket = StringIO.new
+    assert_equal({}, r.response_headers)
+    r.response_headers = {'D' => '1', 'E' => 2}
+    r.send_response(200, 'text', 'Hi!', nil, {'F' => 3})
+    r.socket.rewind
+    resp = r.socket.read
+    assert_not_nil resp.match("D: 1\r\n")
+    assert_not_nil resp.match("E: 2\r\n")
+    assert_not_nil resp.match("F: 3\r\n")
   end
 end

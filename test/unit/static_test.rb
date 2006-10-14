@@ -15,6 +15,7 @@ class StaticTest < Test::Unit::TestCase
     attr_accessor :path, :socket, :headers
     
     def initialize
+      super(nil)
       @headers = {}
     end
   end

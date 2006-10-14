@@ -70,6 +70,7 @@ module ServerSide
           NOT_MODIFIED_CLOSE) % [Time.now.httpdate, date, etag, stat.size])
       end
     rescue => e
+      puts e.message
       send_response(404, TEXT_PLAIN, 'Error reading file.')
     end
     

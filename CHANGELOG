@@ -1,5 +1,7 @@
 ==SVN
 
+* Added response_headers attribute to HTTP::Request.
+
 * Refactored ServerSide::Static constants.
 
 * Renamed ServerSide::StaticFiles to ServerSide::Static.
