@@ -109,6 +109,21 @@ task :aok do
   sh %{rake spec}
 end
 
+require 'spec/rake/spectask'
+
+desc "Run specs RCov"
+Spec::Rake::SpecTask.new('specs_with_rcov') do |t|
+  t.spec_files = FileList['test/spec/*_spec.rb']
+  t.rcov = true
+end
+
+require 'spec/rake/rcov_verify'
+
+RCov::VerifyTask.new(:rcov_verify => :rcov) do |t|
+  t.threshold = 95.4 # Make sure you have rcov 0.7 or higher!
+  t.index_html = 'doc/output/coverage/index.html'
+end
+
 desc 'Update docs and upload to rubyforge.org'
 task :doc_rforge do
   sh %{rake doc}

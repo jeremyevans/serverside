@@ -1,5 +1,7 @@
 ==SVN
 
+* Added spec coverage rake task.
+
 * Added HTTP::Caching module.
 
 * Added response_headers attribute to HTTP::Request.
