@@ -1,5 +1,7 @@
 ==SVN
 
+* Added HTTP::Caching module.
+
 * Added response_headers attribute to HTTP::Request.
 
 * Refactored ServerSide::Static constants.

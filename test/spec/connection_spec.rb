@@ -1,7 +1,5 @@
 require File.join(File.dirname(__FILE__), '../../lib/serverside')
 
-# String extensions
-
 class ServerSide::HTTP::Connection
   attr_reader :socket, :request_class, :thread
 end
