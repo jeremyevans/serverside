@@ -1,18 +1,12 @@
-require 'time'
+require File.join(File.dirname(__FILE__), 'caching')
 
 module ServerSide
   # This module provides functionality for serving files and directory listings
   # over HTTP.
   module Static
-    ETAG = 'ETag'.freeze
+    include HTTP::Caching
+    
     ETAG_FORMAT = '%x:%x:%x'.inspect.freeze
-    CACHE_CONTROL = 'Cache-Control'.freeze
-    MAX_AGE = "max-age=#{86400 * 30}".freeze
-    IF_NONE_MATCH = 'If-None-Match'.freeze
-    IF_MODIFIED_SINCE = 'If-Modified-Since'.freeze
-    LAST_MODIFIED = "Last-Modified".freeze
-    NOT_MODIFIED_CLOSE = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nConnection: close\r\nLast-Modified: %s\r\nETag: %s\r\nCache-Control: #{MAX_AGE}\r\n\r\n".freeze
-    NOT_MODIFIED_PERSIST = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nLast-Modified: %s\r\nETag: %s\r\nCache-Control: #{MAX_AGE}\r\n\r\n".freeze
     TEXT_PLAIN = 'text/plain'.freeze
     TEXT_HTML = 'text/html'.freeze
     MAX_CACHE_FILE_SIZE = 100000.freeze # 100KB for the moment
@@ -44,30 +38,14 @@ module ServerSide
     def serve_file(fn)
       stat = File.stat(fn)
       etag = (ETAG_FORMAT % [stat.mtime.to_i, stat.size, stat.ino]).freeze
-      date = stat.mtime.httpdate
-      
-      etag_match = @headers[IF_NONE_MATCH]
-      last_date = @headers[IF_MODIFIED_SINCE]
-      
-      modified = (!etag_match && !last_date) || 
-        (etag_match && (etag != etag_match)) || (last_date && (last_date != date))
-      
-      if modified
+      validate_cache(etag, stat.mtime) do
         if @@static_files[fn] && (@@static_files[fn][0] == etag)
           content = @@static_files[fn][1]
         else
           content = IO.read(fn).freeze
           @@static_files[fn] = [etag.freeze, content]
         end
-        
-        send_response(200, @@mime_types[File.extname(fn)], content, stat.size, {
-          ETAG => etag, 
-          LAST_MODIFIED => date, 
-          CACHE_CONTROL => MAX_AGE
-        })
-      else
-        @socket << ((@persistent ? NOT_MODIFIED_PERSIST : 
-          NOT_MODIFIED_CLOSE) % [Time.now.httpdate, date, etag, stat.size])
+        send_response(200, @@mime_types[File.extname(fn)], content, stat.size)
       end
     rescue => e
       puts e.message

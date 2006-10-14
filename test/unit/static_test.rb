@@ -61,9 +61,8 @@ class StaticTest < Test::Unit::TestCase
     stat = File.stat(__FILE__)
     etag = (ServerSide::Static::ETAG_FORMAT % 
       [stat.mtime.to_i, stat.size, stat.ino])
-    assert_equal etag, /ETag:\s(.*)\r\n/.match(resp)[1]
-    assert_equal ServerSide::Static::MAX_AGE,
-      /Cache-Control:\s(.*)\r\n/.match(resp)[1]
+    assert_not_nil resp =~ /ETag:\s"#{etag}"\r\n/
+    assert_not_nil resp =~ /Cache-Control:\smax-age=#{ServerSide::HTTP::Caching::DEFAULT_MAX_AGE}\r\n/
     assert_equal stat.size.to_s,
       /Content-Length:\s(.*)\r\n/.match(resp)[1]
   end
@@ -82,14 +81,13 @@ class StaticTest < Test::Unit::TestCase
     stat = File.stat(__FILE__)
     etag = (ServerSide::Static::ETAG_FORMAT % 
       [stat.mtime.to_i, stat.size, stat.ino])
-    assert_equal etag, /ETag:\s(.*)\r\n/.match(resp)[1]
-    assert_equal ServerSide::Static::MAX_AGE,
-      /Cache-Control:\s(.*)\r\n/.match(resp)[1]
+    assert_not_nil resp =~ /ETag:\s"#{etag}"\r\n/
+    assert_not_nil resp =~ /Cache-Control:\smax-age=#{ServerSide::HTTP::Caching::DEFAULT_MAX_AGE}\r\n/
     assert_equal stat.size.to_s,
       /Content-Length:\s(.*)\r\n/.match(resp)[1]
       
     c.socket = StringIO.new
-    c.headers[ServerSide::Static::IF_NONE_MATCH] = etag
+    c.headers[ServerSide::Static::IF_NONE_MATCH] = "\"#{etag}\""
     c.serve_file(__FILE__)
     c.socket.rewind
     resp = c.socket.read
@@ -100,9 +98,8 @@ class StaticTest < Test::Unit::TestCase
     stat = File.stat(__FILE__)
     etag = (ServerSide::Static::ETAG_FORMAT % 
       [stat.mtime.to_i, stat.size, stat.ino])
-    assert_equal etag, /ETag:\s(.*)\r\n/.match(resp)[1]
-    assert_equal ServerSide::Static::MAX_AGE,
-      /Cache-Control:\s(.*)\r\n/.match(resp)[1]
+    assert_not_nil resp =~ /ETag:\s"#{etag}"\r\n/
+    assert_not_nil resp =~ /Cache-Control:\smax-age=#{ServerSide::HTTP::Caching::DEFAULT_MAX_AGE}\r\n/
     
     FileUtils.touch(__FILE__)
     c.socket = StringIO.new
@@ -117,9 +114,8 @@ class StaticTest < Test::Unit::TestCase
     stat = File.stat(__FILE__)
     etag = (ServerSide::Static::ETAG_FORMAT % 
       [stat.mtime.to_i, stat.size, stat.ino])
-    assert_equal etag, /ETag:\s(.*)\r\n/.match(resp)[1]
-    assert_equal ServerSide::Static::MAX_AGE,
-      /Cache-Control:\s(.*)\r\n/.match(resp)[1]
+    assert_not_nil resp =~ /ETag:\s"#{etag}"\r\n/
+    assert_not_nil resp =~ /Cache-Control:\smax-age=#{ServerSide::HTTP::Caching::DEFAULT_MAX_AGE}\r\n/
     assert_equal stat.size.to_s,
       /Content-Length:\s(.*)\r\n/.match(resp)[1]
   end
@@ -167,9 +163,8 @@ class StaticTest < Test::Unit::TestCase
     stat = File.stat(__FILE__)
     etag = (ServerSide::Static::ETAG_FORMAT % 
       [stat.mtime.to_i, stat.size, stat.ino])
-    assert_equal etag, /ETag:\s(.*)\r\n/.match(resp)[1]
-    assert_equal ServerSide::Static::MAX_AGE,
-      /Cache-Control:\s(.*)\r\n/.match(resp)[1]
+    assert_not_nil resp =~ /ETag:\s"#{etag}"\r\n/
+    assert_not_nil resp =~ /Cache-Control:\smax-age=#{ServerSide::HTTP::Caching::DEFAULT_MAX_AGE}\r\n/
     assert_equal stat.size.to_s,
       /Content-Length:\s(.*)\r\n/.match(resp)[1]
   end

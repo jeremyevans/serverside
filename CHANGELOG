@@ -1,5 +1,7 @@
 ==SVN
 
+* Refactored ServerSide::Static to use HTTP::Caching code.
+
 * Added spec coverage rake task.
 
 * Added HTTP::Caching module.
