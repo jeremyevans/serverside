@@ -1,3 +1,7 @@
+==SVN
+
+* Rewrote request unit test into request spec.
+
 ==0.2.8
 
 * Refactored ServerSide::Static to use HTTP::Caching code.
