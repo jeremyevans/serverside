@@ -1,5 +1,7 @@
 ==SVN
 
+* Fixed bug in doc_rforge rake task.
+
 * Rewrote request unit test into request spec.
 
 ==0.2.8

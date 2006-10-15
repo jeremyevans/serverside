@@ -67,6 +67,7 @@ task :uninstall => [:clean] do
   sh %{sudo gem uninstall #{NAME}}
 end
 
+desc 'Update docs and upload to rubyforge.org'
 task :doc_rforge do
   sh %{rake doc}
   sh %{scp -r doc/rdoc/* ciconia@rubyforge.org:/var/www/gforge-projects/serverside}
@@ -122,12 +123,6 @@ require 'spec/rake/rcov_verify'
 RCov::VerifyTask.new(:rcov_verify => :rcov) do |t|
   t.threshold = 95.4 # Make sure you have rcov 0.7 or higher!
   t.index_html = 'doc/output/coverage/index.html'
-end
-
-desc 'Update docs and upload to rubyforge.org'
-task :doc_rforge do
-  sh %{rake doc}
-  sh "scp -C -r * ciconia@rubyforge.org:/var/www/gforge-projects/serverside/"
 end
 
 ##############################################################################
