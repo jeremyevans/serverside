@@ -99,3 +99,41 @@ context "Caching::valid_client_cache?" do
     r.valid_client_cache?('eeee', t.httpdate).should_not_be false
   end
 end
+
+context "Caching::cache_etags" do
+  specify "should return an empty array if no If-None-Match header is included" do
+    r = DummyRequest.new
+    r.cache_etags.should_be_a_kind_of Array
+    r.cache_etags.should_equal []
+  end
+  
+  specify "should return all etags included in the If-None-Match header" do
+    r = DummyRequest.new
+    r.headers['If-None-Match'] = '*'
+    r.cache_etags.should_equal ['*']
+    r.headers['If-None-Match'] = '*, "XXX-YYY","AAA-BBB"'
+    r.cache_etags.should_equal ['*', 'XXX-YYY', 'AAA-BBB']
+    r.headers['If-None-Match'] = '"abcd-EFGH"'
+    r.cache_etags.should_equal ['abcd-EFGH']
+  end
+end
+
+context "Caching::cache_stamps" do
+  specify "should return nil if no If-Modified-Since header is included" do
+    r = DummyRequest.new
+    r.cache_stamp.should_be_nil
+  end
+  
+  specify "should return nil if no an invalid stamp is specified" do
+    r = DummyRequest.new
+    r.headers['If-Modified-Since'] = 'invalid stamp'
+    r.cache_stamp.should_be_nil
+  end
+  
+  specify "should return the stamp specified in the If-Modified-Since header" do
+    r = DummyRequest.new
+    t = Time.now
+    r.headers['If-Modified-Since'] = t.httpdate
+    r.cache_stamp.to_i.should_equal t.to_i
+  end
+end

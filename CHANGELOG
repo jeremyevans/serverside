@@ -1,5 +1,7 @@
 ==SVN
 
+* Added HTTP::Caching.cache_etags and cache_stamp methods.
+
 * Fixed bug in doc_rforge rake task.
 
 * Rewrote request unit test into request spec.
