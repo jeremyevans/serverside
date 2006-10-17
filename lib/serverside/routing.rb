@@ -1,8 +1,8 @@
 require File.join(File.dirname(__FILE__), 'request')
 
 module ServerSide
-  # The Router class defines a kind of connection that can route requests
-  # to different handlers based on rules that can be specified either by
+  # The Router class is a subclass of HTTP::Request that can invoke
+  # different handlers based on rules that can be specified either by
   # lambdas or by hashes that contain variable names corresponding to patterns.
   #
   # The simplest form of a routing rule specifies a path pattern:
@@ -19,7 +19,7 @@ module ServerSide
   #
   #   ServerSide.route(lambda {@headers['Agent'] =~ /Moz/}) {serve_static('moz'/@path)}
   #
-  # Routing rules are evaluated in backwards, so the rules should be ordered
+  # Routing rules are evaluated backwards, so the rules should be ordered
   # from the general to the specific.
   class Router < HTTP::Request
     # Returns true if routes were defined.

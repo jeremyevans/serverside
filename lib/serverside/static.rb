@@ -76,7 +76,13 @@ module ServerSide
       elsif serve_template(path)
         return
       elsif File.directory?(path)
-        serve_dir(path)
+        if File.file?(path/'index.html')
+          serve_file(path/'index.html')
+        elsif File.file?(path/'index.rhtml')
+          serve_template(path/'index.rhtml')
+        else
+          serve_dir(path)
+        end
       else
         send_response(404, 'text', FILE_NOT_FOUND)
       end

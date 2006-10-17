@@ -1,7 +1,7 @@
 require File.join(File.dirname(__FILE__), '../../lib/serverside')
 require 'stringio'
 
-class DummyRequest < ServerSide::HTTP::Request
+class DummyRequest2 < ServerSide::HTTP::Request
   attr_accessor :calls, :parse_result, :persistent
   
   def parse
@@ -18,7 +18,7 @@ end
 
 context "HTTP::Request.process" do
   specify "should call parse and and short-circuit if the result is nil" do
-    r = DummyRequest.new(nil)
+    r = DummyRequest2.new(nil)
     r.process.should_be_nil
     r.calls.should_equal [:parse]
 
@@ -29,7 +29,7 @@ context "HTTP::Request.process" do
   end
   
   specify "should follow parse with respond and return @persistent" do
-    r = DummyRequest.new(nil)
+    r = DummyRequest2.new(nil)
     r.parse_result = true
     r.process.should_be_nil
     r.calls.should_equal [:parse, :respond]
