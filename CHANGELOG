@@ -1,5 +1,7 @@
 ==SVN
 
+* Start work on controller class.
+
 * Renamed Router.route_default to default_route.
 
 * Fixed small errors in documentation.
