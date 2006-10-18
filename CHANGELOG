@@ -1,5 +1,7 @@
 ==SVN
 
+* Renamed Router.route_default to default_route.
+
 * Fixed small errors in documentation.
 
 * Changed ServerSide::Static.serve_static to look for inded.html inside directory before serving the directory.

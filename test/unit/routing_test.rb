@@ -69,7 +69,7 @@ class RoutingTest < Test::Unit::TestCase
     assert_equal nil, R.new(StringIO.new).respond
     R.rules << [{:t => 'abc'}, lambda{1}]
     R.rules << [{:t => 'def'}, lambda{2}]
-    R.route_default {3}
+    R.default_route {3}
     R.compile_rules
     r = R.new(StringIO.new)
     r.t = 'abc'
@@ -148,11 +148,11 @@ class RoutingTest < Test::Unit::TestCase
     assert_equal c, eval("R::#{tag}")
   end
   
-  def test_route_default
-    R.route_default {'mau m'}
+  def test_default_route
+    R.default_route {'mau m'}
     assert_equal 'mau m', R.new(StringIO.new).default_handler
 
-    R.route_default {654321}
+    R.default_route {654321}
     assert_equal 654321, R.new(StringIO.new).default_handler
   end
   
@@ -164,8 +164,8 @@ class RoutingTest < Test::Unit::TestCase
     assert_equal 2, R.rules[0][1].call
   end
   
-  def test_serverside_route_default
-    ServerSide::Router.route_default {1234}
+  def test_serverside_default_route
+    ServerSide::Router.default_route {1234}
     assert_equal 1234, R.new(StringIO.new).default_handler
   end
 end

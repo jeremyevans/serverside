@@ -116,7 +116,7 @@ module ServerSide
     end
 
     # Sets the default handler for incoming requests.
-    def self.route_default(&block)
+    def self.default_route(&block)
       define_method(:default_handler, &block)
       compile_rules
     end
