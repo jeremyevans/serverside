@@ -14,10 +14,10 @@ class ServerSide::Router
 end
 
 context "ServerSide::Controller.mount" do
-  specify "should accept a routing rule" do
+  specify "should accept a routing rule as argument" do
     proc {ServerSide::Controller.mount}.should_raise ArgumentError
   end
-
+  
   specify "should return a subclass of ServerSide::Controller" do
     c = ServerSide::Controller.mount(:path => '/test')
     c.should_be_a_kind_of Class
@@ -42,21 +42,18 @@ context "ServerSide::Controller.mount" do
     r.respond
     $req.should_be_a_kind_of ServerSide::Router
   end
-end
 
-__END__
+  specify "should accept either an argument or block as the rule" do
+    ServerSide::Router.reset_rules
+    rule = {:path => '/test'}
+    c = ServerSide::Controller.mount(rule)
+    r = ServerSide::Router.rules.first
+    r.first.should_be rule
 
-class MyController < ServerSide::Controller.mount(:path => '/')
-  def process
+    ServerSide::Router.reset_rules
+    rule = proc {true}
+    c = ServerSide::Controller.mount(&rule)
+    r = ServerSide::Router.rules.first
+    r.first.should_be rule
   end
 end
-
-class MyController < ServerSide::ActionController
-  default_action :list
-
-  def list
-  end
-  
-  def 
-end
-

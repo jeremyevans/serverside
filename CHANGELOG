@@ -1,5 +1,7 @@
 ==SVN
 
+* Added support for lambda rules in ServerSide::Controller.mount.
+
 * Start work on controller class.
 
 * Renamed Router.route_default to default_route.
