@@ -1,5 +1,7 @@
 ==SVN
 
+* Added basic rendering capabilities to ServerSide::Controller.
+
 * Added support for lambda rules in ServerSide::Controller.mount.
 
 * Start work on controller class.

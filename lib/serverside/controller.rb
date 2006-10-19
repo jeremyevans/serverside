@@ -9,6 +9,26 @@ module ServerSide
       ServerSide::Router.route(rule) {c.new(self)}
       c
     end
+    
+    def initialize(request)
+      @request = request
+      @path = request.path
+      @parameters = request.parameters
+      process
+      render_default if not @rendered
+    end
+    
+    def process
+    end
+    
+    def render_default
+      @request.send_response(200, 'text/plain', 'no response.')
+    end
+    
+    def render(body, content_type)
+      @request.send_response(200, content_type, body)
+      @rendered = true
+    end
   end
 end
 
@@ -21,7 +41,8 @@ require 'metaid'
 class ActionController
   def self.default_routing_rule
     if name.split('::').last =~ /(.+)Controller$/
-      {:path => ''/Inflector.underscore($1)}
+      controller = Inflector.underscore($1) 
+      {:path => ["/#{controller}/:action", "/#{controller}/:action/:id"]}
     end
   end
 

@@ -57,3 +57,83 @@ context "ServerSide::Controller.mount" do
     r.first.should_be rule
   end
 end
+
+class ServerSide::Controller
+  attr_accessor :request, :path, :parameters, :rendered
+end
+
+class ServerSide::HTTP::Request
+  attr_accessor :path, :parameters
+end
+
+require 'metaid'
+
+class DummyController < ServerSide::Controller
+  attr_reader :process_called
+  
+  def process
+    @process_called = true
+  end
+  
+  def render_default
+    @rendered = :default
+  end
+end
+
+context "ServerSide::Controller new instance" do
+  specify "should set @request, @path, and @parameters instance variables" do
+    req = ServerSide::HTTP::Request.new(StringIO.new)
+    req.path = '/aa/bb/cc'
+    req.parameters = {:q => 'node_state', :f => 'xml'}
+    c = ServerSide::Controller.new(req)
+    c.request.should_be req
+    c.path.should_be req.path
+    c.parameters.should_be req.parameters
+  end
+  
+  specify "should invoke the process method" do
+    req = ServerSide::HTTP::Request.new(StringIO.new)
+    c = DummyController.new(req)
+    c.process_called.should_be true
+  end
+  
+  specify "should invoke render_default unless @rendered" do
+    req = ServerSide::HTTP::Request.new(StringIO.new)
+    c = DummyController.new(req)
+    c.rendered.should_be :default
+    
+    c_class = Class.new(DummyController) do
+      define_method(:process) {@rendered = true}
+    end
+    c = c_class.new(req)
+    c.rendered.should_be true
+  end
+end
+
+context "ServerSide::Controller.render_default" do
+  specify "should render a default 200 response" do
+    req = ServerSide::HTTP::Request.new(StringIO.new)
+    c = ServerSide::Controller.new(req)
+    req.socket.rewind
+    resp = req.socket.read
+    resp.should_match /HTTP\/1\.1\s200/
+  end
+end
+
+context "ServerSide::Controller.render" do
+  specify "should render a 200 response with body and content type arguments" do
+    req = ServerSide::HTTP::Request.new(StringIO.new)
+    c = ServerSide::Controller.new(req)
+    c.render('hello world', 'text/plain')
+    req.socket.rewind
+    resp = req.socket.read
+    resp.should_match /Content-Type:\stext\/plain\r\n/
+  end
+  
+  specify "should set @rendered to true" do
+    req = ServerSide::HTTP::Request.new(StringIO.new)
+    c = ServerSide::Controller.new(req)
+    c.render('hello world', 'text/plain')
+    c.rendered.should_equal true
+  end
+end
