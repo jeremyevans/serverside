@@ -165,6 +165,16 @@ module ServerSide
         @persistent = false
       end
       
+      CONTENT_DISPOSITION = 'Content-Disposition'.freeze
+      CONTENT_DESCRIPTION = 'Content-Description'.freeze
+
+      def send_file(content, content_type, disposition = :inline, filename = nil, description = nil)
+        disposition = filename ? "#{disposition}; filename=#{filename}" : "#{disposition}"
+        @response_headers[CONTENT_DISPOSITION] = disposition
+        @response_headers[CONTENT_DESCRIPTION] = description if description
+        send_response(200, content_type, content)
+      end
+      
       # Send a redirect response.
       def redirect(location, permanent = false)
         @socket << (STATUS_REDIRECT % 

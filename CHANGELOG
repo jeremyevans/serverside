@@ -1,5 +1,7 @@
 ==SVN
 
+* Added HTTP::Request.send_file method.
+
 * Added basic rendering capabilities to ServerSide::Controller.
 
 * Added support for lambda rules in ServerSide::Controller.mount.
@@ -10,7 +12,7 @@
 
 * Fixed small errors in documentation.
 
-* Changed ServerSide::Static.serve_static to look for inded.html inside directory before serving the directory.
+* Changed ServerSide::Static.serve_static to look for index.html inside directory before serving the directory.
 
 * Added HTTP::Caching.cache_etags and cache_stamp methods.
 

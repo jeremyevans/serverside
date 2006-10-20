@@ -229,6 +229,46 @@ context "HTTP::Request.send_response" do
   end
 end
 
+context "HTTP::Request.send_file" do
+  specify "should include a disposition header in the response" do
+    socket = StringIO.new
+    r = ServerSide::HTTP::Request.new(socket)
+    r.send_file('text', 'text/plain', :attachment)
+    socket.rewind
+    socket.read.should_match /Content-Disposition: attachment\r\n/
+  end
+  
+  specify "should use :inline as default disposition" do
+    socket = StringIO.new
+    r = ServerSide::HTTP::Request.new(socket)
+    r.send_file('text', 'text/plain')
+    socket.rewind
+    socket.read.should_match /Content-Disposition: inline\r\n/
+  end
+  
+  specify "should include filename parameter if specified" do
+    socket = StringIO.new
+    r = ServerSide::HTTP::Request.new(socket)
+    r.send_file('text', 'text/plain', :attachment, 'text.txt')
+    socket.rewind
+    socket.read.should_match /Content-Disposition: attachment; filename=text.txt\r\n/
+  end
+  
+  specify "should include a description header if specified" do
+    socket = StringIO.new
+    r = ServerSide::HTTP::Request.new(socket)
+    r.send_file('text', 'text/plain', :attachment, 'text.txt')
+    socket.rewind
+    socket.read.should_not_match /Content-Description:\s/
+
+    socket = StringIO.new
+    r = ServerSide::HTTP::Request.new(socket)
+    r.send_file('text', 'text/plain', :attachment, 'text.txt', 'this is text.')
+    socket.rewind
+    socket.read.should_match /Content-Description:\sthis is text\./
+  end
+end
+
 context "HTTP::Request.redirect" do
   specify "should send a 302 response for temporary redirect" do
     r = ServerSide::HTTP::Request.new(nil)
