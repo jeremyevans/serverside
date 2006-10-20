@@ -1,4 +1,6 @@
-==SVN
+==0.2.9
+
+* Improved rake clean task.
 
 * Added HTTP::Request.send_file method.
 
