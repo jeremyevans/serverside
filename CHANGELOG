@@ -1,3 +1,9 @@
+==SVN
+
+* Added documentation to Controller.
+
+* Fixed Controller.mount to build a self.inherited method, and do the routing there.
+
 ==0.2.9
 
 * Improved rake clean task.

@@ -28,6 +28,7 @@ context "ServerSide::Controller.mount" do
     ServerSide::Router.reset_rules
     rule = {:path => '/test'}
     c = ServerSide::Controller.mount(rule)
+    sub_class = Class.new(c)
     r = ServerSide::Router.rules.first
     r.first.should_equal rule
     r.last.should_be_a_kind_of Proc
@@ -35,7 +36,7 @@ context "ServerSide::Controller.mount" do
       define_method(:initialize) {|req| $req = req}
     end
     res = r.last.call
-    res.should_be_a_kind_of c
+    res.should_be_a_kind_of sub_class
     
     r = ServerSide::Router.new(StringIO.new)
     r.path = '/test'
@@ -46,13 +47,13 @@ context "ServerSide::Controller.mount" do
   specify "should accept either an argument or block as the rule" do
     ServerSide::Router.reset_rules
     rule = {:path => '/test'}
-    c = ServerSide::Controller.mount(rule)
+    c = Class.new(ServerSide::Controller.mount(rule))
     r = ServerSide::Router.rules.first
     r.first.should_be rule
 
     ServerSide::Router.reset_rules
     rule = proc {true}
-    c = ServerSide::Controller.mount(&rule)
+    c = Class.new(ServerSide::Controller.mount(&rule))
     r = ServerSide::Router.rules.first
     r.first.should_be rule
   end

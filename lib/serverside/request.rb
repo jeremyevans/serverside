@@ -150,16 +150,17 @@ module ServerSide
         @response_headers.merge!(headers) if headers
         h = @response_headers.inject('') {|m, kv| m << (HEADER % kv)}
         
-        # calculate content_length if needed. if we dont have the content_length,
-        # we consider the response as a streaming response, and so the connection
-        # will not be persistent.
+        # calculate content_length if needed. if we dont have the 
+        # content_length, we consider the response as a streaming response, 
+        # and so the connection will not be persistent.
         content_length = body.length if content_length.nil? && body
         @persistent = false if content_length.nil?
         
         # Select the right format to use according to circumstances.
         @socket << ((@persistent ? STATUS_PERSIST : 
           (body ? STATUS_CLOSE : STATUS_STREAM)) % 
-          [status, Time.now.httpdate, content_type, h, @response_cookies, content_length])
+          [status, Time.now.httpdate, content_type, h, @response_cookies, 
+            content_length])
         @socket << body if body
       rescue
         @persistent = false
@@ -168,8 +169,10 @@ module ServerSide
       CONTENT_DISPOSITION = 'Content-Disposition'.freeze
       CONTENT_DESCRIPTION = 'Content-Description'.freeze
 
-      def send_file(content, content_type, disposition = :inline, filename = nil, description = nil)
-        disposition = filename ? "#{disposition}; filename=#{filename}" : "#{disposition}"
+      def send_file(content, content_type, disposition = :inline, 
+        filename = nil, description = nil)
+        disposition = filename ?
+          "#{disposition}; filename=#{filename}" : disposition
         @response_headers[CONTENT_DISPOSITION] = disposition
         @response_headers[CONTENT_DESCRIPTION] = description if description
         send_response(200, content_type, content)
@@ -192,10 +195,12 @@ module ServerSide
       # Sets a cookie to be included in the response.
       def set_cookie(name, value, expires)
         @response_cookies ||= ""
-        @response_cookies << (SET_COOKIE % [name, value.to_s.uri_escape, expires.rfc2822])
+        @response_cookies <<
+          (SET_COOKIE % [name, value.to_s.uri_escape, expires.rfc2822])
       end
       
-      # Marks a cookie as deleted. The cookie is given an expires stamp in the past.
+      # Marks a cookie as deleted. The cookie is given an expires stamp in 
+      # the past.
       def delete_cookie(name)
         set_cookie(name, nil, COOKIE_EXPIRED_TIME)
       end
