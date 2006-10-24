@@ -70,7 +70,7 @@ end
 desc 'Update docs and upload to rubyforge.org'
 task :doc_rforge do
   sh %{rake doc}
-  sh %{scp -r doc/rdoc/* ciconia@rubyforge.org:/var/www/gforge-projects/serverside}
+  sh %{scp -r doc/* ciconia@rubyforge.org:/var/www/gforge-projects/serverside}
 end
 
 desc 'Run unit tests'
