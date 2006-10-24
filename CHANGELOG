@@ -1,5 +1,7 @@
 ==SVN
 
+* Refactored ServerSide::Template and wrote template spec.
+
 * Added documentation to Controller.
 
 * Fixed Controller.mount to build a self.inherited method, and do the routing there.
