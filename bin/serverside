@@ -65,7 +65,7 @@ else
   require fn if File.file?(fn)
 end
 unless ServerSide::Router.has_routes?
-  ServerSide::Router.route_default {serve_static('.'/@path)}
+  ServerSide::Router.default_route {serve_static('.'/@path)}
 end
 
 if $cmd == 'serve'
