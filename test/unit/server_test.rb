@@ -11,7 +11,7 @@ class ServerTest < Test::Unit::TestCase
   def test_server_creation
     t = Thread.new do
       begin
-        ServerSide::HTTP::Server.new('0.0.0.0', 17543, DummyRequest)
+        ServerSide::HTTP::Server.new('0.0.0.0', 17543, DummyRequest).start
       rescue => e
         puts e.message
         puts e.backtrace.first

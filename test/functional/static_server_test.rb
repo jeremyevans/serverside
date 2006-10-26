@@ -10,7 +10,7 @@ class StaticServerTest < Test::Unit::TestCase
   end
   
   def test_basic
-    t = Thread.new {ServerSide::HTTP::Server.new('0.0.0.0', 17654, StaticRequest)}
+    t = Thread.new {ServerSide::HTTP::Server.new('0.0.0.0', 17654, StaticRequest).start}
     sleep 0.1
 
     h = Net::HTTP.new('localhost', 17654)

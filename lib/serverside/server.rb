@@ -6,14 +6,20 @@ module ServerSide
     # designed to support both HTTP 1.1 persistent connections, and HTTP streaming
     # for applications which use Comet techniques.
     class Server
-      # Creates a new server by opening a listening socket and starting an accept
-      # loop. When a new connection is accepted, a new instance of the 
-      # supplied connection class is instantiated and passed the connection for
-      # processing.
+      attr_reader :listener
+
+      # Creates a new server by opening a listening socket.
       def initialize(host, port, request_class)
-        @server = TCPServer.new(host, port)
+        @request_class = request_class
+        @listener = TCPServer.new(host, port)
+      end
+      
+      # starts an accept loop. When a new connection is accepted, a new 
+      # instance of the supplied connection class is instantiated and passed 
+      # the connection for processing.
+      def start
         while true
-          Connection.new(@server.accept, request_class)
+          Connection.new(@listener.accept, @request_class)
         end
       end
     end

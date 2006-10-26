@@ -22,9 +22,11 @@ module ServerSide
   # Routing rules are evaluated backwards, so the rules should be ordered
   # from the general to the specific.
   class Router < HTTP::Request
+    @@rules = []
+  
     # Returns true if routes were defined.
-    def self.has_routes?
-      @@rules && !@@rules.empty? rescue false
+    def self.routes_defined?
+      !@@rules.empty? || @@default_route
     end
     
     # Adds a routing rule. The normalized rule is a hash containing keys (acting
@@ -36,7 +38,6 @@ module ServerSide
     #
     #   ServerSide.route(lambda{path = 'mypage'}) {serve_static('mypage.html')}
     def self.route(rule, &block)
-      @@rules ||= []
       rule = {:path => rule} unless (Hash === rule) || (Proc === rule)
       @@rules.unshift [rule, block]
       compile_rules
@@ -45,7 +46,6 @@ module ServerSide
     # Compiles all rules into a respond method that is invoked when a request
     # is received.
     def self.compile_rules
-      @@rules ||= []
       code = @@rules.inject('lambda {') {|m, r| m << rule_to_statement(r[0], r[1])}
       code << 'default_handler}'
       define_method(:respond, &eval(code))
@@ -69,12 +69,12 @@ module ServerSide
       "return #{proc_tag} if #{cond}\n"
     end
 
-    # Pattern for finding parameters inside patterns. Parameters are parts of the
-    # pattern, which the routing pre-processor turns into sub-regexp that are
-    # used to extract parameter values from the pattern.
+    # Pattern for finding parameters inside patterns. Parameters are parts 
+    # of the pattern, which the routing pre-processor turns into sub-regexp 
+    # that are used to extract parameter values from the pattern.
     #
-    # For example, matching '/controller/show' against '/controller/:action' will
-    # give us @parameters[:action] #=> "show"
+    # For example, matching '/controller/show' against '/controller/:action'
+    # will give us @parameters[:action] #=> "show"
     ParamRegexp = /(?::([a-z]+))/
 
     # Returns the condition part for the key and value specified. The key is the
@@ -117,6 +117,7 @@ module ServerSide
 
     # Sets the default handler for incoming requests.
     def self.default_route(&block)
+      @@default_route = block
       define_method(:default_handler, &block)
       compile_rules
     end

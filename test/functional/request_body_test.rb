@@ -3,7 +3,7 @@ require 'net/http'
 
 $r = nil
 ServerSide::Router.route(:path => '/') {$r = self; send_response(200, 'text', 'OK')}
-t = Thread.new {ServerSide::HTTP::Server.new('0.0.0.0', 17651, ServerSide::Router)}
+t = Thread.new {ServerSide::HTTP::Server.new('0.0.0.0', 17651, ServerSide::Router).start}
 sleep 0.1
 
 class RequestBodyTest < Test::Unit::TestCase

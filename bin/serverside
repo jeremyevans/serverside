@@ -76,7 +76,7 @@ if $cmd == 'serve'
   puts "Serving at #{$cmd_config[:host]}:#{$cmd_config[:ports].begin}..."
   trap('INT') {exit}
   ServerSide::HTTP::Server.new($cmd_config[:host], $cmd_config[:ports].begin,
-    ServerSide::Router)
+    ServerSide::Router).start
 else
   ServerSide::Application.daemonize($cmd_config, $cmd)
 end

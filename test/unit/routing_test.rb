@@ -8,12 +8,9 @@ class ServerSide::Router
     @@rules
   end
   
-  def self.remove_rules
-    @@rules = nil
-  end
-  
-  def self.reset_rules
+  def self.reset
     @@rules = []
+    @@default_route = nil
   end
   
   def self.reset_respond
@@ -24,18 +21,16 @@ end
 class RoutingTest < Test::Unit::TestCase
   R = ServerSide::Router
   
-  def test_has_routes?
-    R.remove_rules
-    assert_nil R.has_routes?
-    R.reset_rules
-    assert_equal false, R.has_routes?
+  def test_routes_defined?
+    R.reset
+    assert_nil R.routes_defined?
     R.route('/controller/:action/:id') {}
-    assert_equal true, R.has_routes?
+    assert_equal true, R.routes_defined?
   end
   
   def test_route
     l1 = lambda {1 + 1}
-    R.reset_rules
+    R.reset
     R.route('/controller/:action/:id', &l1)
     assert_equal 1, R.rules.length
     assert_equal({:path => '/controller/:action/:id'}, R.rules[0][0])
@@ -63,7 +58,7 @@ class RoutingTest < Test::Unit::TestCase
   end
   
   def test_compile_rules
-    R.reset_rules
+    R.reset
     R.reset_respond
 
     assert_equal nil, R.new(StringIO.new).respond
@@ -157,7 +152,7 @@ class RoutingTest < Test::Unit::TestCase
   end
   
   def test_serverside_route
-    R.reset_rules
+    R.reset
     ServerSide::Router.route(:path => 'abc') {1 + 1}
     assert_equal 1, R.rules.length
     assert_equal({:path => 'abc'}, R.rules[0][0])

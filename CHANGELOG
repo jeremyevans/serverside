@@ -1,5 +1,15 @@
 ==SVN
 
+* Wrote Server spec.
+
+* Wrote Router spec.
+
+* Refactored HTTP::Server to allow creating instances without starting them.
+
+* Fixed Router.routes_defined? to return non-nil if default route is defined.
+
+* Renamed Router.has_routes? to routes_defined?.
+
 * Fixed Static.serve_template and Static.serve_static to work correctly (render templates.)
 
 * Removed deprecated code in Template.render.

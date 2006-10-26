@@ -15,7 +15,8 @@ module ServerSide
       daemon_class = Class.new(Daemon::Cluster) do
         meta_def(:pid_fn) {Daemon::WorkingDirectory/'serverside.pid'}
         meta_def(:server_loop) do |port|
-          ServerSide::HTTP::Server.new(config[:host], port, ServerSide::Router)
+          ServerSide::HTTP::Server.new(
+            config[:host], port, ServerSide::Router).start
         end
         meta_def(:ports) {config[:ports]}
       end
