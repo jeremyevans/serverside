@@ -1,5 +1,7 @@
 ==SVN
 
+* Wrote Static spec.
+
 * Fixed bug in serverside script - wrong call to route_default instead of default_route.
 
 * Refactored ServerSide::Template and wrote template spec.
