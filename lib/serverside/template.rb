@@ -39,17 +39,6 @@ module ServerSide
       else
         raise RuntimeError, 'Template not found.'
       end
-      t = @@templates[name]
-      return t[1].result(binding) if t && t[0].nil?
-      
-      if File.file?(name)
-        stamp = File.mtime(name)
-        t = set(name, IO.read(name), stamp) if (!t || (stamp != t[0]))
-        t[1].result(binding)
-      else
-        @@templates[name] = nil
-        raise RuntimeError, 'Template not found.'
-      end
     end
   end
 end

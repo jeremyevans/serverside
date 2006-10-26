@@ -81,6 +81,16 @@ context "ServerSide::Template.validate" do
     Template.templates['tmp'].first.should_equal File.mtime('tmp')
     FileUtils.rm('tmp')
   end
+  
+  specify "should return nil and clear the cache if a cached file has been deleted" do
+    Template.reset
+    IO.write('tmp', '1')
+    Template.validate('tmp').result(binding).should_equal '1'
+    Template.templates['tmp'].first.should_equal File.mtime('tmp')
+    FileUtils.rm('tmp')
+    Template.validate('tmp').should_be_nil
+    Template.templates['tmp'].should_be_nil
+  end
 end
 
 context "ServerSide::Template.render" do

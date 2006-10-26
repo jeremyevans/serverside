@@ -1,5 +1,9 @@
 ==SVN
 
+* Fixed Static.serve_template and Static.serve_static to work correctly (render templates.)
+
+* Removed deprecated code in Template.render.
+
 * Wrote Static spec.
 
 * Fixed bug in serverside script - wrong call to route_default instead of default_route.

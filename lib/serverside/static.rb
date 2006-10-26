@@ -48,7 +48,6 @@ module ServerSide
         send_response(200, @@mime_types[File.extname(fn)], content, stat.size)
       end
     rescue => e
-      puts e.message
       send_response(404, TEXT_PLAIN, 'Error reading file.')
     end
     
@@ -64,17 +63,13 @@ module ServerSide
     end
     
     def serve_template(fn, b = nil)
-      if (fn =~ RHTML) || (File.file?(fn = fn + '.rhtml'))
-        send_response(200, TEXT_HTML, Template.render(fn, b || binding))
-      end
+      send_response(200, TEXT_HTML, Template.render(fn, b || binding))
     end
     
     # Serves static files and directory listings.
     def serve_static(path)
       if File.file?(path)
-        serve_file(path)
-      elsif serve_template(path)
-        return
+        path =~ RHTML ? serve_template(path) : serve_file(path)
       elsif File.directory?(path)
         if File.file?(path/'index.html')
           serve_file(path/'index.html')

@@ -137,6 +137,57 @@ context "Static.serve_file" do
     resp.should_match /Cache-Control:\smax-age=#{ServerSide::HTTP::Caching::DEFAULT_MAX_AGE}\r\n/
     resp.should_match /Content-Length:\s#{stat.size.to_s}\r\n/
   end
+
+  specify "should serve a 404 response for invalid files" do
+    c = Dummy.new
+    c.socket = StringIO.new
+    c.serve_file('invalid_file.html')
+    c.socket.rewind
+    resp = c.socket.read
+    
+    resp.should_match /HTTP\/1.1\s404(.*)\r\n/
+  end
+end
+
+class IO
+  def self.write(fn, content)
+    File.open(fn, 'w') {|f| f << content}
+  end
+end
+
+class ServerSide::Template
+  def self.reset
+    @@templates = {}
+  end
+end
+
+
+context "Static.serve_template" do
+  specify "should render .rhtml file as template" do
+    IO.write('tmp.rhtml', '<%= @t %>')
+    @t = Time.now.to_s
+    c = Dummy.new
+    c.socket = StringIO.new
+    c.serve_template('tmp.rhtml', binding)
+    c.socket.rewind
+    resp = c.socket.read
+    resp.should.match /\r\n\r\n#{@t}$/
+    FileUtils.rm('tmp.rhtml')
+  end
+  
+  specify "should use its own binding when none is specified" do
+    Template.reset
+    IO.write('tmp.rhtml', '<%= @path %>')
+
+    c = Dummy.new
+    c.socket = StringIO.new
+    c.path = '/test/hey'
+    c.serve_template('tmp.rhtml')
+    c.socket.rewind
+    resp = c.socket.read
+    resp.should.match /\r\n\r\n\/test\/hey$/
+    FileUtils.rm('tmp.rhtml')
+  end
 end
 
 context "Static.serve_dir" do
@@ -179,7 +230,7 @@ context "Static.serve_static" do
   specify "should serve files" do
     c = Dummy.new
     c.socket = StringIO.new
-    c.serve_file(__FILE__)
+    c.serve_static(__FILE__)
     c.socket.rewind
     resp = c.socket.read
     
@@ -191,5 +242,31 @@ context "Static.serve_static" do
     resp.should_match /ETag:\s"#{etag}"\r\n/
     resp.should_match /Cache-Control:\smax-age=#{ServerSide::HTTP::Caching::DEFAULT_MAX_AGE}\r\n/
     resp.should_match /Content-Length:\s#{stat.size.to_s}\r\n/
+  end
+  
+  specify "should serve templates" do
+    Template.reset
+    IO.write('tmp.rhtml', '<%= 1 + 1%>')
+
+    c = Dummy.new
+    c.socket = StringIO.new
+    c.serve_static('tmp.rhtml')
+    c.socket.rewind
+    resp = c.socket.read
+    
+    resp.should_match /HTTP\/1.1\s200(.*)\r\n/
+    resp.should_match /\r\n\r\n2$/
+    
+    FileUtils.rm('tmp.rhtml')
+  end
+  
+  specify "should serve a 404 response for invalid files" do
+    c = Dummy.new
+    c.socket = StringIO.new
+    c.serve_static('invalid_file.html')
+    c.socket.rewind
+    resp = c.socket.read
+    
+    resp.should_match /HTTP\/1.1\s404(.*)\r\n/
   end
 end

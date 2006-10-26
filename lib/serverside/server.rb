@@ -12,7 +12,9 @@ module ServerSide
       # processing.
       def initialize(host, port, request_class)
         @server = TCPServer.new(host, port)
-        loop {Connection.new(@server.accept, request_class)}
+        while true
+          Connection.new(@server.accept, request_class)
+        end
       end
     end
   end
