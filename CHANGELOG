@@ -1,5 +1,7 @@
 ==SVN
 
+* Improved spec coverage for caching.
+
 * Wrote Server spec.
 
 * Wrote Router spec.

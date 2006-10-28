@@ -130,7 +130,6 @@ context "Router.rule_to_statement" do
     l4 = proc {}
     
     s = R.rule_to_statement({:path => '/controller', :host => 'static'}, l4)
-    p s
     s.should_match /^return\s#{l4.proc_tag}\sif\s\(.+\)&&\(.+\)\n$/
     s.should_match /\(@path\s=~\s([^\)]+)\)/
     s =~ /\(@path\s=~\s([^\)]+)\)/

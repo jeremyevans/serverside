@@ -165,7 +165,7 @@ end
 context "Static.serve_template" do
   specify "should render .rhtml file as template" do
     IO.write('tmp.rhtml', '<%= @t %>')
-    @t = Time.now.to_s
+    @t = Time.now.to_f
     c = Dummy.new
     c.socket = StringIO.new
     c.serve_template('tmp.rhtml', binding)
@@ -258,6 +258,45 @@ context "Static.serve_static" do
     resp.should_match /\r\n\r\n2$/
     
     FileUtils.rm('tmp.rhtml')
+  end
+  
+  specify "should serve index.html if exists in directory path" do
+    dir = File.dirname(__FILE__)/:tmp_dir
+    FileUtils.mkdir(dir) rescue nil
+    begin
+      IO.write(dir/'index.html', '<h1>HI</h1>')
+      c = Dummy.new
+      c.socket = StringIO.new
+      c.serve_static(dir)
+      c.socket.rewind
+      resp = c.socket.read
+    
+      resp.should_match /HTTP\/1.1\s200(.*)\r\n/
+      resp.should_match /\r\n\r\n<h1>HI<\/h1>$/
+      resp.should_match /Content-Type: text\/html/
+    ensure
+      FileUtils.rmtree(dir) rescue nil
+    end
+  end
+  
+  specify "should serve index.rhtml if exists in directory path" do
+    dir = File.dirname(__FILE__)/:tmp_dir
+    FileUtils.mkdir(dir) rescue puts "dir already exists"
+    begin
+      IO.write(dir/'index.rhtml', '<h1><%= @path %></h1>')
+      c = Dummy.new
+      c.socket = StringIO.new
+      c.path = dir
+      c.serve_static(dir)
+      c.socket.rewind
+      resp = c.socket.read
+    
+      resp.should_match /HTTP\/1.1\s200(.*)\r\n/
+      resp.should_match /\r\n\r\n<h1>#{dir}<\/h1>$/
+      resp.should_match /Content-Type: text\/html/
+    ensure
+      FileUtils.rmtree(dir) rescue nil
+    end
   end
   
   specify "should serve a 404 response for invalid files" do
