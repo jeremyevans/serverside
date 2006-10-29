@@ -66,7 +66,7 @@ module ServerSide
           end
         }.join('&&')
       end
-      "return #{proc_tag} if #{cond}\n"
+      "if #{cond} && (r = #{proc_tag}); return r; end\n"
     end
 
     # Pattern for finding parameters inside patterns. Parameters are parts 

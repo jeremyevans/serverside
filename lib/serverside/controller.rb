@@ -62,11 +62,14 @@ end
 
 __END__
 
-require 'rubygems'
-require 'active_support/inflector'
-require 'metaid'
+class String
+  def underscore
+    gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').gsub(/([a-z\d])([A-Z])/,'\1_\2').
+      tr("-", "_").downcase
+  end
+end
 
-class ActionController
+class ServerSide::ActionController < ServerSide::Controller
   def self.default_routing_rule
     if name.split('::').last =~ /(.+)Controller$/
       controller = Inflector.underscore($1) 

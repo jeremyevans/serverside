@@ -1,5 +1,9 @@
 ==SVN
 
+* Removed unit tests that were converted to specs.
+
+* Router now excepts handlers to return non-nil if the request was handled. Otherwise, the request goes to the next handler with an appropriate rule.
+
 * Improved spec coverage for caching.
 
 * Wrote Server spec.

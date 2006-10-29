@@ -2,7 +2,7 @@ require File.join(File.dirname(__FILE__), '../../lib/serverside')
 require 'stringio'
 
 class ServerSide::Router
-  attr_accessor :t, :parameters
+  attr_accessor :t, :parameters, :path
   
   def self.rules
     @@rules
@@ -96,7 +96,7 @@ context "Router.compile_rules" do
     R.rules << [{:t => 'abc'}, proc{:abc}]
     R.rules << [{:t => 'def'}, proc{:def}]
     R.default_route {:default}
-    R.compile_rules
+    # R.compile_rules - already called by default_route
     r = R.new(StringIO.new)
     r.t = 'abc'
     r.respond.should_equal :abc
@@ -105,13 +105,28 @@ context "Router.compile_rules" do
     r.t = ''
     r.respond.should_equal :default
   end
+  
+  specify "should allow handlers to give up on a request, and then pass it on." do
+    R.reset
+    R.default_route {:default}
+    R.new(StringIO.new).respond.should_equal :default
+    R.route('.*') {@path == '/first' ? :first : nil}
+    R.route('.*') {@path == '/second' ? :second : nil}
+    r = R.new(StringIO.new)
+    r.path = '/second'
+    r.respond.should_equal :second
+    r.path = '/first'
+    r.respond.should_equal :first
+    r.path = '/other'
+    r.respond.should_equal :default
+  end
 end
 
 context "Router.rule_to_statement" do
   specify "should define procs as methods and construct a test expression" do
     l1 = proc {}
     l2 = proc {}
-    R.rule_to_statement(l1, l2).should_equal "return #{l2.proc_tag} if #{l1.proc_tag}\n"
+    R.rule_to_statement(l1, l2).should_equal "if #{l1.proc_tag} && (r = #{l2.proc_tag}); return r; end\n"
     r = R.new(StringIO.new)
     r.should_respond_to l1.proc_tag
     r.should_respond_to l2.proc_tag
@@ -120,7 +135,7 @@ context "Router.rule_to_statement" do
   specify "should convert hash rule with single key-value to a test expression" do
     l3 = proc {}
     s = R.rule_to_statement({:path => '/.*'}, l3)
-    (s =~ /^return\s#{l3.proc_tag}\sif\s\(@path\s=~\s(.*)\)\n$/).should_not_be_nil
+    s =~ /^if \(@path =~ ([^\(]*)\)/
     eval("R::#{$1}").should_equal /\/.*/
     r = R.new(StringIO.new)
     r.should_respond_to l3.proc_tag
@@ -130,7 +145,6 @@ context "Router.rule_to_statement" do
     l4 = proc {}
     
     s = R.rule_to_statement({:path => '/controller', :host => 'static'}, l4)
-    s.should_match /^return\s#{l4.proc_tag}\sif\s\(.+\)&&\(.+\)\n$/
     s.should_match /\(@path\s=~\s([^\)]+)\)/
     s =~ /\(@path\s=~\s([^\)]+)\)/
     eval("R::#{$1}").should_equal /\/controller/
@@ -144,8 +158,7 @@ context "Router.rule_to_statement" do
   specify "should convert hash with Array value to a test expression" do
     l5 = proc {}
     s = R.rule_to_statement({:path => ['/x', '/y']}, l5)
-    s.should_match /^return\s#{l5.proc_tag}\sif\s\(\(@path\s=~\s(.*)\)\|\|\(@path\s=~\s(.*)\)\)\n$/
-    s =~ /^return\s#{l5.proc_tag}\sif\s\(\(@path\s=~\s(.*)\)\|\|\(@path\s=~\s(.*)\)\)\n$/
+    s =~ /^if\s\(\(@path\s=~\s([^\)]*)\)\|\|\(@path\s=~\s([^\)]*)\)\)/
     eval("R::#{$1}").should_equal /\/x/
     eval("R::#{$2}").should_equal /\/y/
     r = R.new(StringIO.new)
