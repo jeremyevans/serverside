@@ -4,15 +4,16 @@ module ServerSide
   module HTTP
     # This module implements HTTP cache negotiation with a client.
     module Caching
+      LAST_MODIFIED = "Last-Modified".freeze
       ETAG = 'ETag'.freeze
+      EXPIRES = 'Expires'.freeze
       CACHE_CONTROL = 'Cache-Control'.freeze
       DEFAULT_MAX_AGE = (86400 * 30).freeze
       IF_NONE_MATCH = 'If-None-Match'.freeze
       ETAG_WILDCARD = '*'.freeze
       IF_MODIFIED_SINCE = 'If-Modified-Since'.freeze
-      LAST_MODIFIED = "Last-Modified".freeze
-      NOT_MODIFIED_CLOSE = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nConnection: close\r\nLast-Modified: %s\r\nETag: \"%s\"\r\nCache-Control: max-age=%d\r\n\r\n".freeze
-      NOT_MODIFIED_PERSIST = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nLast-Modified: %s\r\nETag: \"%s\"\r\nCache-Control: max-age=%d\r\n\r\n".freeze
+      NOT_MODIFIED_CLOSE = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nConnection: close\r\nLast-Modified: %s\r\nETag: \"%s\"\r\nExpires: %s\r\nCache-Control: %s\r\n\r\n".freeze
+      NOT_MODIFIED_PERSIST = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nLast-Modified: %s\r\nETag: \"%s\"\r\nExpires: %s\r\nCache-Control: %s\r\n\r\n".freeze
       MAX_AGE = 'max-age=%d'.freeze
       IF_NONE_MATCH_REGEXP = /^"?([^"]+)"?$/.freeze
 
@@ -54,23 +55,31 @@ module ServerSide
       #   validate_cache("1234-5678", Time.now, 360) do
       #     send_response(200, "text/html", body)
       #   end
-      def validate_cache(etag, stamp, max_age = DEFAULT_MAX_AGE, &block)
+      def validate_cache(etag, stamp, max_age = DEFAULT_MAX_AGE, 
+        cache_control = :public, &block)
         http_stamp = stamp.httpdate
         if valid_client_cache?(etag, http_stamp)
-          send_not_modified(etag, http_stamp, max_age)
+          send_not_modified(etag, stamp, max_age, cache_control)
         else
           @response_headers[ETAG] = "\"#{etag}\""
           @response_headers[LAST_MODIFIED] = http_stamp
-          @response_headers[CACHE_CONTROL] = MAX_AGE % max_age
+          @response_headers[EXPIRES] = MAX_AGE % max_age
+          @response_headers[CACHE_CONTROL] = cache_control
           block.call
         end
       end
 
       # Sends a 304 HTTP response, along with etag and stamp validators, and a
       # Cache-Control header.
-      def send_not_modified(etag, http_time, max_age = DEFAULT_MAX_AGE)
+      def send_not_modified(etag, stamp, max_age = DEFAULT_MAX_AGE, cache_control = :public)
         @socket << ((@persistent ? NOT_MODIFIED_PERSIST : NOT_MODIFIED_CLOSE) % 
-          [Time.now.httpdate, http_time, etag, max_age])
+          [
+            Time.now.httpdate, 
+            stamp, 
+            etag, 
+            (stamp + max_age).httpdate,
+            cache_control
+          ])
       end
     end
   end

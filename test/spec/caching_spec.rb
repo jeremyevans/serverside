@@ -13,7 +13,7 @@ class DummyRequest < Request
 end
 
 context "Caching::validate_cache" do
-  specify "should set etag and last-modified response headers" do
+  specify "should set etag, last-modified and expires response headers" do
     r = DummyRequest.new
     t = Time.now
     r.validate_cache('aaaa', t) {
@@ -63,7 +63,22 @@ context "Caching::send_not_modified" do
     resp.should_match /^HTTP\/1.1\s304 Not Modified\r\n/
     resp.should_match /ETag:\s"dddd"\r\n/
     resp.should_match /Last-Modified:\s#{t.httpdate}\r\n/
-    resp.should_match /Cache-Control:\smax-age=240\r\n/
+    resp.should_match /Expires: #{(t + 240).httpdate}\r\n/
+  end
+  
+  specify "should include an appropriate cache-control header" do
+    r = DummyRequest.new
+    t = Time.now
+    r.send_not_modified('dddd', t.httpdate, 240, :public)
+    r.socket.rewind
+    resp = r.socket.read
+    resp.should_match /Cache-Control: public\r\n/
+
+    r.socket.rewind
+    r.send_not_modified('dddd', t.httpdate, 240, :private)
+    r.socket.rewind
+    resp = r.socket.read
+    resp.should_match /Cache-Control: private\r\n/
   end
 end
 
