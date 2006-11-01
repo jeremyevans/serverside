@@ -4,22 +4,38 @@ module ServerSide
   module HTTP
     # This module implements HTTP cache negotiation with a client.
     module Caching
-      LAST_MODIFIED = "Last-Modified".freeze
+      # HTTP headers
       ETAG = 'ETag'.freeze
+      LAST_MODIFIED = 'Last-Modified'.freeze
       EXPIRES = 'Expires'.freeze
       CACHE_CONTROL = 'Cache-Control'.freeze
-      DEFAULT_MAX_AGE = (86400 * 30).freeze
+      VARY = 'Vary'.freeze
+      
       IF_NONE_MATCH = 'If-None-Match'.freeze
-      ETAG_WILDCARD = '*'.freeze
-      IF_MODIFIED_SINCE = 'If-Modified-Since'.freeze
-      NOT_MODIFIED_CLOSE = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nConnection: close\r\nLast-Modified: %s\r\nETag: \"%s\"\r\nExpires: %s\r\nCache-Control: %s\r\n\r\n".freeze
-      NOT_MODIFIED_PERSIST = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nLast-Modified: %s\r\nETag: \"%s\"\r\nExpires: %s\r\nCache-Control: %s\r\n\r\n".freeze
-      MAX_AGE = 'max-age=%d'.freeze
+      IF_MODIFIED_SINCE = 'Id-Modified-Since'.freeze
+      WILDCARD = '*'.freeze
+      
+      # Header values
+      NO_CACHE = 'no-cache'.freeze
       IF_NONE_MATCH_REGEXP = /^"?([^"]+)"?$/.freeze
-
-      # Returns an array containing all etags specified by the client in the
-      # If-None-Match header.
-      def cache_etags
+  
+      # expiry etag
+      ETAG_EXPIRY_REGEXP = /(\d+)-(\d+)/.freeze
+      ETAG_EXPIRY_FORMAT = "%d-%d".freeze
+    
+      # 304 formats
+      NOT_MODIFIED_CLOSE = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nConnection: close\r\nContent-Length: 0r\n\r\n".freeze
+      NOT_MODIFIED_PERSIST = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nContent-Length: 0\r\n\r\n".freeze
+      
+      def disable_caching
+        @response_headers[CACHE_CONTROL] = NO_CACHE
+        @response_headers.delete(ETAG)
+        @response_headers.delete(LAST_MODIFIED)
+        @response_headers.delete(EXPIRES)
+        @response_headers.delete(VARY)
+      end
+    
+      def etag_validators
         h = @headers[IF_NONE_MATCH]
         return [] unless h
         h.split(',').inject([]) do |m, i|
@@ -27,62 +43,49 @@ module ServerSide
         end
       end
       
-      # Returns the cache stamp specified by the client in the 
-      # If-Modified-Since header. If no stamp is specified, returns nil.
-      def cache_stamp
-        (h = @headers[IF_MODIFIED_SINCE]) ? Time.httpdate(h) : nil
-      rescue
+      def valid_etag?(etag = nil)
+        if etag
+          etag_validators.each {|e| return true if e == etag || e == WILDCARD}
+        else
+          etag_validators.each do |e|
+            if e =~ EXPIRY_ETAG_REGEXP
+              return true if Time.at($2) < Time.now
+            end
+          end
+        end
         nil
       end
-
-      # Checks the request headers for validators and returns true if the
-      # client cache is valid. The validators can be either etags (specified
-      # in the If-None-Match header), or a modification stamp (specified in the
-      # If-Modified-Since header.)
-      def valid_client_cache?(etag, http_stamp)
-        none_match = @headers[IF_NONE_MATCH]
-        modified_since = @headers[IF_MODIFIED_SINCE]
-        (none_match && (none_match =~ /\*|"#{etag}"/)) ||
-          (modified_since && (modified_since == http_stamp))
+      
+      def expiry_etag(stamp, max_age)
+        EXPIRY_ETAG_FORMAT % [stamp.to_i, (stamp + max_age).to_i]
       end
       
-      # Validates the client cache by checking any supplied validators in the
-      # request. If the client cache is not valid, the specified block is
-      # executed. This method also makes sure the correct validators are 
-      # included in the response - along with a Cache-Control header, to allow
-      # the client to cache the response. A possible usage:
-      # 
-      #   validate_cache("1234-5678", Time.now, 360) do
-      #     send_response(200, "text/html", body)
-      #   end
-      def validate_cache(etag, stamp, max_age = DEFAULT_MAX_AGE, 
-        cache_control = :public, &block)
-        http_stamp = stamp.httpdate
-        if valid_client_cache?(etag, http_stamp)
-          send_not_modified(etag, stamp, max_age, cache_control)
-        else
-          @response_headers[ETAG] = "\"#{etag}\""
-          @response_headers[LAST_MODIFIED] = http_stamp
-          @response_headers[EXPIRES] = MAX_AGE % max_age
-          @response_headers[CACHE_CONTROL] = cache_control
-          block.call
+      def valid_stamp?(stamp)
+        if modified_since = @headers[IF_MODIFIED_SINCE]
+          modified_since == stamp.httpdate
         end
       end
-
-      # Sends a 304 HTTP response, along with etag and stamp validators, and a
-      # Cache-Control header.
-      def send_not_modified(etag, stamp, max_age = DEFAULT_MAX_AGE, cache_control = :public)
-        @socket << ((@persistent ? NOT_MODIFIED_PERSIST : NOT_MODIFIED_CLOSE) % 
-          [
-            Time.now.httpdate, 
-            stamp, 
-            etag, 
-            (stamp + max_age).httpdate,
-            cache_control
-          ])
+      
+      def validate_cache(stamp, max_age, etag = nil, 
+        cache_control = nil, vary = nil, &block)
+        
+        if valid_etag?(etag) || valid_stamp?(stamp)
+          send_not_modified_response
+          true
+        else
+          @response_headers[ETAG] = "\"#{etag || expiry_etag(stamp, max_age)}\""
+          @response_headers[LAST_MODIFIED] = stamp.httpdate
+          @response_headers[EXPIRES] = (stamp + max_age).httpdate
+          @response_headers[CACHE_CONTROL] = cache_control if cache_control
+          @response_headers[VARY] = vary if vary
+          block ? block.call : nil
+        end
+      end
+      
+      def send_not_modified_response
+        @socket << ((@persistent ? NOT_MODIFIED_PERSIST : NOT_MODIFIED_CLOSE) %
+          Time.now.httpdate)
       end
     end
   end
 end
-
-__END__

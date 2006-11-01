@@ -12,6 +12,98 @@ class DummyRequest < Request
   end
 end
 
+context "Caching#disable_caching" do
+  specify "should set the Cache-Control header to no-cache" do
+    r = DummyRequest.new
+    r.response_headers['Cache-Control'].should_be_nil
+    r.disable_caching
+    r.response_headers['Cache-Control'].should_equal 'no-cache'
+  end
+  
+  specify "should remove all other cache-related headers" do
+    r = DummyRequest.new
+    r.response_headers['ETag'] = 'something'
+    r.response_headers['Vary'] = 'something'
+    r.response_headers['Expires'] = 'something'
+    r.response_headers['Last-Modified'] = 'something'
+    r.disable_caching
+    r.response_headers['ETag'].should_be_nil
+    r.response_headers['Vary'].should_be_nil
+    r.response_headers['Expires'].should_be_nil
+    r.response_headers['Last-Modified'].should_be_nil
+  end
+end
+
+context "Caching#etag_validators" do
+  specify "should return an empty array if no validators are present" do
+    r = DummyRequest.new
+    r.etag_validators.should_equal []    
+  end
+  
+  specify "should return an array containing all etag validators" do
+    r = DummyRequest.new
+    r.headers['If-None-Match'] = '"aaa-bbb"'
+    r.etag_validators.should_equal ['aaa-bbb']
+
+    r.headers['If-None-Match'] = '"aaa-bbb", "ccc-ddd"'
+    r.etag_validators.should_equal ['aaa-bbb', 'ccc-ddd']
+  end
+  
+  specify "should handle etags with and without quotes" do
+    r = DummyRequest.new
+    r.headers['If-None-Match'] = 'aaa-bbb'
+    r.etag_validators.should_equal ['aaa-bbb']
+
+    r.headers['If-None-Match'] = 'aaa-bbb, "ccc-ddd"'
+    r.etag_validators.should_equal ['aaa-bbb', 'ccc-ddd']
+  end
+  
+  specify "should handle a wildcard validator" do
+    r = DummyRequest.new
+    r.headers['If-None-Match'] = '*'
+    r.etag_validators.should_equal ['*']
+  end
+end
+
+context "Caching#valid_etag?" do
+  specify "should return nil if no validator matches the specified etag" do
+    r = DummyRequest.new
+    r.valid_etag?('xxx-yyy').should_be_nil
+    
+    r.headers['If-None-Match'] = 'xx-yy, aaa-bbb'
+    r.valid_etag?('xxx-yyy').should_be_nil
+  end
+
+  specify "should return true if a validator matches the specifed etag" do
+    r = DummyRequest.new
+    
+    r.headers['If-None-Match'] = 'xxx-yyy'
+    r.valid_etag?('xxx-yyy').should_be true
+    
+    r.headers['If-None-Match'] = '"xxx-yyy"'
+    r.valid_etag?('xxx-yyy').should_be true
+    
+    r.headers['If-None-Match'] = 'aaa-bbb, xxx-yyy'
+    r.valid_etag?('xxx-yyy').should_be true
+
+    r.headers['If-None-Match'] = 'xxx-yyy, aaa-bbb'
+    r.valid_etag?('xxx-yyy').should_be true
+  end
+  
+  specify "should return true if a wildcard is included in If-None-Match" do
+    r = DummyRequest.new
+    
+    r.headers['If-None-Match'] = '*'
+    r.valid_etag?('xxx-yyy').should_be true
+    
+    r.headers['If-None-Match'] = 'aaa-bbb, *'
+    r.valid_etag?('xxx-yyy').should_be true
+  end
+end
+
+__END__
+
+
 context "Caching::validate_cache" do
   specify "should set etag, last-modified and expires response headers" do
     r = DummyRequest.new
