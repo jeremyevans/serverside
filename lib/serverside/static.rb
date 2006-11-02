@@ -6,10 +6,11 @@ module ServerSide
   module Static
     include HTTP::Caching
     
-    ETAG_FORMAT = '%x:%x:%x'.inspect.freeze
+    ETAG_FORMAT = '%x:%x:%x'.freeze
     TEXT_PLAIN = 'text/plain'.freeze
     TEXT_HTML = 'text/html'.freeze
     MAX_CACHE_FILE_SIZE = 100000.freeze # 100KB for the moment
+    MAX_AGE = 86400 # one day
     
     DIR_LISTING_START = '<html><head><title>Directory Listing for %s</title></head><body><h2>Directory listing for %s:</h2>'.freeze
     DIR_LISTING = '<a href="%s">%s</a><br/>'.freeze
@@ -38,7 +39,7 @@ module ServerSide
     def serve_file(fn)
       stat = File.stat(fn)
       etag = (ETAG_FORMAT % [stat.mtime.to_i, stat.size, stat.ino]).freeze
-      validate_cache(etag, stat.mtime) do
+      validate_cache(stat.mtime, MAX_AGE, etag) do
         if @@static_files[fn] && (@@static_files[fn][0] == etag)
           content = @@static_files[fn][1]
         else

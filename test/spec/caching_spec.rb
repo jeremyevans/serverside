@@ -3,7 +3,7 @@ require 'stringio'
 include ServerSide::HTTP
 
 class DummyRequest < Request
-  attr_accessor :socket
+  attr_accessor :socket, :persistent
   include Caching
   
   def initialize
@@ -101,146 +101,218 @@ context "Caching#valid_etag?" do
   end
 end
 
-__END__
-
-
-context "Caching::validate_cache" do
-  specify "should set etag, last-modified and expires response headers" do
+context "Caching#valid_etag? in expiry etag mode (no etag specified)" do
+  specify "should return nil if no etag validator is included" do
     r = DummyRequest.new
-    t = Time.now
-    r.validate_cache('aaaa', t) {
-      r.send_response(200, 'text/plain', 'hi', nil, {'F' => 1})
-    }
-    r.socket.rewind
-    resp = r.socket.read
+    r.valid_etag?.should_be_nil
+  end
+  
+  specify "should return true if If-None-Match includes a wildcard" do
+    r = DummyRequest.new
     
-    resp.should_match /ETag:\s"aaaa"\r\n/
-    resp.should_match /Last-Modified:\s#{t.httpdate}\r\n/
-    resp.should_match /F:\s1\r\n/
-  end
-  
-  specify "should send not modified response if client includes a suitable validator" do
-    r = DummyRequest.new
-    t = Time.now
-    r.headers['If-None-Match'] = '"bbbb"'
-    r.validate_cache('bbbb', t) {raise "This should not be called"}
-    r.socket.rewind
-    resp = r.socket.read
-
-    resp.should_match /^HTTP\/1.1\s304 Not Modified\r\n/
-    resp.should_match /ETag:\s"bbbb"\r\n/
-    resp.should_match /Last-Modified:\s#{t.httpdate}\r\n/
-
-    r = DummyRequest.new
-    t = Time.now
-    r.headers['If-Modified-Since'] = t.httpdate
-    r.validate_cache('cccc', t) {raise "This should not be called"}
-    r.socket.rewind
-    resp = r.socket.read
-
-    resp.should_match /^HTTP\/1.1\s304 Not Modified\r\n/
-    resp.should_match /ETag:\s"cccc"\r\n/
-    resp.should_match /Last-Modified:\s#{t.httpdate}\r\n/
-  end
-end
-
-context "Caching::send_not_modified" do
-  specify "should send back a valid 304 response with headers" do
-    r = DummyRequest.new
-    t = Time.now
-    r.send_not_modified('dddd', t.httpdate, 240)
-    r.socket.rewind
-    resp = r.socket.read
-
-    resp.should_match /^HTTP\/1.1\s304 Not Modified\r\n/
-    resp.should_match /ETag:\s"dddd"\r\n/
-    resp.should_match /Last-Modified:\s#{t.httpdate}\r\n/
-    resp.should_match /Expires: #{(t + 240).httpdate}\r\n/
-  end
-  
-  specify "should include an appropriate cache-control header" do
-    r = DummyRequest.new
-    t = Time.now
-    r.send_not_modified('dddd', t.httpdate, 240, :public)
-    r.socket.rewind
-    resp = r.socket.read
-    resp.should_match /Cache-Control: public\r\n/
-
-    r.socket.rewind
-    r.send_not_modified('dddd', t.httpdate, 240, :private)
-    r.socket.rewind
-    resp = r.socket.read
-    resp.should_match /Cache-Control: private\r\n/
-  end
-end
-
-context "Caching::valid_client_cache?" do
-  specify "should check if-none-match validator for etag" do
-    r = DummyRequest.new
-    t = Time.now
-    r.valid_client_cache?('eeee', t).should_be_nil
-    r.headers['If-None-Match'] = '"abc"'
-    r.valid_client_cache?('eeee', t).should_be_nil
-    r.headers['If-None-Match'] = '"eeee"'
-    r.valid_client_cache?('eeee', t).should_not_be_nil
-    r.headers['If-None-Match'] = '"aaa", "bbb", "ccc"'
-    r.valid_client_cache?('eeee', t).should_be_nil
-    r.headers['If-None-Match'] = '"aaa", "eeee", "ccc"'
-    r.valid_client_cache?('eeee', t).should_not_be_nil
-  end
-  
-  specify "should check if-none-match validator for wildcard" do
-    r = DummyRequest.new
     r.headers['If-None-Match'] = '*'
-    r.valid_client_cache?('eeee', nil).should_not_be_nil
-    r.headers['If-None-Match'] = '*, "aaaa"'
-    r.valid_client_cache?('eeee', nil).should_not_be_nil
+    r.valid_etag?.should_be true
   end
   
-  specify "should check if-modified-since validator for etag" do
+  specify "should ignore validators not formatted as expiry etags" do
+    r = DummyRequest.new
+    
+    r.headers['If-None-Match'] = 'abcd'
+    r.valid_etag?.should_be_nil
+
+    r.headers['If-None-Match'] = 'xxx-yyy, zzz-zzz'
+    r.valid_etag?.should_be_nil
+  end
+  
+  specify "should parse expiry etags and check the expiration stamp" do
     r = DummyRequest.new
     t = Time.now
-    r.headers['If-Modified-Since'] = (t-1).httpdate
-    r.valid_client_cache?('eeee', t.httpdate).should_be false
-    r.headers['If-Modified-Since'] = t.httpdate
-    r.valid_client_cache?('eeee', t.httpdate).should_not_be false
+    fmt = Caching::EXPIRY_ETAG_FORMAT
+    
+    r.headers['If-None-Match'] = fmt % [t.to_i, (t - 20).to_i]
+    r.valid_etag?.should_be_nil
+
+    r.headers['If-None-Match'] = fmt % [t.to_i, (t + 20).to_i]
+    r.valid_etag?.should_be true
+    
+    r.headers['If-None-Match'] = "xxx-yyy, #{fmt % [t.to_i, (t + 20).to_i]}, #{fmt % [t.to_i, (t - 20).to_i]}"
+    r.valid_etag?.should_be true
   end
 end
 
-context "Caching::cache_etags" do
-  specify "should return an empty array if no If-None-Match header is included" do
+context "Caching#expiry_etag" do
+  specify "should return an expiry etag with the stamp and expiration time" do
     r = DummyRequest.new
-    r.cache_etags.should_be_a_kind_of Array
-    r.cache_etags.should_equal []
-  end
-  
-  specify "should return all etags included in the If-None-Match header" do
-    r = DummyRequest.new
-    r.headers['If-None-Match'] = '*'
-    r.cache_etags.should_equal ['*']
-    r.headers['If-None-Match'] = '*, "XXX-YYY","AAA-BBB"'
-    r.cache_etags.should_equal ['*', 'XXX-YYY', 'AAA-BBB']
-    r.headers['If-None-Match'] = '"abcd-EFGH"'
-    r.cache_etags.should_equal ['abcd-EFGH']
+    
+    t = Time.now
+    fmt = Caching::EXPIRY_ETAG_FORMAT
+    max_age = 54321
+    
+    r.expiry_etag(t, max_age).should_equal(fmt % [t.to_i, (t + max_age).to_i]) 
   end
 end
 
-context "Caching::cache_stamps" do
+context "Caching#valid_stamp?" do
   specify "should return nil if no If-Modified-Since header is included" do
     r = DummyRequest.new
-    r.cache_stamp.should_be_nil
+    r.valid_stamp?(Time.now).should_be_nil
   end
   
-  specify "should return nil if no an invalid stamp is specified" do
+  specify "should return nil if the If-Modified-Since header is different than the specified stamp" do
+    t = Time.now
     r = DummyRequest.new
-    r.headers['If-Modified-Since'] = 'invalid stamp'
-    r.cache_stamp.should_be_nil
+    r.headers['If-Modified-Since'] = t.httpdate
+    r.valid_stamp?(t + 1).should_be_nil
+    r.valid_stamp?(t - 1).should_be_nil
   end
   
-  specify "should return the stamp specified in the If-Modified-Since header" do
+  specify "should return true if the If-Modified-Since header matches the specified stamp" do
+    t = Time.now
+    r = DummyRequest.new
+    r.headers['If-Modified-Since'] = t.httpdate
+    r.valid_stamp?(t).should_be true
+  end
+end
+
+context "Caching#validate_cache" do
+  specify "should return nil if no validators are present" do
+    r = DummyRequest.new
+    r.validate_cache(Time.now, 360).should_be_nil
+  end
+  
+  specify "should check for a stamp validator" do
+    r = DummyRequest.new
+    t = Time.now
+    
+    r.headers['If-Modified-Since'] = t.httpdate
+    r.validate_cache(t + 1, 360).should_be_nil 
+    r.validate_cache(t - 1, 360).should_be_nil
+    r.validate_cache(t, 360).should_be true
+  end
+  
+  specify "should check for an etag validator" do
+    r = DummyRequest.new
+    t = Time.now
+    etag = 'abcdef'
+
+    r.validate_cache(t, 360, etag).should_be_nil
+    r.headers['If-None-Match'] = 'aaa-bbb'
+    r.validate_cache(t, 360, etag).should_be_nil
+    r.headers['If-None-Match'] = "aaa-bbb, #{etag}"
+    r.validate_cache(t, 360, etag).should_be true
+    r.headers['If-None-Match'] = '*'
+    r.validate_cache(t, 360, etag).should_be true
+  end
+  
+  specify "should check for an expiry etag validator if etag is unspecified" do
+    r = DummyRequest.new
+    t = Time.now
+    fmt = Caching::EXPIRY_ETAG_FORMAT
+    
+    r.headers['If-None-Match'] = 'aaa-bbb'
+    r.validate_cache(t, 360).should_be_nil
+    r.headers['If-None-Match'] = "aaa-bbb, #{fmt % [t.to_i, (t + 20).to_i]}"
+    r.validate_cache(t, 360).should_be true
+    r.headers['If-None-Match'] = '*'
+    r.validate_cache(t, 360).should_be true
+  end
+
+  specify "should set the response headers with caching info if request did not validate" do
+    r = DummyRequest.new
+    t = Time.now
+    r.validate_cache(t, 360, 'aaa-bbb', :public, 'Cookie')
+    r.response_headers['ETag'].should_equal '"aaa-bbb"'
+    r.response_headers['Last-Modified'].should_equal t.httpdate
+    r.response_headers['Expires'].should_equal((t + 360).httpdate)
+    r.response_headers['Cache-Control'].should_equal :public
+    r.response_headers['Vary'].should_equal 'Cookie'
+  end
+  
+  specify "should set an expiry etag if no etag is specified" do
+    r = DummyRequest.new
+    t = Time.now
+    fmt = Caching::EXPIRY_ETAG_FORMAT
+    r.validate_cache(t, 360)
+    r.response_headers['ETag'].should_equal(
+      "\"#{fmt % [t.to_i, (t + 360).to_i]}\"")
+  end
+  
+  specify "should send a 304 response if the cache validates" do
+    r = DummyRequest.new
+    t = Time.now
+    fmt = Caching::EXPIRY_ETAG_FORMAT
+    
+    r.headers['If-None-Match'] = "aaa-bbb, #{fmt % [t.to_i, (t + 20).to_i]}"
+    r.validate_cache(t, 360).should_be true
+    r.socket.rewind
+    resp = r.socket.read
+    resp.should_match /^HTTP\/1.1 304 Not Modified\r\n/
+
+    r = DummyRequest.new
+    t = Time.now
+    
+    r.headers['If-Modified-Since'] = t.httpdate
+    r.validate_cache(t, 360).should_be true
+    r.socket.rewind
+    resp = r.socket.read
+    resp.should_match /^HTTP\/1.1 304 Not Modified\r\n/
+  end
+  
+  specify "should not send anything if the cache doesn't validate" do
+    r = DummyRequest.new
+    t = Time.now
+    
+    r.validate_cache(t, 360).should_be_nil
+    r.socket.rewind
+    resp = r.socket.read
+    resp.should_be_empty
+  end
+  
+  specify "should not execute the given block if the cache validates" do
     r = DummyRequest.new
     t = Time.now
     r.headers['If-Modified-Since'] = t.httpdate
-    r.cache_stamp.to_i.should_equal t.to_i
+    proc {r.validate_cache(t, 360) {raise}}.should_not_raise
+  end
+  
+  specify "should return the result of the given block if the cache doesn't validate" do
+    x = nil
+    l = proc {x = :executed}
+    
+    r = DummyRequest.new
+    t = Time.now
+    r.validate_cache(t, 360, &l).should_equal :executed
+    x.should_equal :executed
   end
 end
+
+context "Caching#send_not_modified_response" do
+  specify "should render a 304 response" do
+    r = DummyRequest.new
+    r.send_not_modified_response
+    r.socket.rewind
+    resp = r.socket.read
+    resp.should_match /^HTTP\/1.1 304 Not Modified\r\n/
+    resp.should_match /Content-Length: 0\r\n/
+    resp.should_match /\r\n\r\n$/ # empty response body
+  end
+  
+  specify "should exclude Connection header if persistent" do
+    r = DummyRequest.new
+    r.persistent = true
+    r.send_not_modified_response
+    r.socket.rewind
+    resp = r.socket.read
+    resp.should_not_match /Connection: close\r\n/
+  end
+  
+  specify "should include Connection header if persistent" do
+    r = DummyRequest.new
+    r.persistent = false
+    r.send_not_modified_response
+    r.socket.rewind
+    resp = r.socket.read
+    resp.should_match /Connection: close\r\n/
+  end
+end
+

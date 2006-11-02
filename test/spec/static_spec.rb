@@ -74,7 +74,6 @@ context "Static.serve_file" do
     etag = (ServerSide::Static::ETAG_FORMAT % 
       [stat.mtime.to_i, stat.size, stat.ino])
     resp.should_match /ETag:\s"#{etag}"\r\n/
-    resp.should_match /Cache-Control:\smax-age=#{ServerSide::HTTP::Caching::DEFAULT_MAX_AGE}\r\n/
     resp.should_match /Content-Length:\s#{stat.size.to_s}\r\n/
   end
   
@@ -93,13 +92,12 @@ context "Static.serve_file" do
     
     resp.should_match /HTTP\/1.1\s200(.*)\r\n/
     resp.should_match /ETag:\s"#{etag}"\r\n/
-    resp.should_match /Cache-Control:\smax-age=#{ServerSide::HTTP::Caching::DEFAULT_MAX_AGE}\r\n/
     resp.should_match /Content-Length:\s#{stat.size.to_s}\r\n/
       
     # normal response (invalid etag)
     c = Dummy.new
     c.socket = StringIO.new
-    c.headers[ServerSide::Static::IF_NONE_MATCH] = "\"xxx-yyy\""
+    c.headers['If-None-Match'] = "\"xxx-yyy\""
     Dummy.static_files.clear
     c.serve_file(__FILE__)
     c.socket.rewind
@@ -107,24 +105,22 @@ context "Static.serve_file" do
     
     resp.should_match /HTTP\/1.1\s200(.*)\r\n/
     resp.should_match /ETag:\s"#{etag}"\r\n/
-    resp.should_match /Cache-Control:\smax-age=#{ServerSide::HTTP::Caching::DEFAULT_MAX_AGE}\r\n/
     resp.should_match /Content-Length:\s#{stat.size.to_s}\r\n/
     
     # not modified (etag specified)
     c.socket = StringIO.new
-    c.headers[ServerSide::Static::IF_NONE_MATCH] = "\"#{etag}\""
+    c.headers['If-None-Match'] = "\"#{etag}\""
+    c.valid_etag?(etag).should_be true
     c.serve_file(__FILE__)
     c.socket.rewind
     resp = c.socket.read
 
     resp.should_match /HTTP\/1.1\s304(.*)\r\n/
-    resp.should_match /ETag:\s"#{etag}"\r\n/
-    resp.should_match /Cache-Control:\smax-age=#{ServerSide::HTTP::Caching::DEFAULT_MAX_AGE}\r\n/
 
     # modified response (file stamp changed)
     FileUtils.touch(__FILE__)
     c.socket = StringIO.new
-    c.headers[ServerSide::Static::IF_NONE_MATCH] = etag
+    c.headers['If-None-Match'] = etag
     c.serve_file(__FILE__)
     c.socket.rewind
     resp = c.socket.read
@@ -134,7 +130,6 @@ context "Static.serve_file" do
     etag = (ServerSide::Static::ETAG_FORMAT % 
       [stat.mtime.to_i, stat.size, stat.ino])
     resp.should_match /ETag:\s"#{etag}"\r\n/
-    resp.should_match /Cache-Control:\smax-age=#{ServerSide::HTTP::Caching::DEFAULT_MAX_AGE}\r\n/
     resp.should_match /Content-Length:\s#{stat.size.to_s}\r\n/
   end
 
@@ -240,7 +235,6 @@ context "Static.serve_static" do
     etag = (ServerSide::Static::ETAG_FORMAT % 
       [stat.mtime.to_i, stat.size, stat.ino])
     resp.should_match /ETag:\s"#{etag}"\r\n/
-    resp.should_match /Cache-Control:\smax-age=#{ServerSide::HTTP::Caching::DEFAULT_MAX_AGE}\r\n/
     resp.should_match /Content-Length:\s#{stat.size.to_s}\r\n/
   end
   

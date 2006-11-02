@@ -12,19 +12,20 @@ module ServerSide
       VARY = 'Vary'.freeze
       
       IF_NONE_MATCH = 'If-None-Match'.freeze
-      IF_MODIFIED_SINCE = 'Id-Modified-Since'.freeze
+      IF_MODIFIED_SINCE = 'If-Modified-Since'.freeze
       WILDCARD = '*'.freeze
       
       # Header values
       NO_CACHE = 'no-cache'.freeze
       IF_NONE_MATCH_REGEXP = /^"?([^"]+)"?$/.freeze
   
-      # expiry etag
-      ETAG_EXPIRY_REGEXP = /(\d+)-(\d+)/.freeze
-      ETAG_EXPIRY_FORMAT = "%d-%d".freeze
+      # etags
+      EXPIRY_ETAG_REGEXP = /(\d+)-(\d+)/.freeze
+      EXPIRY_ETAG_FORMAT = "%d-%d".freeze
+      ETAG_QUOTE_FORMAT = '"%s"'.freeze
     
       # 304 formats
-      NOT_MODIFIED_CLOSE = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nConnection: close\r\nContent-Length: 0r\n\r\n".freeze
+      NOT_MODIFIED_CLOSE = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nConnection: close\r\nContent-Length: 0\r\n\r\n".freeze
       NOT_MODIFIED_PERSIST = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nContent-Length: 0\r\n\r\n".freeze
       
       def disable_caching
@@ -48,9 +49,8 @@ module ServerSide
           etag_validators.each {|e| return true if e == etag || e == WILDCARD}
         else
           etag_validators.each do |e|
-            if e =~ EXPIRY_ETAG_REGEXP
-              return true if Time.at($2) < Time.now
-            end
+            return true if e == WILDCARD ||
+              ((e =~ EXPIRY_ETAG_REGEXP) && (Time.at($2.to_i) > Time.now))
           end
         end
         nil
@@ -61,9 +61,8 @@ module ServerSide
       end
       
       def valid_stamp?(stamp)
-        if modified_since = @headers[IF_MODIFIED_SINCE]
-          modified_since == stamp.httpdate
-        end
+        return true if (modified_since = @headers[IF_MODIFIED_SINCE]) &&
+          (modified_since == stamp.httpdate)
       end
       
       def validate_cache(stamp, max_age, etag = nil, 
@@ -73,7 +72,8 @@ module ServerSide
           send_not_modified_response
           true
         else
-          @response_headers[ETAG] = "\"#{etag || expiry_etag(stamp, max_age)}\""
+          @response_headers[ETAG] = ETAG_QUOTE_FORMAT %
+            [etag || expiry_etag(stamp, max_age)]
           @response_headers[LAST_MODIFIED] = stamp.httpdate
           @response_headers[EXPIRES] = (stamp + max_age).httpdate
           @response_headers[CACHE_CONTROL] = cache_control if cache_control
