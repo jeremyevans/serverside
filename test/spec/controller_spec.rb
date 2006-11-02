@@ -70,10 +70,10 @@ end
 require 'metaid'
 
 class DummyController < ServerSide::Controller
-  attr_reader :process_called
+  attr_reader :response_called
   
-  def process
-    @process_called = true
+  def response
+    @response_called = true
   end
   
   def render_default
@@ -92,10 +92,10 @@ context "ServerSide::Controller new instance" do
     c.parameters.should_be req.parameters
   end
   
-  specify "should invoke the process method" do
+  specify "should invoke the response method" do
     req = ServerSide::HTTP::Request.new(StringIO.new)
     c = DummyController.new(req)
-    c.process_called.should_be true
+    c.response_called.should_be true
   end
   
   specify "should invoke render_default unless @rendered" do
@@ -104,7 +104,7 @@ context "ServerSide::Controller new instance" do
     c.rendered.should_be :default
     
     c_class = Class.new(DummyController) do
-      define_method(:process) {@rendered = true}
+      define_method(:response) {@rendered = true}
     end
     c = c_class.new(req)
     c.rendered.should_be true
@@ -138,3 +138,5 @@ context "ServerSide::Controller.render" do
     c.rendered.should_equal true
   end
 end
+
+

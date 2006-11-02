@@ -1,5 +1,7 @@
 ==SVN
 
+* Renamed ServerSide::Controller.process to response. 
+
 * Improved HTTP caching code to better conform to the HTTP spec. Also improved the validate_cache method to work without a block as well.
 
 * Removed unit tests that were converted to specs.

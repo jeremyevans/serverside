@@ -10,7 +10,7 @@ module ServerSide
     # subclassed. For example:
     #
     #   class MyController < ServerSide::Controller.mount('/ohmy')
-    #     def process
+    #     def response
     #       render('Hi there!', 'text/plain')
     #     end
     #   end
@@ -33,18 +33,18 @@ module ServerSide
     
     # Initialize a new controller instance. Sets @request to the request object
     # and copies both the request path and parameters to instance variables.
-    # After calling process, this method checks whether a response has been sent
+    # After calling response, this method checks whether a response has been sent
     # (rendered), and if not, invokes the render_default method. 
     def initialize(request)
       @request = request
       @path = request.path
       @parameters = request.parameters
-      process
+      response
       render_default if not @rendered
     end
     
-    # Processes the request. This method should be overriden.
-    def process
+    # Renders the response. This method should be overriden.
+    def response
     end
     
     # Sends a default response.
