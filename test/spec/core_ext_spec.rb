@@ -20,6 +20,11 @@ context "String" do
     ('/hello/'/'there').should_equal '/hello/there'
     ('touch'/'/me/'/'hold'/'/me').should_equal 'touch/me/hold/me'
   end
+  
+  specify ".underscore should turn camel-cased phrases to underscored ones" do
+    'CamelCase'.underscore.should_equal 'camel_case'
+    'Content-Type'.underscore.should_equal 'content_type'
+  end
 end
 
 # Symbol extensions

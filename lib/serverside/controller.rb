@@ -62,18 +62,11 @@ end
 
 __END__
 
-class String
-  def underscore
-    gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').gsub(/([a-z\d])([A-Z])/,'\1_\2').
-      tr("-", "_").downcase
-  end
-end
-
 class ServerSide::ActionController < ServerSide::Controller
   def self.default_routing_rule
     if name.split('::').last =~ /(.+)Controller$/
       controller = Inflector.underscore($1) 
-      {:path => ["/#{controller}/:action", "/#{controller}/:action/:id"]}
+      {:path => ["/#{controller}", "/#{controller}/:action", "/#{controller}/:action/:id"]}
     end
   end
 
