@@ -1,5 +1,9 @@
 ==SVN
 
+* Changed rake spec task to do coverage as well.
+
+* Renamed controller.rb to controllers.rb.
+
 * Added String.underscore method.
 
 * Renamed ServerSide::Controller.process to response. 

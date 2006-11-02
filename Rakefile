@@ -87,11 +87,6 @@ Rake::TestTask.new('test_functional') do |t|
   t.verbose = true
 end
 
-desc 'Run specification tests'
-task :spec do
-  sh %{spec test/spec/*_spec.rb}
-end
-
 desc 'Run rcov'
 task :rcov do
   sh %{rcov test/unit/*_test.rb test/functional/*_test.rb}
@@ -112,8 +107,8 @@ end
 
 require 'spec/rake/spectask'
 
-desc "Run specs RCov"
-Spec::Rake::SpecTask.new('specs_with_rcov') do |t|
+desc "Run specs with coverage"
+Spec::Rake::SpecTask.new('spec') do |t|
   t.spec_files = FileList['test/spec/*_spec.rb']
   t.rcov = true
 end
@@ -122,7 +117,7 @@ require 'spec/rake/rcov_verify'
 
 RCov::VerifyTask.new(:rcov_verify => :rcov) do |t|
   t.threshold = 95.4 # Make sure you have rcov 0.7 or higher!
-  t.index_html = 'doc/output/coverage/index.html'
+  t.index_html = 'coverage/index.html'
 end
 
 ##############################################################################
