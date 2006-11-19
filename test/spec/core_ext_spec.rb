@@ -4,26 +4,26 @@ require File.join(File.dirname(__FILE__), '../../lib/serverside')
 
 context "String" do
   specify "should have URI escaping functionality" do
-    'a b c'.uri_escape.should_equal 'a+b+c'
-    'a/b#1@6%8K'.uri_escape.should_equal 'a%2Fb%231%406%258K'
+    'a b c'.uri_escape.should == 'a+b+c'
+    'a/b#1@6%8K'.uri_escape.should == 'a%2Fb%231%406%258K'
   end
   
   specify "should have URI unescaping functionality" do
-    'a%20b%20c'.uri_unescape.should_equal 'a b c'
-    'a%2Fb%231%406%258K'.uri_unescape.should_equal 'a/b#1@6%8K'
+    'a%20b%20c'.uri_unescape.should == 'a b c'
+    'a%2Fb%231%406%258K'.uri_unescape.should == 'a/b#1@6%8K'
     s = 'b!-=&*%aAåabéfak{}":,m"\'Mbac( 12313t awerqwe)'
-    s.uri_escape.uri_unescape.should_equal s
+    s.uri_escape.uri_unescape.should == s
   end
 
   specify "should have a / operator for joining paths." do
-    ('abc'/'def').should_equal 'abc/def'
-    ('/hello/'/'there').should_equal '/hello/there'
-    ('touch'/'/me/'/'hold'/'/me').should_equal 'touch/me/hold/me'
+    ('abc'/'def').should == 'abc/def'
+    ('/hello/'/'there').should == '/hello/there'
+    ('touch'/'/me/'/'hold'/'/me').should == 'touch/me/hold/me'
   end
   
   specify ".underscore should turn camel-cased phrases to underscored ones" do
-    'CamelCase'.underscore.should_equal 'camel_case'
-    'Content-Type'.underscore.should_equal 'content_type'
+    'CamelCase'.underscore.should == 'camel_case'
+    'Content-Type'.underscore.should == 'content_type'
   end
 end
 
@@ -35,15 +35,15 @@ end
 
 context "Symbol.to_s" do
   specify "should convert the symbol to a string" do
-    :abc_def.to_s.should_equal 'abc_def'
+    :abc_def.to_s.should == 'abc_def'
     :def_ghi.to_s.should_be_instance_of String
-    :ghi_jkl.to_s.should_equal :ghi_jkl.id2name
+    :ghi_jkl.to_s.should == :ghi_jkl.id2name
   end
   
   specify "should cache the id2name value" do
     :kwantz_mit_krantz._to_s.should_be_nil
     :kwantz_mit_krantz.to_s
-    :kwantz_mit_krantz._to_s.should_equal :kwantz_mit_krantz.id2name
+    :kwantz_mit_krantz._to_s.should == :kwantz_mit_krantz.id2name
   end
   
   specify "should always return the same cached value" do
@@ -62,11 +62,11 @@ context "Proc.proc_tag" do
   end
  
   specify "should return the same tag always" do
-    @l1.proc_tag.should_equal @l1.proc_tag
+    @l1.proc_tag.should == @l1.proc_tag
   end
   
   specify "should return the object id in base 36 prefixed with 'proc_'" do
-    @l1.proc_tag.should_equal 'proc_' + @l1.object_id.to_s(36).sub('-', '_')
+    @l1.proc_tag.should == 'proc_' + @l1.object_id.to_s(36).sub('-', '_')
   end
 end
 
@@ -81,12 +81,12 @@ context "Object.const_tag" do
   end
   
   specify "should return the same tag always" do
-    @o1.const_tag.should_equal @o1.const_tag
-    @o2.const_tag.should_equal @o2.const_tag
+    @o1.const_tag.should == @o1.const_tag
+    @o2.const_tag.should == @o2.const_tag
   end
   
   specify "should return the object id in base 36 (upcase) prefixed with 'C'" do
-    @o1.const_tag.should_equal 'C' + @o1.object_id.to_s(36).upcase.sub('-', '_')
-    @o2.const_tag.should_equal 'C' + @o2.object_id.to_s(36).upcase.sub('-', '_')
+    @o1.const_tag.should == 'C' + @o1.object_id.to_s(36).upcase.sub('-', '_')
+    @o2.const_tag.should == 'C' + @o2.object_id.to_s(36).upcase.sub('-', '_')
   end
 end

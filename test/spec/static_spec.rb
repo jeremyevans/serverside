@@ -34,8 +34,8 @@ context "Static.static_files" do
     stat = File.stat(__FILE__)
     etag = (ServerSide::Static::ETAG_FORMAT % 
       [stat.mtime.to_i, stat.size, stat.ino])
-    cache[0].should_equal etag
-    cache[1].should_equal IO.read(__FILE__)
+    cache[0].should == etag
+    cache[1].should == IO.read(__FILE__)
   end
 end
 
@@ -45,18 +45,18 @@ context "Static.mime_types" do
   end
   
   specify "should return text/plain as the default mime type" do
-    Dummy.mime_types['.rb'].should_equal 'text/plain'
-    Dummy.mime_types['.invalid'].should_equal 'text/plain'
+    Dummy.mime_types['.rb'].should == 'text/plain'
+    Dummy.mime_types['.invalid'].should == 'text/plain'
   end
   
   specify "should return the correct mime type for common files" do
-    Dummy.mime_types['.html'].should_equal 'text/html' 
-    Dummy.mime_types['.css'].should_equal 'text/css' 
-    Dummy.mime_types['.js'].should_equal 'text/javascript' 
-    Dummy.mime_types['.gif'].should_equal 'image/gif' 
-    Dummy.mime_types['.jpg'].should_equal 'image/jpeg' 
-    Dummy.mime_types['.jpeg'].should_equal 'image/jpeg' 
-    Dummy.mime_types['.png'].should_equal 'image/png'
+    Dummy.mime_types['.html'].should == 'text/html' 
+    Dummy.mime_types['.css'].should == 'text/css' 
+    Dummy.mime_types['.js'].should == 'text/javascript' 
+    Dummy.mime_types['.gif'].should == 'image/gif' 
+    Dummy.mime_types['.jpg'].should == 'image/jpeg' 
+    Dummy.mime_types['.jpeg'].should == 'image/jpeg' 
+    Dummy.mime_types['.png'].should == 'image/png'
   end
 end
 

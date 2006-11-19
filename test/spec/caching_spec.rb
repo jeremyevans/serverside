@@ -17,7 +17,7 @@ context "Caching#disable_caching" do
     r = DummyRequest.new
     r.response_headers['Cache-Control'].should_be_nil
     r.disable_caching
-    r.response_headers['Cache-Control'].should_equal 'no-cache'
+    r.response_headers['Cache-Control'].should == 'no-cache'
   end
   
   specify "should remove all other cache-related headers" do
@@ -37,31 +37,31 @@ end
 context "Caching#etag_validators" do
   specify "should return an empty array if no validators are present" do
     r = DummyRequest.new
-    r.etag_validators.should_equal []    
+    r.etag_validators.should == []    
   end
   
   specify "should return an array containing all etag validators" do
     r = DummyRequest.new
     r.headers['If-None-Match'] = '"aaa-bbb"'
-    r.etag_validators.should_equal ['aaa-bbb']
+    r.etag_validators.should == ['aaa-bbb']
 
     r.headers['If-None-Match'] = '"aaa-bbb", "ccc-ddd"'
-    r.etag_validators.should_equal ['aaa-bbb', 'ccc-ddd']
+    r.etag_validators.should == ['aaa-bbb', 'ccc-ddd']
   end
   
   specify "should handle etags with and without quotes" do
     r = DummyRequest.new
     r.headers['If-None-Match'] = 'aaa-bbb'
-    r.etag_validators.should_equal ['aaa-bbb']
+    r.etag_validators.should == ['aaa-bbb']
 
     r.headers['If-None-Match'] = 'aaa-bbb, "ccc-ddd"'
-    r.etag_validators.should_equal ['aaa-bbb', 'ccc-ddd']
+    r.etag_validators.should == ['aaa-bbb', 'ccc-ddd']
   end
   
   specify "should handle a wildcard validator" do
     r = DummyRequest.new
     r.headers['If-None-Match'] = '*'
-    r.etag_validators.should_equal ['*']
+    r.etag_validators.should == ['*']
   end
 end
 
@@ -148,7 +148,7 @@ context "Caching#expiry_etag" do
     fmt = Caching::EXPIRY_ETAG_FORMAT
     max_age = 54321
     
-    r.expiry_etag(t, max_age).should_equal(fmt % [t.to_i, (t + max_age).to_i]) 
+    r.expiry_etag(t, max_age).should == (fmt % [t.to_i, (t + max_age).to_i]) 
   end
 end
 
@@ -221,11 +221,11 @@ context "Caching#validate_cache" do
     r = DummyRequest.new
     t = Time.now
     r.validate_cache(t, 360, 'aaa-bbb', :public, 'Cookie')
-    r.response_headers['ETag'].should_equal '"aaa-bbb"'
-    r.response_headers['Last-Modified'].should_equal t.httpdate
-    r.response_headers['Expires'].should_equal((t + 360).httpdate)
-    r.response_headers['Cache-Control'].should_equal :public
-    r.response_headers['Vary'].should_equal 'Cookie'
+    r.response_headers['ETag'].should == '"aaa-bbb"'
+    r.response_headers['Last-Modified'].should == t.httpdate
+    r.response_headers['Expires'].should == ((t + 360).httpdate)
+    r.response_headers['Cache-Control'].should == :public
+    r.response_headers['Vary'].should == 'Cookie'
   end
   
   specify "should set an expiry etag if no etag is specified" do
@@ -233,7 +233,7 @@ context "Caching#validate_cache" do
     t = Time.now
     fmt = Caching::EXPIRY_ETAG_FORMAT
     r.validate_cache(t, 360)
-    r.response_headers['ETag'].should_equal(
+    r.response_headers['ETag'].should == (
       "\"#{fmt % [t.to_i, (t + 360).to_i]}\"")
   end
   
@@ -281,8 +281,8 @@ context "Caching#validate_cache" do
     
     r = DummyRequest.new
     t = Time.now
-    r.validate_cache(t, 360, &l).should_equal :executed
-    x.should_equal :executed
+    r.validate_cache(t, 360, &l).should == :executed
+    x.should == :executed
   end
 end
 

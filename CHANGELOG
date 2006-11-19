@@ -1,5 +1,7 @@
 ==SVN
 
+* Updated specs to work with RSpec 0.7.
+
 * Changed rake spec task to do coverage as well.
 
 * Renamed controller.rb to controllers.rb.

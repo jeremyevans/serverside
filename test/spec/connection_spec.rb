@@ -49,11 +49,11 @@ context "Connection.initialize" do
     $pause_request = true
     c = Connection.new(DummySocket.new, DummyRequest1)
     c.thread.should_be_an_instance_of Thread
-    c.thread.alive?.should_equal true
-    DummyRequest1.instance_count.should_equal 1
+    c.thread.alive?.should == true
+    DummyRequest1.instance_count.should == 1
     $pause_request = false
     sleep 0.1 while c.thread.alive?
-    DummyRequest1.instance_count.should_equal 1000
+    DummyRequest1.instance_count.should == 1000
   end
 end
 

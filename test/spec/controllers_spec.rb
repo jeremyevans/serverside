@@ -30,7 +30,7 @@ context "ServerSide::Controller.mount" do
     c = ServerSide::Controller.mount(rule)
     sub_class = Class.new(c)
     r = ServerSide::Router.rules.first
-    r.first.should_equal rule
+    r.first.should == rule
     r.last.should_be_a_kind_of Proc
     c.module_eval do
       define_method(:initialize) {|req| $req = req}
@@ -135,7 +135,7 @@ context "ServerSide::Controller.render" do
     req = ServerSide::HTTP::Request.new(StringIO.new)
     c = ServerSide::Controller.new(req)
     c.render('hello world', 'text/plain')
-    c.rendered.should_equal true
+    c.rendered.should == true
   end
 end
 

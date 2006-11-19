@@ -34,7 +34,7 @@ context "HTTP::Server" do
     s = nil
     proc {s = TCPSocket.new('localhost', 17863)}.should_not_raise
     sleep 0.2
-    $http_connection_created.should_equal true
+    $http_connection_created.should == true
     server.listener.close
   end
 end

@@ -113,12 +113,12 @@ Spec::Rake::SpecTask.new('spec') do |t|
   t.rcov = true
 end
 
-require 'spec/rake/rcov_verify'
+#require 'spec/rake/rcov_verify'
 
-RCov::VerifyTask.new(:rcov_verify => :rcov) do |t|
-  t.threshold = 95.4 # Make sure you have rcov 0.7 or higher!
-  t.index_html = 'coverage/index.html'
-end
+#RCov::VerifyTask.new(:rcov_verify => :rcov) do |t|
+#  t.threshold = 95.4 # Make sure you have rcov 0.7 or higher!
+#  t.index_html = 'coverage/index.html'
+#end
 
 ##############################################################################
 # Statistics
