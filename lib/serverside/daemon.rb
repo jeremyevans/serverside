@@ -24,6 +24,10 @@ module Daemon
     rescue
       raise 'Pid not found. Is the daemon started?'
     end
+    
+    def self.remove(daemon)
+      FileUtils.rm(daemon.pid_fn) if File.file?(daemon.pid_fn)
+    end
   end
   
   # Controls a daemon according to the supplied command or command-line 
@@ -57,11 +61,17 @@ module Daemon
       daemon.start
     end
   end
-
+  
   # Stops the daemon by sending it a TERM signal.
   def self.stop(daemon)
     pid = PidFile.recall(daemon)
-    FileUtils.rm(daemon.pid_fn)
+    PidFile.remove(daemon)
     pid && Process.kill("TERM", pid)
+  end
+
+  def self.alive?(daemon)
+    pid = PidFile.recall(daemon) rescue nil
+    return nil if !pid
+    `ps #{pid}` =~ /#{pid}/ ? true : nil
   end
 end

@@ -1,5 +1,7 @@
 ==SVN
 
+* Converted daemon_test to daemon_spec.
+
 * Updated specs to work with RSpec 0.7.
 
 * Changed rake spec task to do coverage as well.

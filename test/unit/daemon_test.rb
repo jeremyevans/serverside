@@ -48,13 +48,12 @@ class DaemonTest < Test::Unit::TestCase
     FileUtils.rm(TestDaemon.result_fn) rescue nil
     Daemon.control(TestDaemon, :start)
     sleep 0.2
-    assert_equal true, File.file?(TestDaemon.pid_fn)
+    File.file?(TestDaemon.pid_fn).should == true
     sleep 0.5
-    assert_nothing_raised {Daemon::PidFile.recall(TestDaemon)}
+    proc {Daemon::PidFile.recall(TestDaemon)}.should_not_raise
     Daemon.control(TestDaemon, :stop)
     sleep 0.5
-    assert_equal true, File.file?(TestDaemon.result_fn)
-    FileUtils.rm(TestDaemon.result_fn) rescue nil
+    File.file?(TestDaemon.result_fn).should == true
   end
   
   def test_restart
