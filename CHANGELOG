@@ -1,5 +1,7 @@
 ==SVN
 
+* Converted cluster_test to cluster_spec.
+
 * Converted daemon_test to daemon_spec.
 
 * Updated specs to work with RSpec 0.7.

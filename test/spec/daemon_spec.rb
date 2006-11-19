@@ -1,5 +1,4 @@
 require File.join(File.dirname(__FILE__), '../../lib/serverside')
-require 'fileutils'
 
 class TestDaemon < Daemon::Base
   def self.start
@@ -75,8 +74,7 @@ context "Daemon.control" do
     Daemon.control(TestDaemon, :stop)
     sleep 0.2
     Daemon.alive?(TestDaemon).should_be_nil
-    File.file?(TestDaemon.result_fn).should == true
-    Daemon::PidFile.remove(TestDaemon)
+    File.file?(TestDaemon.result_fn).should == false
   end
   
   specify "should restart the daemon" do
