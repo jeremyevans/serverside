@@ -1,4 +1,6 @@
-require File.join(File.dirname(__FILE__), '../../lib/serverside')
+require File.join(File.dirname(__FILE__), '../lib/serverside')
+
+__END__
 
 context "Daemon::Cluster::PidFile" do
   setup do
@@ -42,7 +44,7 @@ class DummyCluster < Daemon::Cluster
   
   def self.server_loop(port)
     at_exit {File.open(FN, 'a') {|f| f.puts port}}
-    loop {sleep 60}
+    loop {sleep 10}
   end
   
   def self.ports

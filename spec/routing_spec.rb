@@ -1,4 +1,4 @@
-require File.join(File.dirname(__FILE__), '../../lib/serverside')
+require File.join(File.dirname(__FILE__), '../lib/serverside')
 require 'stringio'
 
 class ServerSide::Router

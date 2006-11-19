@@ -2,7 +2,6 @@ require 'rake'
 require 'rake/clean'
 require 'rake/gempackagetask'
 require 'rake/rdoctask'
-require 'rake/testtask'
 require 'fileutils'
 include FileUtils
 
@@ -47,7 +46,7 @@ spec = Gem::Specification.new do |s|
   s.add_dependency('metaid')
   s.required_ruby_version = '>= 1.8.2'
 
-  s.files = %w(COPYING README Rakefile) + Dir.glob("{bin,doc,test,lib}/**/*") 
+  s.files = %w(COPYING README Rakefile) + Dir.glob("{bin,doc,spec,lib}/**/*") 
       
   s.require_path = "lib"
   s.bindir = "bin"
@@ -73,43 +72,11 @@ task :doc_rforge do
   sh %{scp -r doc/* ciconia@rubyforge.org:/var/www/gforge-projects/serverside}
 end
 
-desc 'Run unit tests'
-Rake::TestTask.new('test_unit') do |t|
-  t.libs << 'test'
-  t.pattern = 'test/unit/*_test.rb'
-  t.verbose = true
-end
-
-desc 'Run functional tests'
-Rake::TestTask.new('test_functional') do |t|
-  t.libs << 'test'
-  t.pattern = 'test/functional/*_test.rb'
-  t.verbose = true
-end
-
-desc 'Run rcov'
-task :rcov do
-  sh %{rcov test/unit/*_test.rb test/functional/*_test.rb}
-end
-
-desc 'Run all tests'
-Rake::TestTask.new('test') do |t|
-  t.libs << 'test'
-  t.pattern = 'test/**/*_test.rb'
-  t.verbose = true
-end
-
-desc 'Run all tests, specs and finish with rcov'
-task :aok do
-  sh %{rake rcov}
-  sh %{rake spec}
-end
-
 require 'spec/rake/spectask'
 
 desc "Run specs with coverage"
 Spec::Rake::SpecTask.new('spec') do |t|
-  t.spec_files = FileList['test/spec/*_spec.rb']
+  t.spec_files = FileList['spec/*_spec.rb']
   t.rcov = true
 end
 
@@ -126,9 +93,7 @@ end
 
 STATS_DIRECTORIES = [
   %w(Code                 lib/),
-  %w(Unit\ tests          test/unit),
-  %w(Functional\ tests    test/functional),
-  %w(Specification\ tests test/spec)
+  %w(Specification\ tests spec)
 ].collect { |name, dir| [ name, "./#{dir}" ] }.select { |name, dir| File.directory?(dir) }
 
 desc "Report code statistics (KLOCs, etc) from the application"
