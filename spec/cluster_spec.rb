@@ -1,5 +1,7 @@
 require File.join(File.dirname(__FILE__), '../lib/serverside')
 
+__END__
+
 context "Daemon::Cluster::PidFile" do
   setup do
     @fn = Daemon::Cluster::PidFile::FN

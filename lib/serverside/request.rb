@@ -123,15 +123,16 @@ module ServerSide
           @parameters.merge! parse_parameters(@body)
         elsif @content_type =~ MULTIPART_REGEXP
           boundary = "--#$1"
-          @body.split(/(?:\r?\n|\A)#{Regexp::quote(boundary)}(?:--)?\r\n/m).each do |pt|
+          r = /(?:\r?\n|\A)#{Regexp::quote("--#$1")}(?:--)?\r\n/m
+          @body.split(r).each do |pt|
             headers, payload = pt.split("\r\n\r\n", 2)
             atts = {}
             if headers =~ CONTENT_DISPOSITION_REGEXP
-              $1.split(';').map {|part|
+              $1.split(';').map do |part|
                 if part =~ FIELD_ATTRIBUTE_REGEXP
                   atts[$1.to_sym] = $2
                 end
-              }
+              end
             end
             if headers =~ CONTENT_TYPE_REGEXP
               atts[:type] = $1
