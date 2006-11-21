@@ -30,8 +30,6 @@ module ServerSide
       '.png'.freeze => 'image/png'.freeze
     })
     
-    @@static_files = {}
-    
     # Serves a file over HTTP. The file is cached in memory for later retrieval.
     # If the If-None-Match header is included with an ETag, it is checked
     # against the file's current ETag. If there's a match, a 304 response is
@@ -40,13 +38,8 @@ module ServerSide
       stat = File.stat(fn)
       etag = (ETAG_FORMAT % [stat.mtime.to_i, stat.size, stat.ino]).freeze
       validate_cache(stat.mtime, MAX_AGE, etag) do
-        if @@static_files[fn] && (@@static_files[fn][0] == etag)
-          content = @@static_files[fn][1]
-        else
-          content = IO.read(fn).freeze
-          @@static_files[fn] = [etag.freeze, content]
-        end
-        send_response(200, @@mime_types[File.extname(fn)], content, stat.size)
+        send_response(200, @@mime_types[File.extname(fn)], IO.read(fn), 
+          stat.size)
       end
     rescue => e
       send_response(404, TEXT_PLAIN, 'Error reading file.')

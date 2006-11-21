@@ -1,5 +1,7 @@
 ==SVN
 
+* Removed static file cache from Static.
+
 * Fixed daemon_spec to work correctly.
 
 * Removed all tests, moved specs to /spec, and fixed rakefile.

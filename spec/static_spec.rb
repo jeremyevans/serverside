@@ -3,10 +3,6 @@ require 'stringio'
 require 'fileutils'
 
 class Dummy < ServerSide::HTTP::Request
-  def self.static_files
-    @@static_files
-  end
-  
   def self.mime_types
     @@mime_types
   end
@@ -20,24 +16,6 @@ class Dummy < ServerSide::HTTP::Request
 end
 
 include ServerSide
-
-context "Static.static_files" do
-  specify "Should cache served files, along with their etag" do
-    Dummy.static_files.should_be_a_kind_of Hash
-    Dummy.static_files.clear
-    c = Dummy.new
-    c.socket = StringIO.new
-    Dummy.static_files[__FILE__].should_be_nil
-    c.serve_file(__FILE__)
-    cache = Dummy.static_files[__FILE__]
-    cache.should_not_be_nil
-    stat = File.stat(__FILE__)
-    etag = (ServerSide::Static::ETAG_FORMAT % 
-      [stat.mtime.to_i, stat.size, stat.ino])
-    cache[0].should == etag
-    cache[1].should == IO.read(__FILE__)
-  end
-end
 
 context "Static.mime_types" do
   specify "should be a hash" do
@@ -85,7 +63,6 @@ context "Static.serve_file" do
     # normal response
     c = Dummy.new
     c.socket = StringIO.new
-    Dummy.static_files.clear
     c.serve_file(__FILE__)
     c.socket.rewind
     resp = c.socket.read
@@ -98,7 +75,6 @@ context "Static.serve_file" do
     c = Dummy.new
     c.socket = StringIO.new
     c.headers['If-None-Match'] = "\"xxx-yyy\""
-    Dummy.static_files.clear
     c.serve_file(__FILE__)
     c.socket.rewind
     resp = c.socket.read
@@ -191,7 +167,6 @@ context "Static.serve_dir" do
   
     c = Dummy.new
     c.socket = StringIO.new
-    Dummy.static_files.clear
     c.path = dir
     c.serve_dir(dir)
     c.socket.rewind
@@ -210,7 +185,6 @@ context "Static.serve_static" do
   
     c = Dummy.new
     c.socket = StringIO.new
-    Dummy.static_files.clear
     c.path = dir
     c.serve_static(dir)
     c.socket.rewind
