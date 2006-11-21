@@ -1,5 +1,7 @@
 ==SVN
 
+* Fixed daemon_spec to work correctly.
+
 * Removed all tests, moved specs to /spec, and fixed rakefile.
 
 * Converted cluster_test to cluster_spec.

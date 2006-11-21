@@ -80,14 +80,17 @@ context "Daemon.control" do
   specify "should restart the daemon" do
     Daemon::PidFile.remove(TestDaemon)
     Daemon.control(TestDaemon, :start)
-    sleep 0.5
-    pid1 = Daemon::PidFile.recall(TestDaemon)
-    Daemon.control(TestDaemon, :restart)
-    sleep 0.5
-    pid2 = Daemon::PidFile.recall(TestDaemon)
-    pid1.should_not == pid2
-    Daemon.control(TestDaemon, :stop)
-    Daemon::PidFile.remove(TestDaemon)
+    begin
+      sleep 0.5
+      pid1 = Daemon::PidFile.recall(TestDaemon)
+      Daemon.control(TestDaemon, :restart)
+      sleep 1
+      pid2 = Daemon::PidFile.recall(TestDaemon)
+      pid1.should_not == pid2
+    ensure
+      Daemon.control(TestDaemon, :stop)
+      Daemon::PidFile.remove(TestDaemon)
+    end
   end
   
   specify "should raise RuntimeError for invalid command" do
