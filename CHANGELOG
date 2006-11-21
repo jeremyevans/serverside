@@ -1,4 +1,4 @@
-==SVN
+==0.3.0
 
 * Disabled cluster_spec and parts of daemon_spec for now due to strange forking behavior.
 
