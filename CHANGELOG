@@ -1,4 +1,10 @@
-==0.3.0
+*0.3.1*
+
+* Removed application.rb file and fixed serverside script.
+
+* Fixed bug in Caching.validate_stamp where the expiry stamp would be the file stamp + max_age - leading to stale resources.
+
+*0.3.0*
 
 * Disabled cluster_spec and parts of daemon_spec for now due to strange forking behavior.
 
@@ -20,13 +26,13 @@
 
 * Added String.underscore method.
 
-* Renamed ServerSide::Controller.process to response. 
+* Renamed ServerSide::Controller.process to response.
 
 * Improved HTTP caching code to better conform to the HTTP spec. Also improved the validate_cache method to work without a block as well.
 
 * Removed unit tests that were converted to specs.
 
-* Router now excepts handlers to return non-nil if the request was handled. Otherwise, the request goes to the next handler with an appropriate rule.
+* Router now expects handlers to return non-nil if the request was handled. Otherwise, the request goes to the next handler with an appropriate rule.
 
 * Improved spec coverage for caching.
 

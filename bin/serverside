@@ -64,7 +64,7 @@ else
   fn = File.join(path, 'serverside.rb')
   require fn if File.file?(fn)
 end
-unless ServerSide::Router.has_routes?
+unless ServerSide::Router.routes_defined?
   ServerSide::Router.default_route {serve_static('.'/@path)}
 end
 
@@ -78,5 +78,15 @@ if $cmd == 'serve'
   ServerSide::HTTP::Server.new($cmd_config[:host], $cmd_config[:ports].begin,
     ServerSide::Router).start
 else
-  ServerSide::Application.daemonize($cmd_config, $cmd)
+  daemon_class = Class.new(Daemon::Cluster) do
+    meta_def(:pid_fn) {Daemon::WorkingDirectory/'serverside.pid'}
+    meta_def(:server_loop) do |port|
+      ServerSide::HTTP::Server.new(
+        $cmd_config[:host], port, ServerSide::Router).start
+    end
+    meta_def(:ports) {$cmd_config[:ports]}
+  end
+  Daemon.control(daemon_class, $cmd)
+
+#  ServerSide::Application.daemonize($cmd_config, $cmd)
 end

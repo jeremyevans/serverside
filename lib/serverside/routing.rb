@@ -23,6 +23,7 @@ module ServerSide
   # from the general to the specific.
   class Router < HTTP::Request
     @@rules = []
+    @@default_route = nil
   
     # Returns true if routes were defined.
     def self.routes_defined?

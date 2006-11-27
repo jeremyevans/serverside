@@ -75,7 +75,7 @@ module ServerSide
           @response_headers[ETAG] = ETAG_QUOTE_FORMAT %
             [etag || expiry_etag(stamp, max_age)]
           @response_headers[LAST_MODIFIED] = stamp.httpdate
-          @response_headers[EXPIRES] = (stamp + max_age).httpdate
+          @response_headers[EXPIRES] = (Time.now + max_age).httpdate
           @response_headers[CACHE_CONTROL] = cache_control if cache_control
           @response_headers[VARY] = vary if vary
           block ? block.call : nil
