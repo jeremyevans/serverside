@@ -9,5 +9,11 @@
 module ServerSide
 end
 
-path = File.join(File.dirname(__FILE__), 'serverside')
-Dir.foreach(path) {|fn| require File.join(path, fn) if fn =~ /\.rb$/}
+module Kernel
+  def require_dir(dir)
+    Dir.foreach(dir) {|fn| require File.join(dir, fn) if fn =~ /\.rb$/}
+  end
+end
+
+require_dir File.join(File.dirname(__FILE__), 'serverside')
+

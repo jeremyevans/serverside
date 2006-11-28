@@ -1,3 +1,7 @@
+*SVN*
+
+* Moved HTTP-related code to lib/http.
+
 *0.3.1*
 
 * Removed application.rb file and fixed serverside script.
