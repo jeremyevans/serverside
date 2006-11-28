@@ -27,7 +27,9 @@ module ServerSide
       # 304 formats
       NOT_MODIFIED_CLOSE = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nConnection: close\r\nContent-Length: 0\r\n\r\n".freeze
       NOT_MODIFIED_PERSIST = "HTTP/1.1 304 Not Modified\r\nDate: %s\r\nContent-Length: 0\r\n\r\n".freeze
-      
+
+      # Sets the Cache-Control header to no-cache and removes any other 
+      # caching-related headers in the response.      
       def disable_caching
         @response_headers[CACHE_CONTROL] = NO_CACHE
         @response_headers.delete(ETAG)
@@ -36,6 +38,8 @@ module ServerSide
         @response_headers.delete(VARY)
       end
     
+      # Returns an array containing all etag validators specified in the 
+      # If-None-Match header.
       def etag_validators
         h = @headers[IF_NONE_MATCH]
         return [] unless h
@@ -44,6 +48,9 @@ module ServerSide
         end
       end
       
+      # Returns true if any of the etag validators match etag, or if a wildcard
+      # validator is present. Otherwise, if any of the validators is in an 
+      # expiry etag format, checks whether etag has already expired.
       def valid_etag?(etag = nil)
         if etag
           etag_validators.each {|e| return true if e == etag || e == WILDCARD}
@@ -56,15 +63,21 @@ module ServerSide
         nil
       end
       
+      # Formats an expiry etag, which is composed of a modification stamp and
+      # an expiration stamp in the future.
       def expiry_etag(stamp, max_age)
-        EXPIRY_ETAG_FORMAT % [stamp.to_i, (stamp + max_age).to_i]
+        EXPIRY_ETAG_FORMAT % [stamp.to_i, (Time.now + max_age).to_i]
       end
-      
+
+      # Returns true if the If-Modified-Since header matches stamp. 
       def valid_stamp?(stamp)
         return true if (modified_since = @headers[IF_MODIFIED_SINCE]) &&
           (modified_since == stamp.httpdate)
       end
       
+      # Validates the client's cache by checking for any valid validators. If
+      # so, a 304 response is rendered and true is returned. Otherwise, the 
+      # supplied block is executed or nil is returned.
       def validate_cache(stamp, max_age, etag = nil, 
         cache_control = nil, vary = nil, &block)
         
@@ -81,7 +94,8 @@ module ServerSide
           block ? block.call : nil
         end
       end
-      
+
+      # Renders a 304 not modified response.      
       def send_not_modified_response
         @socket << ((@persistent ? NOT_MODIFIED_PERSIST : NOT_MODIFIED_CLOSE) %
           Time.now.httpdate)
