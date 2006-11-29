@@ -1,4 +1,5 @@
 require 'postgres'
+require 'mutex_m'
 
 module Postgres
   PG_TYPES = {
@@ -12,6 +13,8 @@ module Postgres
   }
 
   class Database < ServerSide::Database
+    include Mutex_m
+    
     def make_connection
       PGconn.connect(
         @opts[:host] || 'localhost',

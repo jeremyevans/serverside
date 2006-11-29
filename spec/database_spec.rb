@@ -10,10 +10,6 @@ class ServerSide::Database
 end
 
 context "A new Database" do
-  specify "should be a kind of of mutex (for locking purposes)" do
-    ServerSide::Database.new.should_be_a_kind_of Mutex
-  end
-  
   specify "should accept options and store them in @opts" do
     opts = :my_options
     ServerSide::Database.new(opts).opts.should_be opts

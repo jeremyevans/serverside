@@ -1,7 +1,5 @@
-require 'thread'
-
 module ServerSide
-  class Database < Mutex
+  class Database
     attr_reader :conn
   
     def initialize(opts = {})

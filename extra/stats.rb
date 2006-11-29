@@ -64,19 +64,19 @@ class CodeStatistics
 
   def print_header
     print_splitter
-    puts '| Name                 | Lines |   LOC | Classes | Methods | M/C | LOC/M |'
+    puts '| Name          | Lines |   LOC | Classes | Methods | M/C | LOC/M |'
     print_splitter
   end
 
   def print_splitter
-    puts '+----------------------+-------+-------+---------+---------+-----+-------+'
+    puts '+---------------+-------+-------+---------+---------+-----+-------+'
   end
 
   def print_line(name, statistics)
     m_over_c   = (statistics[:methods] / statistics[:classes])   rescue m_over_c = 0
     loc_over_m = (statistics[:codelines] / statistics[:methods]) - 2 rescue loc_over_m = 0
 
-    puts "| #{name.ljust(20)} " +
+    puts "| #{name.ljust(13)} " +
          "| #{statistics[:lines].to_s.rjust(5)} " +
          "| #{statistics[:codelines].to_s.rjust(5)} " +
          "| #{statistics[:classes].to_s.rjust(7)} " +
@@ -89,13 +89,13 @@ class CodeStatistics
     c_loc = 0
     t_loc = 0
     @statistics.each do |n, s|
-      if n =~ /tests$/
+      if n =~ /spec/i
         t_loc += s[:codelines]
       else
         c_loc += s[:codelines]
       end
     end
     ratio = (((t_loc.to_f / c_loc)*10).round.to_f/10).to_s[0,4]
-    puts "  Code LOC: #{c_loc}     Test LOC: #{t_loc}     Code to Test Ratio: 1:#{ratio}"
+    puts "  Code LOC: #{c_loc}     Spec LOC: #{t_loc}     Code to Spec Ratio: 1:#{ratio}"
   end
 end

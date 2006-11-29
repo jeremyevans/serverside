@@ -92,8 +92,8 @@ end
 ##############################################################################
 
 STATS_DIRECTORIES = [
-  %w(Code                 lib/),
-  %w(Specification\ tests spec)
+  %w(Code   lib/),
+  %w(Spec   spec/)
 ].collect { |name, dir| [ name, "./#{dir}" ] }.select { |name, dir| File.directory?(dir) }
 
 desc "Report code statistics (KLOCs, etc) from the application"

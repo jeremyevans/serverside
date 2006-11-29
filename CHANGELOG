@@ -1,5 +1,7 @@
 *SVN*
 
+* Added Dataset class.
+
 * Added Postgres::Database class.
 
 * Added basic functionality for ServerSide::Database class, and created lib/db directory for database-related code.
