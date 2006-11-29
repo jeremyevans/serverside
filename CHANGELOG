@@ -1,6 +1,8 @@
 *SVN*
 
-* Added basic ServerSide::Database class, and created lib/db directory for database-related code.
+* Added Postgres::Database class.
+
+* Added basic functionality for ServerSide::Database class, and created lib/db directory for database-related code.
 
 * Fixed bug in HTTP::Caching.expiry_tag - the expiration stamp was incorrect (based off stamp instead of Time.now.)
 
