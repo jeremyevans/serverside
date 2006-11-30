@@ -37,31 +37,18 @@ module Postgres
   class Dataset < ServerSide::Dataset
     SELECT = "SELECT %s FROM %s".freeze
     LIMIT = "LIMIT %s".freeze
+    ORDER = "ORDER BY %s".freeze
   
-    def each(field = nil, &block)
+    def each(&block)
       @db.synchronize do
         execute
-        @result.each do |r|
-          row = fetch_row(r)
-          block.call(field ? row[field] : row)
-        end
+        @result.each {|r| block.call(fetch_row(r))}
       end
       self
     end
     
-    def all(field = nil)
-      result = []
-      @db.synchronize do
-        execute
-        @result.each do |r|
-          row = fetch_row(r)
-          result << (field ? row[field] : row)
-        end
-      end
-      result
-    end
-    
     def first
+      raise RuntimeError, 'No order specified' unless @opts[:order]
       @db.synchronize do
         execute(@opts.merge(:limit => 1))
         @result.each do |r|
@@ -70,28 +57,43 @@ module Postgres
       end
     end
     
+    def last
+      raise RuntimeError, 'No order specified' unless @opts[:order]
+      @db.synchronize do
+        execute(@opts.merge(
+          :limit => 1, 
+          :order => reverse_order(@opts[:order])
+        ))
+        @result.each do |r|
+          break fetch_row(r)
+        end
+      end
+    end
+    
     def execute(opts = nil)
-      @result = @db.conn.exec(compile_sql(opts))
+      sql = compile_sql(opts)
+      puts "**************************"
+      puts sql
+      @result = @db.conn.exec(sql)
       @fields = @result.fields.map {|s| s.to_sym}
       @types = (0..(@result.num_fields - 1)).map {|idx| @result.type(idx)}
       compile_row_fetcher
     end
 
     def compile_sql(opts = nil)
-      custom_opts = !opts.nil?
-      return @sql if @sql && custom_opts
-
       opts = @opts if opts.nil?
       fields = opts[:select]
       select_fields = fields ? field_list(fields) : "*"
       select_source = source_list(opts[:from]) 
       select_clause = SELECT % [select_fields, select_source]
       
-      limit = opts[:limit]
-      limit_clause = limit ? LIMIT % [limit] : ''
+      order = opts[:order]
+      order_clause = order ? ORDER % order.join(', ') : ''
       
-      sql = [select_clause, limit_clause].join(' ')
-      @sql = sql unless custom_opts
+      limit = opts[:limit]
+      limit_clause = limit ? LIMIT % limit : ''
+      
+      [select_clause, order_clause, limit_clause].join(' ')
     end
     
     def compile_row_fetcher
@@ -105,3 +107,6 @@ module Postgres
     end
   end
 end
+
+DB = Postgres::Database.new
+$d = DB[:nodes]
