@@ -54,24 +54,24 @@ module ServerSide
     
     # DSL constructors
     def from(source)
-      dup_merge(:source => source)
+      dup_merge(:from => source)
     end
     
     def select(*fields)
       fields = fields.first if fields.size == 1
-      dup_merge(:fields => fields)
+      dup_merge(:select => fields)
     end
     
     def from!(source)
       @sql = nil
-      @opts[:source] = source
+      @opts[:from] = source
       self
     end
     
     def select!(*fields)
       @sql = nil
       fields = fields.first if fields.size == 1
-      @opts[:fields] = fields
+      @opts[:select] = fields
       self
     end
   end

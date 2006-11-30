@@ -39,9 +39,7 @@ context "Dataset#dup_merge" do
 end
 
 context "Dataset#field_name" do
-  setup do
-    @d = ServerSide::Dataset.new(:db)
-  end
+  setup {@d = ServerSide::Dataset.new(:db)}
 
   specify "should return the argument as string if not a symbol" do
     @d.field_name(nil).should == ''
@@ -63,9 +61,7 @@ context "Dataset#field_name" do
 end
 
 context "Dataset#field_list" do
-  setup do
-    @d = ServerSide::Dataset.new(:db)
-  end
+  setup {@d = ServerSide::Dataset.new(:db)}
 
   specify "should return the sql wildcard if an empty array is specified" do
     @d.field_list([]).should == '*'
@@ -91,9 +87,7 @@ context "Dataset#field_list" do
 end
 
 context "Dataset#source_list" do
-  setup do
-    @d = ServerSide::Dataset.new(:db)
-  end
+  setup {@d = ServerSide::Dataset.new(:db)}
 
   specify "should return the argument if not an array or hash" do
     @d.source_list(nil).should_be_nil
@@ -105,4 +99,26 @@ context "Dataset#source_list" do
   specify "should return comma-separated value if an array is specified" do
     @d.source_list([1, 2, 3]).should == '1, 2, 3'
   end
+end
+
+context "Dataset DSL: " do
+  specify "#form should create a duplicate dataset with the source argument merged" do
+    subclass = Class.new(ServerSide::Dataset)
+    d1 = subclass.new(:db, {:select => '*'})
+    
+    d2 = d1.from(:posts)
+    d2.class.should_be subclass
+    d2.opts[:select].should == '*'
+    d2.opts[:from].should == :posts
+  end 
+
+  specify "#select should create a duplicate dataset with the select argument merged" do
+    subclass = Class.new(ServerSide::Dataset)
+    d1 = subclass.new(:db, {:from => :posts})
+    
+    d2 = d1.select(:id, :name)
+    d2.class.should_be subclass
+    d2.opts[:from].should == :posts
+    d2.opts[:select].should == [:id, :name]
+  end 
 end

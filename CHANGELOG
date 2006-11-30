@@ -1,5 +1,7 @@
 *SVN*
 
+* Implemented Postgres::Dataset class.
+
 * Added Dataset class.
 
 * Added Postgres::Database class.
