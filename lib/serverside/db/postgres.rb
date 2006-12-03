@@ -35,13 +35,9 @@ module Postgres
   end
   
   class Dataset < ServerSide::Dataset
-    SELECT = "SELECT %s FROM %s".freeze
-    LIMIT = "LIMIT %s".freeze
-    ORDER = "ORDER BY %s".freeze
-  
     def each(&block)
       @db.synchronize do
-        execute
+        select
         @result.each {|r| block.call(fetch_row(r))}
       end
       self
@@ -50,7 +46,7 @@ module Postgres
     def first
       raise RuntimeError, 'No order specified' unless @opts[:order]
       @db.synchronize do
-        execute(@opts.merge(:limit => 1))
+        select(@opts.merge(:limit => 1))
         @result.each do |r|
           break fetch_row(r)
         end
@@ -60,7 +56,7 @@ module Postgres
     def last
       raise RuntimeError, 'No order specified' unless @opts[:order]
       @db.synchronize do
-        execute(@opts.merge(
+        select(@opts.merge(
           :limit => 1, 
           :order => reverse_order(@opts[:order])
         ))
@@ -70,9 +66,9 @@ module Postgres
       end
     end
     
-    def execute(opts = nil)
-      sql = compile_sql(opts)
-      puts "**************************"
+    def select(opts = nil)
+      sql = select_sql(opts)
+      puts "********************"
       puts sql
       @result = @db.conn.exec(sql)
       @fields = @result.fields.map {|s| s.to_sym}
@@ -80,22 +76,14 @@ module Postgres
       compile_row_fetcher
     end
 
-    def compile_sql(opts = nil)
-      opts = @opts if opts.nil?
-      fields = opts[:select]
-      select_fields = fields ? field_list(fields) : "*"
-      select_source = source_list(opts[:from]) 
-      select_clause = SELECT % [select_fields, select_source]
-      
-      order = opts[:order]
-      order_clause = order ? ORDER % order.join(', ') : ''
-      
-      limit = opts[:limit]
-      limit_clause = limit ? LIMIT % limit : ''
-      
-      [select_clause, order_clause, limit_clause].join(' ')
+    def count(opts = nil)
+      sql = count_sql(opts)
+      puts "********************"
+      puts sql
+      @result = @db.conn.exec(sql)
+      @result.each {|r| return r.first.to_i}
     end
-    
+
     def compile_row_fetcher
       parts = (0..(@result.num_fields - 1)).inject([]) do |m, f|
         translate_fn = PG_TYPES[@types[f]]

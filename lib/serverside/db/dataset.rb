@@ -18,15 +18,7 @@ module ServerSide
     
     # sql helpers
     def field_name(field)
-      s = field.to_s
-      if field.is_a?(Symbol)
-        if s =~ AS_REGEXP
-          s = AS_FORMAT % [$1, $2]
-        end
-        s.split(DOUBLE_UNDERSCORE).join(PERIOD)
-      else
-        s
-      end
+      field.is_a?(Symbol) ? field.to_field_name : field
     end
     
     WILDCARD = '*'.freeze
@@ -41,7 +33,7 @@ module ServerSide
           fields.map {|i| field_name(i)}.join(COMMA_SEPARATOR)
         end
       when Symbol:
-        field_name(fields)
+        fields.to_field_name
       else
         fields
       end
@@ -52,6 +44,27 @@ module ServerSide
       when Array: source.join(COMMA_SEPARATOR)
       else source
       end 
+    end
+    
+    AND_SEPARATOR = " AND ".freeze
+    EQUAL_COND = "(%s = %s)".freeze
+    
+    def literal(v)
+      case v
+      when String 
+      else v.to_s
+      end
+    end
+    
+    def where_list(where)
+      case where
+      when Hash: where.map {|kv| EQUAL_COND % kv}.join(AND_SEPARATOR)
+      when Array:
+        fmt = where.shift
+        fmt.gsub('?') {|i| literal(where.shift)}
+      else
+        where
+      end
     end
     
     # DSL constructors
@@ -79,6 +92,13 @@ module ServerSide
         end
       end
     end
+    
+    def where(*where)
+      where = where.first if where.size == 1
+      dup_merge(:where => where)
+    end
+
+    alias_method :filter, :where
 
     def from!(source)
       @sql = nil
@@ -106,6 +126,49 @@ module ServerSide
         end
       end
     end
+
+    SELECT = "SELECT %s FROM %s".freeze
+    LIMIT = "LIMIT %s".freeze
+    ORDER = "ORDER BY %s".freeze
+    WHERE = "WHERE %s".freeze
+  
+    def select_sql(opts = nil)
+      opts = @opts if opts.nil?
+      fields = opts[:select]
+      select_fields = fields ? field_list(fields) : "*"
+      select_source = source_list(opts[:from]) 
+      select_clause = SELECT % [select_fields, select_source]
+      
+      order = opts[:order]
+      order_clause = order ? ORDER % order.join(', ') : ''
+      
+      where = opts[:where]
+      where_clause = where ? WHERE % where_list(where) : ''
+      
+      limit = opts[:limit]
+      limit_clause = limit ? LIMIT % limit : ''
+      
+      [select_clause, order_clause, where_clause, limit_clause].join(' ')
+    end
+    
+    def count_sql(opts = nil)
+      opts = @opts if opts.nil?
+      fields = opts[:select]
+      select_fields = "COUNT(*)"
+      select_source = source_list(opts[:from]) 
+      select_clause = SELECT % [select_fields, select_source]
+      
+      order = opts[:order]
+      order_clause = order ? ORDER % order.join(', ') : ''
+      
+      where = opts[:where]
+      where_clause = where ? WHERE % where_list(where) : ''
+      
+      limit = opts[:limit]
+      limit_clause = limit ? LIMIT % limit : ''
+      
+      [select_clause, order_clause, where_clause, limit_clause].join(' ')
+    end
   end
 end
 
@@ -114,22 +177,21 @@ class Symbol
     "#{to_s} DESC"
   end
   
+  def AS(target)
+    "#{field_name} AS #{target}"
+  end  
+
   AS_REGEXP = /(.*)___(.*)/.freeze
   AS_FORMAT = "%s AS %s".freeze
   DOUBLE_UNDERSCORE = '__'.freeze
   PERIOD = '.'.freeze
   
-  def field_name
+  def to_field_name
     s = to_s
     if s =~ AS_REGEXP
       s = AS_FORMAT % [$1, $2]
     end
     s.split(DOUBLE_UNDERSCORE).join(PERIOD)
   end
-  
-  def AS(target)
-    "#{field_name} AS #{target}"
-  end  
-
 end
 

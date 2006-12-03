@@ -41,9 +41,9 @@ end
 context "Dataset#field_name" do
   setup {@d = ServerSide::Dataset.new(:db)}
 
-  specify "should return the argument as string if not a symbol" do
-    @d.field_name(nil).should == ''
-    @d.field_name(1).should == '1'
+  specify "should return the argument as is if not a symbol" do
+    @d.field_name(nil).should == nil
+    @d.field_name(1).should == 1
     @d.field_name('field').should == 'field'
   end
   
@@ -73,7 +73,7 @@ context "Dataset#field_list" do
   
   specify "should return the argument as is if not an array" do
     @d.field_list(nil).should_be_nil
-    @d.field_list(:hello).should_be :hello
+    @d.field_list(23).should_be 23
     @d.field_list("wowie zowie").should == "wowie zowie"
   end
   
