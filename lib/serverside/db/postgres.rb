@@ -37,16 +37,16 @@ module Postgres
       @conn.exec(sql)
     end
     
-    BEGIN = 'BEGIN'.freeze
-    COMMIT = 'COMMIT'.freeze
-    ROLLBACK = 'ROLLBACK'.freeze
+    SQL_BEGIN = 'BEGIN'.freeze
+    SQL_COMMIT = 'COMMIT'.freeze
+    SQL_ROLLBACK = 'ROLLBACK'.freeze
     
     def transaction
-      execute(BEGIN)
+      execute(SQL_BEGIN)
       yield
-      execute(COMMIT)
+      execute(SQL_COMMIT)
     rescue => e
-      execute(ROLLBACK)
+      execute(SQL_ROLLBACK)
       raise e
     end
   end
