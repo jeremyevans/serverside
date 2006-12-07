@@ -32,6 +32,23 @@ module Postgres
     def query(opts = nil)
       Postgres::Dataset.new(self, opts)
     end
+    
+    def execute(sql)
+      @conn.exec(sql)
+    end
+    
+    BEGIN = 'BEGIN'.freeze
+    COMMIT = 'COMMIT'.freeze
+    ROLLBACK = 'ROLLBACK'.freeze
+    
+    def transaction
+      execute(BEGIN)
+      yield
+      execute(COMMIT)
+    rescue => e
+      execute(ROLLBACK)
+      raise e
+    end
   end
   
   class Dataset < ServerSide::Dataset
@@ -83,6 +100,29 @@ module Postgres
       @result = @db.conn.exec(sql)
       @result.each {|r| return r.first.to_i}
     end
+    
+    def last_insert_id
+      @result = @db.conn.exec('SELECT lastval()')
+      @result.each {|r| return r.first.to_i}
+    end
+    
+    def insert(values, opts = nil)
+      sql = insert_sql(values, opts)
+      @result = @db.conn.exec(sql)
+      last_insert_id
+    end
+    
+    def delete(opts = nil)
+      sql = delete_sql(opts)
+      puts "********************"
+      puts sql
+      @result = @db.conn.exec(sql)
+      @result.each {|r| return r}
+    end
+    
+    def execute(sql)
+      @db.conn.exec(sql).to_a
+    end
 
     def compile_row_fetcher
       parts = (0..(@result.num_fields - 1)).inject([]) do |m, f|
@@ -98,3 +138,18 @@ end
 
 DB = Postgres::Database.new
 $d = DB[:nodes]
+$e = DB[:node_attributes]
+
+__END__
+
+x = 10000
+
+t1 = Time.now
+x.times do
+  $e.insert(:node_id => rand(1000), :kind => rand(1000), :value => rand(100_000_000))
+end
+t2 = Time.now
+e = t2 - t1
+r = x/e
+puts "Inserted #{x} records in #{e} seconds (#{r} recs/s)"
+

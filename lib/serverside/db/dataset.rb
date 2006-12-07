@@ -1,6 +1,8 @@
 module ServerSide
   class Dataset
     include Enumerable
+    
+    attr_reader :db
   
     def initialize(db, opts = {})
       @db = db
@@ -51,7 +53,7 @@ module ServerSide
     
     def literal(v)
       case v
-      when String 
+      when String: "'%s'" % v
       else v.to_s
       end
     end
@@ -131,43 +133,81 @@ module ServerSide
     LIMIT = "LIMIT %s".freeze
     ORDER = "ORDER BY %s".freeze
     WHERE = "WHERE %s".freeze
-  
+    
+    EMPTY = ''.freeze
+    
+    SPACE = ' '.freeze
+    
     def select_sql(opts = nil)
       opts = @opts if opts.nil?
       fields = opts[:select]
-      select_fields = fields ? field_list(fields) : "*"
+      select_fields = fields ? field_list(fields) : WILDCARD
       select_source = source_list(opts[:from]) 
       select_clause = SELECT % [select_fields, select_source]
       
       order = opts[:order]
-      order_clause = order ? ORDER % order.join(', ') : ''
+      order_clause = order ? ORDER % order.join(COMMA_SEPARATOR) : EMPTY
       
       where = opts[:where]
-      where_clause = where ? WHERE % where_list(where) : ''
+      where_clause = where ? WHERE % where_list(where) : EMPTY
       
       limit = opts[:limit]
-      limit_clause = limit ? LIMIT % limit : ''
+      limit_clause = limit ? LIMIT % limit : EMPTY
       
-      [select_clause, order_clause, where_clause, limit_clause].join(' ')
+      [select_clause, order_clause, where_clause, limit_clause].join(SPACE)
     end
+    
+    INSERT = "INSERT INTO %s (%s) VALUES (%s)".freeze
+    
+    def insert_sql(values, opts = nil)
+      opts = @opts if opts.nil?
+      
+      field_list = []
+      value_list = []
+      
+      values.each do |k, v|
+        field_list << k
+        value_list << literal(v)
+      end
+      
+      INSERT % [
+        opts[:from], 
+        field_list.join(COMMA_SEPARATOR), 
+        value_list.join(COMMA_SEPARATOR)
+      ]
+    end
+    
+    DELETE = "DELETE FROM %s".freeze
+    
+    def delete_sql(opts = nil)
+      opts = @opts if opts.nil?
+      delete_source = opts[:from] 
+      
+      where = opts[:where]
+      where_clause = where ? WHERE % where_list(where) : EMPTY
+      
+      [DELETE % delete_source, where_clause].join(SPACE)
+    end
+    
+    COUNT = "COUNT(*)".freeze
     
     def count_sql(opts = nil)
       opts = @opts if opts.nil?
       fields = opts[:select]
-      select_fields = "COUNT(*)"
+      select_fields = COUNT
       select_source = source_list(opts[:from]) 
       select_clause = SELECT % [select_fields, select_source]
       
       order = opts[:order]
-      order_clause = order ? ORDER % order.join(', ') : ''
+      order_clause = order ? ORDER % order.join(COMMA_SEPARATOR) : EMPTY
       
       where = opts[:where]
-      where_clause = where ? WHERE % where_list(where) : ''
+      where_clause = where ? WHERE % where_list(where) : EMPTY
       
       limit = opts[:limit]
-      limit_clause = limit ? LIMIT % limit : ''
+      limit_clause = limit ? LIMIT % limit : EMPTY
       
-      [select_clause, order_clause, where_clause, limit_clause].join(' ')
+      [select_clause, order_clause, where_clause, limit_clause].join(SPACE)
     end
   end
 end
