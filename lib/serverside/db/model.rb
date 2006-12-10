@@ -34,7 +34,12 @@ module ServerSide
     end
     
     def self.find(cond)
-      dataset.filter(cond).first || (raise RuntimeError, "Record not found.")
+      row = dataset.filter(cond).first
+      row ? new(row) : (raise RuntimeError, "Record not found.")
+    end
+    
+    def self.all(cond)
+      dataset.filter(cond).inject([]) {|m, r| m << new(r); m}
     end
     
     def self.[](key)
@@ -50,10 +55,7 @@ module ServerSide
     def self.method_missing(m, *args)
       method_name = m.to_s
       if method_name =~ BY_REGEXP
-        meta_def(method_name) do |arg|
-          values = find($1 => arg)
-          values ? new(values) : nil
-        end
+        meta_def(method_name) {|arg| find($1 => arg)}
         send(m, *args) if respond_to?(m)
       else
         super
