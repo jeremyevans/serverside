@@ -1,4 +1,5 @@
 require 'postgres'
+require 'metaid'
 require 'mutex_m'
 
 require File.join(File.dirname(__FILE__), 'database')
@@ -52,10 +53,12 @@ module Postgres
   end
   
   class Dataset < ServerSide::Dataset
-    def each(&block)
+    attr_reader :result
+  
+    def each(opts = nil, &block)
       @db.synchronize do
-        select
-        @result.each {|r| block.call(fetch_row(r))}
+        select(opts)
+        result_each(&block)
       end
       self
     end
@@ -64,9 +67,7 @@ module Postgres
       raise RuntimeError, 'No order specified' unless @opts[:order]
       @db.synchronize do
         select(@opts.merge(:limit => 1))
-        @result.each do |r|
-          break fetch_row(r)
-        end
+        result_first
       end
     end
     
@@ -74,54 +75,48 @@ module Postgres
       raise RuntimeError, 'No order specified' unless @opts[:order]
       @db.synchronize do
         select(@opts.merge(
-          :limit => 1, 
-          :order => reverse_order(@opts[:order])
-        ))
-        @result.each do |r|
-          break fetch_row(r)
-        end
+          :limit => 1, :order => reverse_order(@opts[:order])))
+        result_first
       end
     end
     
     def select(opts = nil)
-      sql = select_sql(opts)
-      puts "********************"
-      puts sql
-      @result = @db.conn.exec(sql)
-      @fields = @result.fields.map {|s| s.to_sym}
-      @types = (0..(@result.num_fields - 1)).map {|idx| @result.type(idx)}
-      compile_row_fetcher
+      perform select_sql(opts)
     end
 
     def count(opts = nil)
-      sql = count_sql(opts)
-      puts "********************"
-      puts sql
-      @result = @db.conn.exec(sql)
-      @result.each {|r| return r.first.to_i}
+      perform count_sql(opts)
+      result_first[:count]
     end
     
-    def last_insert_id
-      @result = @db.conn.exec('SELECT lastval()')
-      @result.each {|r| return r.first.to_i}
-    end
+    
+    SELECT_LASTVAL = ';SELECT lastval()'.freeze
     
     def insert(values, opts = nil)
-      sql = insert_sql(values, opts)
-      @result = @db.conn.exec(sql)
-      last_insert_id
+      perform insert_sql(values, opts) + SELECT_LASTVAL
+      result_first[:lastval]
+      #last_insert_id
     end
     
     def delete(opts = nil)
-      sql = delete_sql(opts)
-      puts "********************"
-      puts sql
-      @result = @db.conn.exec(sql)
-      @result.each {|r| return r}
+      perform delete_sql(opts)
+      @result.cmdtuples
     end
     
-    def execute(sql)
-      @db.conn.exec(sql).to_a
+    def perform(sql)
+      @result = @db.execute(sql)
+      @fields = @result.fields.map {|s| s.to_sym}
+      @types = (0..(@result.num_fields - 1)).map {|idx| @result.type(idx)}
+      compile_row_fetcher
+      @result
+    end
+    
+    def result_each
+      @result.each {|r| yield fetch_row(r)}
+    end
+    
+    def result_first
+      @result.each {|r| return fetch_row(r)}
     end
 
     def compile_row_fetcher
@@ -131,7 +126,7 @@ module Postgres
         m << ":#{@fields[f]} => r[#{f}]#{translator}"
       end
       l = eval("lambda {|r|{#{parts.join(',')}}}")
-      extend(Module.new {define_method(:fetch_row, &l)})
+      meta_def(:fetch_row, &l)
     end
   end
 end
@@ -142,14 +137,25 @@ $e = DB[:node_attributes]
 
 __END__
 
-x = 10000
+$e.delete
+
+x = 1000
 
 t1 = Time.now
 x.times do
-  $e.insert(:node_id => rand(1000), :kind => rand(1000), :value => rand(100_000_000))
+  $e.insert(:node_id => rand(10_000), :kind => rand(10_000), 
+    :value => rand(100_000_000))
 end
 t2 = Time.now
 e = t2 - t1
 r = x/e
 puts "Inserted #{x} records in #{e} seconds (#{r} recs/s)"
+
+t1 = Time.now
+x = 10
+x.times { $e.each {|r| r} }
+t2 = Time.now
+e = t2 - t1
+r = x/e
+puts "Performed select query #{x} times in #{e} seconds (#{r} query/s)"
 
