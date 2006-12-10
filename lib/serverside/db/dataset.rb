@@ -3,14 +3,16 @@ module ServerSide
     include Enumerable
     
     attr_reader :db
+    attr_accessor :record_class
   
-    def initialize(db, opts = {})
+    def initialize(db, opts = {}, record_class = nil)
       @db = db
       @opts = opts || {}
+      @record_class = record_class
     end
     
     def dup_merge(opts)
-      self.class.new(@db, @opts.merge(opts))
+      self.class.new(@db, @opts.merge(opts), @record_class)
     end
     
     AS_REGEXP = /(.*)___(.*)/.freeze

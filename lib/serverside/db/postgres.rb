@@ -124,14 +124,23 @@ module Postgres
     def result_first
       @result.each {|r| return fetch_row(r)}
     end
+    
+    TRANSLATE = ".%s".freeze
+    FETCH_FIELD = ":%s => r[%s]%s".freeze
+    FETCH = "lambda {|r| {%s}}".freeze
+    FETCH_RECORD_CLASS = "lambda {|r| %s.new(%s)}".freeze
 
     def compile_row_fetcher
-      parts = (0..(@result.num_fields - 1)).inject([]) do |m, f|
+      parts = (0...@result.num_fields).inject([]) do |m, f|
         translate_fn = PG_TYPES[@types[f]]
-        translator = translate_fn ? ".#{translate_fn}" : ""
-        m << ":#{@fields[f]} => r[#{f}]#{translator}"
+        translator = translate_fn ? (TRANSLATE % translate_fn) : EMPTY
+        m << (FETCH_FIELD % [@fields[f], f, translator])
       end
-      l = eval("lambda {|r|{#{parts.join(',')}}}")
+      s = @record_class ?
+        (FETCH_RECORD_CLASS % [@record_class, parts.join(',')]) : 
+        (FETCH % parts.join(','))
+      puts s
+      l = eval(s)
       meta_def(:fetch_row, &l)
     end
   end

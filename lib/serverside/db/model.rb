@@ -38,7 +38,11 @@ module ServerSide
       row ? new(row) : (raise RuntimeError, "Record not found.")
     end
     
-    def self.all(cond)
+    def self.all(cond = nil)
+      dataset.inject([]) {|m, r| m << new(r); m}
+    end
+    
+    def self.filter(cond)
       dataset.filter(cond).inject([]) {|m, r| m << new(r); m}
     end
     
