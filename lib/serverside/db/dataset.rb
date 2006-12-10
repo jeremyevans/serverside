@@ -60,7 +60,10 @@ module ServerSide
     
     def where_list(where)
       case where
-      when Hash: where.map {|kv| EQUAL_COND % kv}.join(AND_SEPARATOR)
+      when Hash:
+        where.map do |kv|
+          EQUAL_COND % [kv[0], literal(kv[1])]
+        end.join(AND_SEPARATOR)
       when Array:
         fmt = where.shift
         fmt.gsub('?') {|i| literal(where.shift)}
@@ -175,6 +178,22 @@ module ServerSide
         field_list.join(COMMA_SEPARATOR), 
         value_list.join(COMMA_SEPARATOR)
       ]
+    end
+    
+    UPDATE = "UPDATE %s SET %s".freeze
+    SET_FORMAT = "%s = %s".freeze
+    
+    def update_sql(values, opts = nil)
+      opts = @opts if opts.nil?
+      
+      set_list = values.map {|kv| SET_FORMAT % [kv[0], literal(kv[1])]}.
+        join(COMMA_SEPARATOR)
+      update_clause = UPDATE % [opts[:from], set_list]
+      
+      where = opts[:where]
+      where_clause = where ? WHERE % where_list(where) : EMPTY
+
+      [update_clause, where_clause].join(SPACE)
     end
     
     DELETE = "DELETE FROM %s".freeze

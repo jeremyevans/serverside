@@ -64,7 +64,7 @@ module Postgres
     end
     
     def first
-      raise RuntimeError, 'No order specified' unless @opts[:order]
+#      raise RuntimeError, 'No order specified' unless @opts[:order]
       @db.synchronize do
         select(@opts.merge(:limit => 1))
         result_first
@@ -89,7 +89,6 @@ module Postgres
       result_first[:count]
     end
     
-    
     SELECT_LASTVAL = ';SELECT lastval()'.freeze
     
     def insert(values, opts = nil)
@@ -98,12 +97,19 @@ module Postgres
       #last_insert_id
     end
     
+    def update(values, opts = nil)
+      perform update_sql(values, opts)
+      @result.cmdtuples
+    end
+    
     def delete(opts = nil)
       perform delete_sql(opts)
       @result.cmdtuples
     end
     
     def perform(sql)
+      puts "**********************"
+      puts sql
       @result = @db.execute(sql)
       @fields = @result.fields.map {|s| s.to_sym}
       @types = (0..(@result.num_fields - 1)).map {|idx| @result.type(idx)}
@@ -131,31 +137,21 @@ module Postgres
   end
 end
 
+__END__
+
 DB = Postgres::Database.new
 $d = DB[:nodes]
 $e = DB[:node_attributes]
 
-__END__
-
-$e.delete
-
-x = 1000
+x = 10000
 
 t1 = Time.now
 x.times do
-  $e.insert(:node_id => rand(10_000), :kind => rand(10_000), 
+  $e.insert(:node_id => rand(1_000), :kind => rand(1_000), 
     :value => rand(100_000_000))
 end
 t2 = Time.now
 e = t2 - t1
 r = x/e
 puts "Inserted #{x} records in #{e} seconds (#{r} recs/s)"
-
-t1 = Time.now
-x = 10
-x.times { $e.each {|r| r} }
-t2 = Time.now
-e = t2 - t1
-r = x/e
-puts "Performed select query #{x} times in #{e} seconds (#{r} query/s)"
 
