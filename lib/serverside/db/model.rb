@@ -33,7 +33,6 @@ module ServerSide
     def self.one_to_one(name, opts)
       klass = opts[:class] || self
       key = opts[:key] || (name.to_s + ID_POSTFIX)
-      puts ONE_TO_ONE_PROC % [key, klass]
       define_method name, &eval(ONE_TO_ONE_PROC % [key, klass])
     end
   
@@ -41,7 +40,6 @@ module ServerSide
     def self.one_to_many(name, opts)
       klass = opts[:class] || self
       keys = opts[:key].to_a.first
-      puts ONE_TO_MANY_PROC % [klass, keys[0], keys[1]]
       define_method name, &eval(ONE_TO_MANY_PROC % [klass, keys[0], keys[1]])
     end
 
@@ -96,6 +94,8 @@ module ServerSide
     end
   end
 end
+
+__END__
 
 ServerSide::Model.database = Postgres::Database.new
 

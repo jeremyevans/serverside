@@ -116,8 +116,6 @@ module Postgres
     end
     
     def perform(sql, use_record_class = false)
-      puts "**********************"
-      puts sql
       @result = @db.execute(sql)
       @fields = @result.fields.map {|s| s.to_sym}
       @types = (0..(@result.num_fields - 1)).map {|idx| @result.type(idx)}
@@ -152,7 +150,6 @@ module Postgres
       s = (use_record_class && @record_class) ?
         (FETCH_RECORD_CLASS % [@record_class, parts.join(',')]) : 
         (FETCH % parts.join(','))
-      puts s
       l = eval(s)
       meta_def(:fetch_row, &l)
     end
