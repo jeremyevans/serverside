@@ -66,6 +66,7 @@ module ServerSide
     def self.filter(cond); dataset.filter(cond); end
     def self.first; dataset.first; end
     def self.count; dataset.count; end
+    def self.join(*args); dataset.join(*args); end
     
     def self.[](key)
       find key.is_a?(Hash) ? key : {primary_key => key}

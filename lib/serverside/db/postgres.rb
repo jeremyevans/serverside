@@ -36,6 +36,13 @@ module Postgres
     
     def execute(sql)
       @conn.exec(sql)
+    rescue PGError => e
+      if @conn.status != 0
+        @conn.reset
+        @conn.exec(sql)
+      else
+        raise e
+      end
     end
     
     SQL_BEGIN = 'BEGIN'.freeze
@@ -44,8 +51,9 @@ module Postgres
     
     def transaction
       execute(SQL_BEGIN)
-      yield
+      result = yield
       execute(SQL_COMMIT)
+      result
     rescue => e
       execute(SQL_ROLLBACK)
       raise e
@@ -131,10 +139,15 @@ module Postgres
     FETCH_RECORD_CLASS = "lambda {|r| %s.new(%s)}".freeze
 
     def compile_row_fetcher(use_record_class)
+      used_fields = []
       parts = (0...@result.num_fields).inject([]) do |m, f|
+        field = @fields[f]
+        next m if used_fields.include?(field)
+        
+        used_fields << field
         translate_fn = PG_TYPES[@types[f]]
         translator = translate_fn ? (TRANSLATE % translate_fn) : EMPTY
-        m << (FETCH_FIELD % [@fields[f], f, translator])
+        m << (FETCH_FIELD % [field, f, translator])
       end
       s = (use_record_class && @record_class) ?
         (FETCH_RECORD_CLASS % [@record_class, parts.join(',')]) : 
