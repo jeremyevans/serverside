@@ -1,5 +1,13 @@
 *SVN*
 
+* Added examples directory.
+
+* Refactored postgres code for better performance.
+
+* Added join capabilities.
+
+* Implemented ServerSide::Model class.
+
 * Implemented Postgres::Dataset class.
 
 * Added Dataset class.
