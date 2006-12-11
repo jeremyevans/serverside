@@ -64,7 +64,7 @@ module ServerSide
       case where
       when Hash:
         where.map do |kv|
-          EQUAL_COND % [kv[0], literal(kv[1])]
+          EQUAL_COND % [field_name(kv[0]), literal(kv[1])]
         end.join(AND_SEPARATOR)
       when Array:
         fmt = where.shift
@@ -72,6 +72,12 @@ module ServerSide
       else
         where
       end
+    end
+    
+    def join_cond_list(cond)
+      cond.map do |kv|
+        EQUAL_COND % [field_name(kv[0]), field_name(kv[1])]
+      end.join(AND_SEPARATOR)
     end
     
     # DSL constructors
@@ -103,6 +109,16 @@ module ServerSide
     def where(*where)
       where = where.first if where.size == 1
       dup_merge(:where => where)
+    end
+    
+    LEFT_OUTER_JOIN = 'LEFT OUTER JOIN'.freeze
+    INNER_JOIN = 'INNER JOIN'.freeze
+    RIGHT_OUTER_JOIN = 'RIGHT OUTER JOIN'.freeze
+    FULL_OUTER_JOIN = 'FULL OUTER JOIN'.freeze
+        
+    def join(table, cond)
+      dup_merge(:join_type => LEFT_OUTER_JOIN, :join_table => table,
+        :join_cond => cond)
     end
 
     alias_method :filter, :where
@@ -138,6 +154,7 @@ module ServerSide
     LIMIT = "LIMIT %s".freeze
     ORDER = "ORDER BY %s".freeze
     WHERE = "WHERE %s".freeze
+    JOIN_CLAUSE = "%s %s ON %s".freeze
     
     EMPTY = ''.freeze
     
@@ -150,6 +167,12 @@ module ServerSide
       select_source = source_list(opts[:from]) 
       select_clause = SELECT % [select_fields, select_source]
       
+      join_type = opts[:join_type]
+      join_table = opts[:join_table]
+      join_cond = join_cond_list(opts[:join_cond])
+      join_clause = join_type ? 
+        JOIN_CLAUSE % [join_type, join_table, join_cond] : EMPTY
+      
       order = opts[:order]
       order_clause = order ? ORDER % order.join(COMMA_SEPARATOR) : EMPTY
       
@@ -159,7 +182,8 @@ module ServerSide
       limit = opts[:limit]
       limit_clause = limit ? LIMIT % limit : EMPTY
       
-      [select_clause, order_clause, where_clause, limit_clause].join(SPACE)
+      [select_clause, join_clause, order_clause, where_clause, limit_clause].
+        join(SPACE)
     end
     
     INSERT = "INSERT INTO %s (%s) VALUES (%s)".freeze

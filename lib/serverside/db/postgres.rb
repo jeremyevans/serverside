@@ -81,7 +81,7 @@ module Postgres
     end
     
     def select(opts = nil)
-      perform select_sql(opts)
+      perform select_sql(opts), true
     end
 
     def count(opts = nil)
@@ -107,13 +107,13 @@ module Postgres
       @result.cmdtuples
     end
     
-    def perform(sql)
+    def perform(sql, use_record_class = false)
       puts "**********************"
       puts sql
       @result = @db.execute(sql)
       @fields = @result.fields.map {|s| s.to_sym}
       @types = (0..(@result.num_fields - 1)).map {|idx| @result.type(idx)}
-      compile_row_fetcher
+      compile_row_fetcher(use_record_class)
       @result
     end
     
@@ -130,13 +130,13 @@ module Postgres
     FETCH = "lambda {|r| {%s}}".freeze
     FETCH_RECORD_CLASS = "lambda {|r| %s.new(%s)}".freeze
 
-    def compile_row_fetcher
+    def compile_row_fetcher(use_record_class)
       parts = (0...@result.num_fields).inject([]) do |m, f|
         translate_fn = PG_TYPES[@types[f]]
         translator = translate_fn ? (TRANSLATE % translate_fn) : EMPTY
         m << (FETCH_FIELD % [@fields[f], f, translator])
       end
-      s = @record_class ?
+      s = (use_record_class && @record_class) ?
         (FETCH_RECORD_CLASS % [@record_class, parts.join(',')]) : 
         (FETCH % parts.join(','))
       puts s
