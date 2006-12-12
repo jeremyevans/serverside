@@ -26,7 +26,7 @@ module Postgres
         '', '',
         @opts[:database] || 'reality_development',
         @opts[:user] || 'postgres',
-        @opts[:password] || '240374'
+        @opts[:password]
       )
     end
     
