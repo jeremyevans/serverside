@@ -21,5 +21,12 @@ module ServerSide
     def [](table)
       query.from(table)
     end
+
+    def literal(v)
+      case v
+      when String: "'%s'" % v
+      else v.to_s
+      end
+    end
   end
 end

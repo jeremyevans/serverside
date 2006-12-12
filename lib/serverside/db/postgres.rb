@@ -34,10 +34,14 @@ module Postgres
       Postgres::Dataset.new(self, opts)
     end
     
+    def connected?
+      @conn.status == PGconn::CONNECTION_OK
+    end
+    
     def execute(sql)
       @conn.exec(sql)
     rescue PGError => e
-      if @conn.status != 0
+      unless connected?
         @conn.reset
         @conn.exec(sql)
       else
@@ -61,8 +65,12 @@ module Postgres
   end
   
   class Dataset < ServerSide::Dataset
-    attr_reader :result
+    attr_reader :result, :fields
   
+    def literal(v)
+      PGconn.quote(v)
+    end
+    
     def each(opts = nil, &block)
       @db.synchronize do
         select(opts)

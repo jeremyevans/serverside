@@ -104,6 +104,8 @@ class Node < ServerSide::Model.table(:nodes)
   one_to_many :children, :class => Node, :key => {:parent_id => :id}
 end
 
+$atts = ServerSide::Model.database[:node_attributes] 
+
 #Node.dataset.filter(:path => '/sas').delete
 
  

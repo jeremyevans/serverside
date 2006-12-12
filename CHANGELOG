@@ -1,5 +1,7 @@
 *SVN*
 
+* Added db/console.rb example.
+
 * Removed join clause from delete and update sql methods.
 
 * Added db/threads.rb example.
