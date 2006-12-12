@@ -1,5 +1,9 @@
 *SVN*
 
+* Removed join clause from delete and update sql methods.
+
+* Added db/threads.rb example.
+
 * Added examples directory.
 
 * Refactored postgres code for better performance.

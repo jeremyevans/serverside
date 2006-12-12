@@ -238,16 +238,10 @@ module ServerSide
       opts = @opts if opts.nil?
       delete_source = opts[:from] 
       
-      join_type = opts[:join_type]
-      join_table = opts[:join_table]
-      join_cond = join_type ? join_cond_list(opts[:join_cond], join_table) : nil
-      join_clause = join_type ? 
-        JOIN_CLAUSE % [join_type, join_table, join_cond] : EMPTY
-      
       where = opts[:where]
       where_clause = where ? WHERE % where_list(where) : EMPTY
       
-      [DELETE % delete_source, join_clause, where_clause].join(SPACE)
+      [DELETE % delete_source, where_clause].join(SPACE)
     end
     
     COUNT = "COUNT(*)".freeze
@@ -262,19 +256,13 @@ module ServerSide
       select_source = source_list(opts[:from]) 
       select_clause = SELECT % [select_fields, select_source]
       
-      join_type = opts[:join_type]
-      join_table = opts[:join_table]
-      join_cond = join_cond_list(opts[:join_cond], join_table)
-      join_clause = join_type ? 
-        JOIN_CLAUSE % [join_type, join_table, join_cond] : EMPTY
-      
       where = opts[:where]
       where_clause = where ? WHERE % where_list(where) : EMPTY
       
       limit = opts[:limit]
       limit_clause = limit ? LIMIT % limit : EMPTY
       
-      [select_clause, join_clause, where_clause, limit_clause].join(SPACE)
+      [select_clause, where_clause, limit_clause].join(SPACE)
     end
   end
 end
