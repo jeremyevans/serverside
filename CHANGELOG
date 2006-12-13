@@ -1,5 +1,7 @@
 *SVN*
 
+* Added schema generation code.
+
 * Fixed Dataset#map to return array of field values if no block specified.
 
 * Added support for filtering using regular expressions in postgres dataset.

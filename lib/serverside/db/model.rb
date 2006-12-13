@@ -27,6 +27,18 @@ module ServerSide
     def self.primary_key; @primary_key ||= :id; end
     def self.set_primary_key(k); @primary_key = k; end
     
+    def self.schema(table_name, &block)
+      @schema = Schema::Generator.new(table_name, &block)
+      set_table_name table_name
+      if @schema.primary_key_name
+        set_primary_key @schema.primary_key_name
+      end
+    end
+    
+    def self.get_schema
+      @schema
+    end
+    
     ONE_TO_ONE_PROC = "proc {i = @values[:%s]; %s[i] if i}".freeze
     ID_POSTFIX = "_id".freeze
     
@@ -99,7 +111,11 @@ __END__
 
 ServerSide::Model.database = Postgres::Database.new
 
-class Node < ServerSide::Model.table(:nodes)
+class Node < ServerSide::Model
+  schema :nodes do
+    
+  end
+
   one_to_one :parent, :class => Node, :key => :parent_id
   one_to_many :children, :class => Node, :key => {:parent_id => :id}
 end
