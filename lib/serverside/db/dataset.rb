@@ -152,13 +152,13 @@ module ServerSide
     
     alias_method :enum_map, :map
     
-    def map(*args, &block)
+    def map(field_name = nil, &block)
       if block
         enum_map(&block)
+      elsif field_name
+        enum_map {|r| r[field_name]}
       else
-        enum_map do |r|
-          args.map {|f| r[f]}
-        end
+        []
       end
     end
 

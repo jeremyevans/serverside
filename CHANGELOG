@@ -1,5 +1,7 @@
 *SVN*
 
+* Fixed Dataset#map to return array of field values if no block specified.
+
 * Added support for filtering using regular expressions in postgres dataset.
 
 * Added Postgres::Dataset#explain method.
