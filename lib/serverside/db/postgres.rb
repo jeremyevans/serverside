@@ -131,7 +131,7 @@ module Postgres
     end
     
     EXPLAIN = 'EXPLAIN '.freeze
-    QUERY_PLAN = :"QUERY PLAN"
+    QUERY_PLAN = 'QUERY PLAN'.to_sym
     
     def explain(opts = nil)
       perform EXPLAIN + select_sql(opts)
