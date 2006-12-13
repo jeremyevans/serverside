@@ -29,8 +29,9 @@ def print_dataset(dataset)
   end
 end
 
+puts "Welcome to the postgres console. Enter .q to exit..."
 while s = prompt
-  break if s =~ /\.quit/i
+  break if s =~ /\.q/i
   
   begin
     dataset.perform(s)
