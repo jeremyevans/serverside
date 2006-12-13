@@ -58,9 +58,6 @@ module ServerSide
       end 
     end
     
-    AND_SEPARATOR = " AND ".freeze
-    EQUAL_COND = "(%s = %s)".freeze
-    
     def literal(v)
       case v
       when String: "'%s'" % v
@@ -68,12 +65,17 @@ module ServerSide
       end
     end
     
+    AND_SEPARATOR = " AND ".freeze
+    EQUAL_COND = "(%s = %s)".freeze
+    
+    def where_equal_condition(left, right)
+      EQUAL_COND % [field_name(left), literal(right)]
+    end
+    
     def where_list(where)
       case where
       when Hash:
-        where.map do |kv|
-          EQUAL_COND % [field_name(kv[0]), literal(kv[1])]
-        end.join(AND_SEPARATOR)
+        where.map {|kv| where_equal_condition(kv[0], kv[1])}.join(AND_SEPARATOR)
       when Array:
         fmt = where.shift
         fmt.gsub('?') {|i| literal(where.shift)}
@@ -171,7 +173,8 @@ module ServerSide
     SPACE = ' '.freeze
     
     def select_sql(opts = nil)
-      opts = @opts if opts.nil?
+      opts = opts ? @opts.merge(opts) : @opts
+
       fields = opts[:select]
       select_fields = fields ? field_list(fields) : WILDCARD
       select_source = source_list(opts[:from]) 
@@ -199,8 +202,8 @@ module ServerSide
     INSERT = "INSERT INTO %s (%s) VALUES (%s)".freeze
     
     def insert_sql(values, opts = nil)
-      opts = @opts if opts.nil?
-      
+      opts = opts ? @opts.merge(opts) : @opts
+
       field_list = []
       value_list = []
       
@@ -220,7 +223,7 @@ module ServerSide
     SET_FORMAT = "%s = %s".freeze
     
     def update_sql(values, opts = nil)
-      opts = @opts if opts.nil?
+      opts = opts ? @opts.merge(opts) : @opts
       
       set_list = values.map {|kv| SET_FORMAT % [kv[0], literal(kv[1])]}.
         join(COMMA_SEPARATOR)
@@ -235,7 +238,8 @@ module ServerSide
     DELETE = "DELETE FROM %s".freeze
     
     def delete_sql(opts = nil)
-      opts = @opts if opts.nil?
+      opts = opts ? @opts.merge(opts) : @opts
+
       delete_source = opts[:from] 
       
       where = opts[:where]
@@ -245,24 +249,10 @@ module ServerSide
     end
     
     COUNT = "COUNT(*)".freeze
+    SELECT_COUNT = {:select => COUNT}.freeze
     
     def count_sql(opts = nil)
-      opts ||= @opts
-      return select_sql(opts.merge(:select => COUNT))
-    
-      opts = @opts if opts.nil?
-      fields = opts[:select]
-      select_fields = COUNT
-      select_source = source_list(opts[:from]) 
-      select_clause = SELECT % [select_fields, select_source]
-      
-      where = opts[:where]
-      where_clause = where ? WHERE % where_list(where) : EMPTY
-      
-      limit = opts[:limit]
-      limit_clause = limit ? LIMIT % limit : EMPTY
-      
-      [select_clause, where_clause, limit_clause].join(SPACE)
+      select_sql(opts ? opts.merge(SELECT_COUNT) : SELECT_COUNT)
     end
   end
 end

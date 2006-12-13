@@ -1,5 +1,13 @@
 *SVN*
 
+* Added support for filtering using regular expressions in postgres dataset.
+
+* Added Postgres::Dataset#explain method.
+
+* Added Postgres::Dataset#lock method.
+
+* Added support for SELECT FOR UPDATE and SELECT FOR SHARE in postgres dataset.
+
 * Added db/console.rb example.
 
 * Removed join clause from delete and update sql methods.

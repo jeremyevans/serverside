@@ -39,6 +39,8 @@ module Postgres
     end
     
     def execute(sql)
+      puts "****************************************"
+      puts sql
       @conn.exec(sql)
     rescue PGError => e
       unless connected?
@@ -71,6 +73,19 @@ module Postgres
       PGconn.quote(v)
     end
     
+    LIKE = '%s ~ %s'.freeze
+    LIKE_CI = '%s ~* %s'.freeze
+    
+    def where_equal_condition(left, right)
+      if right.is_a?(Regexp)
+        (right.casefold? ? LIKE_CI : LIKE) %
+          [field_name(left), PGconn.quote(right.source)]
+      else
+        super
+      end
+#      EQUAL_COND % [field_name(left), literal(right)]
+    end
+    
     def each(opts = nil, &block)
       @db.synchronize do
         select(opts)
@@ -79,27 +94,77 @@ module Postgres
       self
     end
     
-    def first
-#      raise RuntimeError, 'No order specified' unless @opts[:order]
+    LIMIT_1 = {:limit => 1}.freeze
+    
+    def first(opts = nil)
+      opts = opts ? opts.merge(LIMIT_1) : LIMIT_1
       @db.synchronize do
-        select(@opts.merge(:limit => 1))
+        select(opts)
         result_first
       end
     end
     
-    def last
-      raise RuntimeError, 'No order specified' unless @opts[:order]
+    def last(opts = nil)
+      raise RuntimeError, 'No order specified' unless
+        @opts[:order] || (opts && opts[:order])
+      
+      opts = {:order => reverse_order(@opts[:order])}.
+        merge(opts ? opts.merge(LIMIT_1) : LIMIT_1)
+      
       @db.synchronize do
-        select(@opts.merge(
-          :limit => 1, :order => reverse_order(@opts[:order])))
+        select(opts)
         result_first
       end
     end
+    
+    FOR_UPDATE = ' FOR UPDATE'.freeze
+    FOR_SHARE = ' FOR SHARE'.freeze
     
     def select(opts = nil)
-      perform select_sql(opts), true
+      row_lock_mode = opts ? opts[:lock] : @opts[:lock]
+      sql = select_sql(opts)
+      case row_lock_mode
+      when :update : sql << FOR_UPDATE.freeze
+      when :share  : sql << FOR_SHARE.freeze
+      end
+      perform sql, true
     end
-
+    
+    EXPLAIN = 'EXPLAIN '.freeze
+    QUERY_PLAN = :"QUERY PLAN"
+    
+    def explain(opts = nil)
+      perform EXPLAIN + select_sql(opts)
+      result = []
+      result_each {|r| result << r[QUERY_PLAN]}
+      result.join("\r\n")
+    end
+    
+    LOCK = 'LOCK TABLE %s IN %s MODE;'.freeze
+    
+    ACCESS_SHARE = 'ACCESS SHARE'.freeze
+    ROW_SHARE = 'ROW SHARE'.freeze
+    ROW_EXCLUSIVE = 'ROW EXCLUSIVE'.freeze
+    SHARE_UPDATE_EXCLUSIVE = 'SHARE UPDATE EXCLUSIVE'.freeze
+    SHARE = 'SHARE'.freeze
+    SHARE_ROW_EXCLUSIVE = 'SHARE ROW EXCLUSIVE'.freeze
+    EXCLUSIVE = 'EXCLUSIVE'.freeze
+    ACCESS_EXCLUSIVE = 'ACCESS EXCLUSIVE'.freeze
+    
+    # Locks the table with the specified mode.
+    def lock(mode, &block)
+      sql = LOCK % [@opts[:from], mode]
+      if block # perform locking inside a transaction and yield to block
+        db.transaction do
+          perform sql
+          yield
+        end
+      else
+        perform sql # lock without a transaction
+        self
+      end
+    end
+  
     def count(opts = nil)
       perform count_sql(opts)
       result_first[:count]
@@ -140,7 +205,7 @@ module Postgres
     end
     
     TRANSLATE = ".%s".freeze
-    FETCH_FIELD = ":%s => r[%s]%s".freeze
+    FETCH_FIELD = "%s => r[%s]%s".freeze
     FETCH = "lambda {|r| {%s}}".freeze
     FETCH_RECORD_CLASS = "lambda {|r| %s.new(%s)}".freeze
 
@@ -153,7 +218,7 @@ module Postgres
         used_fields << field
         translate_fn = PG_TYPES[@types[f]]
         translator = translate_fn ? (TRANSLATE % translate_fn) : EMPTY
-        m << (FETCH_FIELD % [field, f, translator])
+        m << (FETCH_FIELD % [field.inspect, f, translator])
       end
       s = (use_record_class && @record_class) ?
         (FETCH_RECORD_CLASS % [@record_class, parts.join(',')]) : 
