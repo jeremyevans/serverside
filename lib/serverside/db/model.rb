@@ -1,23 +1,22 @@
+#require 'rubygems'
+require 'metaid'
+
 module ServerSide
   class Model
     @@database = nil
     def self.database; @@database; end
     def self.database=(db); @@database = db; end
     
-    def self.table_name
-      @table_name || (raise RuntimeError, 
-        "Table name not specified for class #{self.class}.")
-    end
+    def self.table_name; @table_name; end
     def self.set_table_name(t); @table_name = t; end
 
-    def self.table(t)
-      Class.new(self) do
-        meta_def(:inherited) {|c| c.set_table_name(t)}
-      end
-    end
-    
     def self.dataset
       return @dataset if @dataset
+      if !table_name
+        raise RuntimeError, "Table name not specified for class #{self}."
+      elsif !database
+        raise RuntimeError, "No database connected."
+      end
       @dataset = database[table_name]
       @dataset.record_class = self
       @dataset
@@ -105,9 +104,24 @@ module ServerSide
       @values.merge!(values)
     end
   end
+  
+  def self.Model(table_name)
+    Class.new(ServerSide::Model) do
+      meta_def(:inherited) {|c| c.set_table_name(table_name)}
+    end
+  end
 end
 
 __END__
+
+class Node < ServerSide::Model(:nodes)
+end
+
+class NodeAttribute < ServerSide::Model(:node_attributes)
+end
+
+
+
 
 ServerSide::Model.database = Postgres::Database.new
 

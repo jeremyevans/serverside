@@ -120,14 +120,22 @@ module Postgres
     FOR_UPDATE = ' FOR UPDATE'.freeze
     FOR_SHARE = ' FOR SHARE'.freeze
     
-    def select(opts = nil)
+    def select_sql(opts = nil)
       row_lock_mode = opts ? opts[:lock] : @opts[:lock]
-      sql = select_sql(opts)
+      sql = super
       case row_lock_mode
       when :update : sql << FOR_UPDATE.freeze
       when :share  : sql << FOR_SHARE.freeze
       end
-      perform sql, true
+      sql
+    end
+    
+    def for_update
+      dup_merge(:lock => :update)
+    end
+    
+    def for_share
+      dup_merge(:lock => :share)
     end
     
     EXPLAIN = 'EXPLAIN '.freeze
@@ -165,6 +173,10 @@ module Postgres
       end
     end
   
+    def select(opts = nil)
+      perform select_sql(opts), true
+    end
+    
     def count(opts = nil)
       perform count_sql(opts)
       result_first[:count]

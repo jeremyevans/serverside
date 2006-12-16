@@ -1,5 +1,13 @@
 *SVN*
 
+* Added ServerSide::Model method, so one can do class node < ServerSide::Model(:nodes).
+
+* Refactored Postgres::Dataset#select.
+
+* Added Postgres::Dataset#for_update and for_share methods.
+
+* Added XML generator.
+
 * Added schema generation code.
 
 * Fixed Dataset#map to return array of field values if no block specified.
