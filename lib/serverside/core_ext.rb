@@ -46,3 +46,5 @@ class Object
   end
 end
 
+def true.to_i; -1; end
+def false.to_i; 0; end

@@ -1,5 +1,7 @@
 *SVN*
 
+* Added true.to_i and false.to_i methods (these will be used by Dataset#literal.)
+
 * Added ServerSide::Model method, so one can do class node < ServerSide::Model(:nodes).
 
 * Refactored Postgres::Dataset#select.
