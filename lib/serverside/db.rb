@@ -4,6 +4,5 @@ require File.join(db_dir, 'database')
 require File.join(db_dir, 'schema')
 require File.join(db_dir, 'dataset')
 require File.join(db_dir, 'model')
-require File.join(db_dir, 'postgres')
 
 
