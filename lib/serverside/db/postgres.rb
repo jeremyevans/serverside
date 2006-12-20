@@ -88,7 +88,7 @@ module Postgres
     
     def each(opts = nil, &block)
       @db.synchronize do
-        select(opts)
+        perform select_sql(opts), true
         result_each(&block)
       end
       self
@@ -99,7 +99,7 @@ module Postgres
     def first(opts = nil)
       opts = opts ? opts.merge(LIMIT_1) : LIMIT_1
       @db.synchronize do
-        select(opts)
+        perform select_sql(opts), true
         result_first
       end
     end
@@ -112,7 +112,7 @@ module Postgres
         merge(opts ? opts.merge(LIMIT_1) : LIMIT_1)
       
       @db.synchronize do
-        select(opts)
+        perform select_sql(opts), true
         result_first
       end
     end
@@ -142,7 +142,7 @@ module Postgres
     QUERY_PLAN = 'QUERY PLAN'.to_sym
     
     def explain(opts = nil)
-      perform EXPLAIN + select_sql(opts)
+      db.synchronize {perform EXPLAIN + select_sql(opts)}
       result = []
       result_each {|r| result << r[QUERY_PLAN]}
       result.join("\r\n")
@@ -162,42 +162,41 @@ module Postgres
     # Locks the table with the specified mode.
     def lock(mode, &block)
       sql = LOCK % [@opts[:from], mode]
-      if block # perform locking inside a transaction and yield to block
-        db.transaction do
-          perform sql
-          yield
+      db.synchronize do
+        if block # perform locking inside a transaction and yield to block
+          db.transaction {perform sql; yield}
+        else
+          perform sql # lock without a transaction
+          self
         end
-      else
-        perform sql # lock without a transaction
-        self
       end
     end
   
-    def select(opts = nil)
-      perform select_sql(opts), true
-    end
-    
     def count(opts = nil)
-      perform count_sql(opts)
-      result_first[:count]
+      db.synchronize {perform count_sql(opts); result_first[:count]}
     end
     
     SELECT_LASTVAL = ';SELECT lastval()'.freeze
     
     def insert(values, opts = nil)
-      perform insert_sql(values, opts) + SELECT_LASTVAL
-      result_first[:lastval]
-      #last_insert_id
+      db.synchronize do
+        perform insert_sql(values, opts) + SELECT_LASTVAL
+        result_first[:lastval]
+      end
     end
     
     def update(values, opts = nil)
-      perform update_sql(values, opts)
-      @result.cmdtuples
+      db.synchronize do
+        perform update_sql(values, opts)
+        @result.cmdtuples
+      end
     end
     
     def delete(opts = nil)
-      perform delete_sql(opts)
-      @result.cmdtuples
+      db.synchronize do
+        perform delete_sql(opts)
+        @result.cmdtuples
+      end
     end
     
     def perform(sql, use_record_class = false)
@@ -240,22 +239,3 @@ module Postgres
     end
   end
 end
-
-__END__
-
-DB = Postgres::Database.new
-$d = DB[:nodes]
-$e = DB[:node_attributes]
-
-x = 10000
-
-t1 = Time.now
-x.times do
-  $e.insert(:node_id => rand(1_000), :kind => rand(1_000), 
-    :value => rand(100_000_000))
-end
-t2 = Time.now
-e = t2 - t1
-r = x/e
-puts "Inserted #{x} records in #{e} seconds (#{r} recs/s)"
-
