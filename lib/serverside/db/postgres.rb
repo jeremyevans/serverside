@@ -87,7 +87,6 @@ module Postgres
       else
         super
       end
-#      EQUAL_COND % [field_name(left), literal(right)]
     end
     
     def each(opts = nil, &block)
