@@ -26,12 +26,28 @@ module ServerSide
     def self.primary_key; @primary_key ||= :id; end
     def self.set_primary_key(k); @primary_key = k; end
     
-    def self.schema(table_name, &block)
-      @schema = Schema::Generator.new(table_name, &block)
-      set_table_name table_name
+    def self.schema(name = nil, &block)
+      name ||= table_name
+      @schema = Schema::Generator.new(name, &block)
+      set_table_name name
       if @schema.primary_key_name
         set_primary_key @schema.primary_key_name
       end
+    end
+    
+    def self.table_exists?
+      dataset.count
+      true
+    rescue
+      false
+    end
+    
+    def self.create_table
+      database.execute get_schema.to_s
+    end
+    
+    def self.drop_table
+      database.execute Schema.drop_table_sql(table_name)
     end
     
     def self.get_schema
@@ -76,6 +92,7 @@ module ServerSide
     def self.first; dataset.first; end
     def self.count; dataset.count; end
     def self.join(*args); dataset.join(*args); end
+    def self.delete(*args); dataset.delete(*args); end
     
     def self.[](key)
       find key.is_a?(Hash) ? key : {primary_key => key}

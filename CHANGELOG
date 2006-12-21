@@ -1,5 +1,7 @@
 *SVN*
 
+* Better integration of Schema generator with Model.
+
 * Refactored postgres select code and wrapped db calls with db.synchronize.
 
 * Added true.to_i and false.to_i methods (these will be used by Dataset#literal.)

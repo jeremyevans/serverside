@@ -51,7 +51,7 @@ module ServerSide
     
     DROP_TABLE = "DROP TABLE %s;".freeze
     
-    def delete_table_sql(name)
+    def drop_table_sql(name)
       DROP_TABLE % name
     end
     
