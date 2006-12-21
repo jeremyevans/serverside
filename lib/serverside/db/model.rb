@@ -51,8 +51,8 @@ module ServerSide
     end
     
     def self.recreate_table
+      drop_table if table_exists?
       create_table
-      drop_table
     end
     
     def self.get_schema
