@@ -1,5 +1,7 @@
 *SVN*
 
+* Fixed schema generation and added Model.recreate_table.
+
 * Better integration of Schema generator with Model.
 
 * Refactored postgres select code and wrapped db calls with db.synchronize.

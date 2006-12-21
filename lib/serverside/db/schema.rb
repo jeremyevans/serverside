@@ -2,7 +2,7 @@ require 'rubygems'
 require 'postgres'
 
 module ServerSide
-  module Schema
+  class Schema
     COMMA_SEPARATOR = ', '.freeze
     COLUMN_DEF = '%s %s'.freeze
     UNIQUE = ' UNIQUE'.freeze
@@ -12,7 +12,7 @@ module ServerSide
     TYPES = Hash.new {|h, k| k}
     TYPES[:double] = 'double precision'
     
-    def column_definition(column)
+    def self.column_definition(column)
       c = COLUMN_DEF % [column[:name], TYPES[column[:type]]]
       c << UNIQUE if column[:unique]
       c << NOT_NULL if column[:null] == false
@@ -20,7 +20,7 @@ module ServerSide
       c
     end
   
-    def create_table_column_list(columns)
+    def self.create_table_column_list(columns)
       columns.map {|c| column_definition(c)}.join(COMMA_SEPARATOR)
     end
     
@@ -29,7 +29,7 @@ module ServerSide
     INDEX_NAME = '%s_%s_index'.freeze
     UNDERSCORE = '_'.freeze
     
-    def index_definition(table_name, index)
+    def self.index_definition(table_name, index)
       fields = index[:columns].join(COMMA_SEPARATOR)
       index_name = index[:name] || INDEX_NAME %
         [table_name, index[:columns].join(UNDERSCORE)]
@@ -37,13 +37,13 @@ module ServerSide
         [index_name, table_name, fields]
     end
     
-    def create_indexes_sql(table_name, indexes)
+    def self.create_indexes_sql(table_name, indexes)
       indexes.map {|i| index_definition(table_name, i)}.join
     end
   
     CREATE_TABLE = "CREATE TABLE %s (%s);".freeze
     
-    def create_table_sql(name, columns, indexes = nil)
+    def self.create_table_sql(name, columns, indexes = nil)
       sql = CREATE_TABLE % [name, create_table_column_list(columns)]
       sql << create_indexes_sql(name, indexes) if indexes && !indexes.empty?
       sql
@@ -51,7 +51,7 @@ module ServerSide
     
     DROP_TABLE = "DROP TABLE %s;".freeze
     
-    def drop_table_sql(name)
+    def self.drop_table_sql(name)
       DROP_TABLE % name
     end
     
@@ -93,7 +93,7 @@ module ServerSide
         if @primary_key && !has_column?(@primary_key[:name])
           @columns.unshift(@primary_key)
         end
-        create_table_sql(@table_name, @columns, @indexes)
+        Schema.create_table_sql(@table_name, @columns, @indexes)
       end
     end
   end

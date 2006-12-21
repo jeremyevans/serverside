@@ -50,6 +50,11 @@ module ServerSide
       database.execute Schema.drop_table_sql(table_name)
     end
     
+    def self.recreate_table
+      create_table
+      drop_table
+    end
+    
     def self.get_schema
       @schema
     end
