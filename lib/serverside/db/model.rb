@@ -119,12 +119,16 @@ module ServerSide
       find primary_key => dataset.insert(values)
     end
     
-    BY_REGEXP = /by_(.*)/.freeze
+    FIND_BY_REGEXP = /^find_by_(.*)/.freeze
+    FILTER_BY_REGEXP = /^filter_by_(.*)/.freeze
     
     def self.method_missing(m, *args)
       method_name = m.to_s
-      if method_name =~ BY_REGEXP
+      if method_name =~ FIND_BY_REGEXP
         meta_def(method_name) {|arg| find($1 => arg)}
+        send(m, *args) if respond_to?(m)
+      elsif method_name =~ FILTER_BY_REGEXP
+        meta_def(method_name) {|arg| filter($1 => arg)}
         send(m, *args) if respond_to?(m)
       else
         super
