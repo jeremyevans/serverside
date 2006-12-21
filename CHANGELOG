@@ -1,5 +1,7 @@
 *SVN*
 
+* Added Postgres literal respresentation for Time objects (as float). 
+
 * Fixed schema generation and added Model.recreate_table.
 
 * Better integration of Schema generator with Model.

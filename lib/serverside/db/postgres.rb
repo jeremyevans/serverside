@@ -70,7 +70,11 @@ module Postgres
     attr_reader :result, :fields
   
     def literal(v)
-      PGconn.quote(v)
+      case v
+      when Time: PGconn.quote(v.to_f)
+      else
+        PGconn.quote(v)
+      end
     end
     
     LIKE = '%s ~ %s'.freeze
