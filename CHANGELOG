@@ -1,5 +1,9 @@
 *SVN*
 
+* Added PGconn.quote method implementation for pure-ruby postgres adapter.
+
+* Added Postgres.tables to query existing tables.
+
 * Added filter_by_XXX and fixed find_by_XXX methods.
 
 * Added Model.schemas and Model.recreate_schemas.

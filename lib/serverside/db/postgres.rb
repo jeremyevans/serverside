@@ -2,6 +2,21 @@ require 'postgres'
 require 'metaid'
 require 'mutex_m'
 
+class PGconn
+  # the pure-ruby postgres adapter does not have a quote method.
+  unless methods.include?('quote')
+    def self.quote(obj)
+      case obj
+      when true: 't'
+      when false: 'f'
+      when nil: 'NULL'
+      when String: "'#{obj}'"
+      else obj.to_s
+      end
+    end
+  end
+end
+
 require File.join(File.dirname(__FILE__), 'database')
 require File.join(File.dirname(__FILE__), 'dataset')
 
@@ -32,6 +47,15 @@ module Postgres
     
     def query(opts = nil)
       Postgres::Dataset.new(self, opts)
+    end
+    
+    RELATION_QUERY = {:from => :pg_class, :select => :relname}.freeze
+    RELATION_FILTER = "(relkind = 'r') AND (relname !~ '^pg|sql')".freeze
+    SYSTEM_TABLE_REGEXP = /^pg|sql/.freeze
+    
+    
+    def tables
+      query(RELATION_QUERY).filter(RELATION_FILTER).map(:relname)
     end
     
     def connected?
