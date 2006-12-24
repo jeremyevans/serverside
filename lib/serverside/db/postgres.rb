@@ -80,9 +80,14 @@ module Postgres
     SQL_ROLLBACK = 'ROLLBACK'.freeze
     
     def transaction
+      if @transaction_in_progress
+        return yield
+      end
+      @transaction_in_progress = true
       execute(SQL_BEGIN)
       result = yield
       execute(SQL_COMMIT)
+      @transaction_in_progress = nil
       result
     rescue => e
       execute(SQL_ROLLBACK)

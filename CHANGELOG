@@ -1,5 +1,15 @@
 *SVN*
 
+* Fixed Postgres::Database#transaction for re-entrancy.
+
+* Renamed Model.database to Model.db.
+
+* Fixed Model.one_to_many construct.
+
+* Added before_delete and after_create hooks.
+
+* Fixed Postgres spec.
+
 * Added PGconn.quote method implementation for pure-ruby postgres adapter.
 
 * Added Postgres.tables to query existing tables.

@@ -3,11 +3,11 @@ require 'metaid'
 
 module ServerSide
   class Model
-    @@database = nil
+    @@db = nil
     @@schemas = {}
     
-    def self.database; @@database; end
-    def self.database=(db); @@database = db; end
+    def self.db; @@db; end
+    def self.db=(db); @@db = db; end
     
     def self.schemas; @@schemas; end
     
@@ -18,10 +18,10 @@ module ServerSide
       return @dataset if @dataset
       if !table_name
         raise RuntimeError, "Table name not specified for class #{self}."
-      elsif !database
+      elsif !db
         raise RuntimeError, "No database connected."
       end
-      @dataset = database[table_name]
+      @dataset = db[table_name]
       @dataset.record_class = self
       @dataset
     end
@@ -42,8 +42,8 @@ module ServerSide
     
     def self.recreate_schemas
       @@schemas.each do |name, schema|
-        database.execute Schema.drop_table_sql(name)
-        database.execute schema.to_s
+        db.execute Schema.drop_table_sql(name)
+        db.execute schema.to_s
       end
     end
     
@@ -55,11 +55,11 @@ module ServerSide
     end
     
     def self.create_table
-      database.execute get_schema.to_s
+      db.execute get_schema.to_s
     end
     
     def self.drop_table
-      database.execute Schema.drop_table_sql(table_name)
+      db.execute Schema.drop_table_sql(table_name)
     end
     
     def self.recreate_table
@@ -80,13 +80,34 @@ module ServerSide
       define_method name, &eval(ONE_TO_ONE_PROC % [key, klass])
     end
   
-    ONE_TO_MANY_PROC = "proc {%s.filter(:%s => @values[:%s])}".freeze  
+    ONE_TO_MANY_PROC = "proc {%s.filter(:%s => @pkey)}".freeze  
     def self.one_to_many(name, opts)
       klass = opts[:class] || self
-      keys = opts[:key].to_a.first
-      define_method name, &eval(ONE_TO_MANY_PROC % [klass, keys[0], keys[1]])
+      key = opts[:on]
+      define_method name, &eval(ONE_TO_MANY_PROC % [klass, key])
+    end
+    
+    def self.get_hooks(key)
+      @hooks ||= {}
+      @hooks[key] ||= []
+    end
+    
+    def self.has_hooks?(key)
+      !get_hooks(key).empty?
+    end
+    
+    def run_hooks(key)
+      self.class.get_hooks(key).each {|h| instance_eval(&h)}
     end
 
+    def self.before_delete(&block)
+      get_hooks(:before_delete).unshift(block)
+    end
+    
+    def self.after_create(&block)
+      get_hooks(:after_create) << block
+    end
+    
     ############################################################################
     
     attr_reader :values, :pkey
@@ -101,7 +122,7 @@ module ServerSide
     end
     
     def self.find(cond)
-      dataset.filter(cond).first# || (raise RuntimeError, "Record not found.")
+      dataset.filter(cond).first # || (raise RuntimeError, "Record not found.")
     end
     
     def self.all; dataset.all; end
@@ -109,14 +130,25 @@ module ServerSide
     def self.first; dataset.first; end
     def self.count; dataset.count; end
     def self.join(*args); dataset.join(*args); end
-    def self.delete(*args); dataset.delete(*args); end
+    def self.delete_all
+      db.transaction {dataset.all.each {|r| r.delete}}
+    end
     
     def self.[](key)
       find key.is_a?(Hash) ? key : {primary_key => key}
     end
     
     def self.create(values)
-      find primary_key => dataset.insert(values)
+      obj = find(primary_key => dataset.insert(values))
+      obj.run_hooks(:after_create)
+      obj
+    end
+    
+    def delete
+      db.transaction do
+        run_hooks(:before_delete)
+        self.class.dataset.filter(primary_key => @pkey).delete
+      end
     end
     
     FIND_BY_REGEXP = /^find_by_(.*)/.freeze
@@ -134,6 +166,8 @@ module ServerSide
         super
       end
     end
+    
+    def db; @@db; end
     
     def [](field); @values[field]; end
     
@@ -161,7 +195,7 @@ end
 
 
 
-ServerSide::Model.database = Postgres::Database.new
+ServerSide::Model.db = Postgres::Database.new
 
 class Node < ServerSide::Model
   schema :nodes do
@@ -172,7 +206,7 @@ class Node < ServerSide::Model
   one_to_many :children, :class => Node, :key => {:parent_id => :id}
 end
 
-$atts = ServerSide::Model.database[:node_attributes] 
+$atts = ServerSide::Model.db[:node_attributes] 
 
 #Node.dataset.filter(:path => '/sas').delete
 
