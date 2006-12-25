@@ -1,5 +1,7 @@
 *SVN*
 
+* Added foreign key support in Schema.
+
 * Changed Postgres#synchronize to acquire connection from connection pool, and be re-entrant.
 
 * Refactored Postgres to use ConnectionPool.

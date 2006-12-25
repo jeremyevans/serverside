@@ -8,16 +8,38 @@ module ServerSide
     UNIQUE = ' UNIQUE'.freeze
     NOT_NULL = ' NOT NULL'.freeze
     DEFAULT = ' DEFAULT %s'.freeze
+    PRIMARY_KEY = ' PRIMARY KEY'.freeze
+    REFERENCES = ' REFERENCES %s'.freeze
+    ON_DELETE = ' ON DELETE %s'.freeze
+    
+    RESTRICT = 'RESTRICT'.freeze
+    CASCADE = 'CASCADE'.freeze
+    NO_ACTION = 'NO ACTION'.freeze
+    SET_NULL = 'SET NULL'.freeze
+    SET_DEFAULT = 'SET DEFAULT'.freeze
     
     TYPES = Hash.new {|h, k| k}
     TYPES[:double] = 'double precision'
+    
+    def self.on_delete_action(action)
+      case action
+      when :restrict: RESTRICT
+      when :cascade: CASCADE
+      when :set_null: SET_NULL
+      when :set_default: SET_DEFAULT
+      else NO_ACTION
+      end
+    end
     
     def self.column_definition(column)
       c = COLUMN_DEF % [column[:name], TYPES[column[:type]]]
       c << UNIQUE if column[:unique]
       c << NOT_NULL if column[:null] == false
       c << DEFAULT % PGconn.quote(column[:default]) if column[:default]
-      c
+      c << PRIMARY_KEY if column[:primary_key]
+      c << REFERENCES % column[:reference] if column[:reference]
+      c << ON_DELETE % on_delete_action(column[:on_delete]) if 
+        column[:on_delete]
     end
   
     def self.create_table_column_list(columns)
@@ -67,7 +89,11 @@ module ServerSide
       end
       
       def primary_key(name, type = nil, opts = nil)
-        @primary_key = {:name => name, :type => type || :serial}.merge(opts || {})
+        @primary_key = {
+          :name => name, 
+          :type => type || :serial,
+          :primary_key => true
+        }.merge(opts || {})
       end
       
       def primary_key_name
