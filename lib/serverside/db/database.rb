@@ -1,10 +1,9 @@
+require 'thread'
+
 module ServerSide
   class Database
-    attr_reader :conn
-  
     def initialize(opts = {})
       @opts = opts
-      @conn = make_connection
     end
 
     # Some convenience methods

@@ -15,6 +15,10 @@ class PGconn
       end
     end
   end
+  
+  def connected?
+    status == PGconn::CONNECTION_OK
+  end
 end
 
 require File.join(File.dirname(__FILE__), 'database')
@@ -32,18 +36,21 @@ module Postgres
   }
 
   class Database < ServerSide::Database
-    include Mutex_m
+    attr_reader :pool
     
-    def make_connection
-      PGconn.connect(
-        @opts[:host] || 'localhost',
-        @opts[:port] || 5432,
-        '', '',
-        @opts[:database] || 'reality_development',
-        @opts[:user] || 'postgres',
-        @opts[:password]
-      )
+    def initialize(opts = {})
+      super
+      @pool = ServerSide::ConnectionPool.new(@opts[:max_connections] || 4) do
+        PGconn.connect(
+          @opts[:host] || 'localhost',
+          @opts[:port] || 5432,
+          '', '',
+          @opts[:database] || 'reality_development',
+          @opts[:user] || 'postgres',
+          @opts[:password])
+      end
     end
+    
     
     def query(opts = nil)
       Postgres::Dataset.new(self, opts)
@@ -58,21 +65,26 @@ module Postgres
       query(RELATION_QUERY).filter(RELATION_FILTER).map(:relname)
     end
     
-    def connected?
-      @conn.status == PGconn::CONNECTION_OK
-    end
-    
     def execute(sql)
       puts "****************************************"
       puts sql
-      @conn.exec(sql)
-    rescue PGError => e
-      unless connected?
-        @conn.reset
-        @conn.exec(sql)
-      else
-        raise e
+      @pool.hold_connection do |conn|
+        begin
+          conn.exec(sql)
+        rescue PGError => e
+          unless conn.connected?
+            conn.reset
+            conn.exec(sql)
+          else
+            p e
+            raise e
+          end
+        end
       end
+    end
+    
+    def synchronize(&block)
+      @pool.hold_connection(&block)
     end
     
     SQL_BEGIN = 'BEGIN'.freeze

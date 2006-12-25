@@ -1,5 +1,13 @@
 *SVN*
 
+* Changed Postgres#synchronize to acquire connection from connection pool, and be re-entrant.
+
+* Refactored Postgres to use ConnectionPool.
+
+* Implemented ConnectionPool class.
+
+* Refactored Postgres#connected? into PGconn.
+
 * Fixed Postgres::Database#transaction for re-entrancy.
 
 * Renamed Model.database to Model.db.
