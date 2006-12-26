@@ -37,9 +37,10 @@ module ServerSide
       c << NOT_NULL if column[:null] == false
       c << DEFAULT % PGconn.quote(column[:default]) if column[:default]
       c << PRIMARY_KEY if column[:primary_key]
-      c << REFERENCES % column[:reference] if column[:reference]
+      c << REFERENCES % column[:table] if column[:table]
       c << ON_DELETE % on_delete_action(column[:on_delete]) if 
         column[:on_delete]
+      c
     end
   
     def self.create_table_column_list(columns)
@@ -82,7 +83,7 @@ module ServerSide
     
       def initialize(table_name, &block)
         @table_name = table_name
-        @primary_key = {:name => :id, :type => :serial}
+        @primary_key = {:name => :id, :type => :serial, :primary_key => true}
         @columns = []
         @indexes = []
         instance_eval(&block)
@@ -104,6 +105,10 @@ module ServerSide
         @columns << {:name => name, :type => type}.merge(opts || {})
       end
       
+      def foreign_key(name, opts)
+        @columns << {:name => name, :type => :integer}.merge(opts || {})
+      end
+      
       def has_column?(name)
         @columns.each {|c| return true if c[:name] == name}
         false
@@ -114,13 +119,44 @@ module ServerSide
         @indexes << {:columns => columns}.merge(opts || {})
       end
       
-      def to_s
-        
+      def create_sql
         if @primary_key && !has_column?(@primary_key[:name])
           @columns.unshift(@primary_key)
         end
         Schema.create_table_sql(@table_name, @columns, @indexes)
       end
+      
+      def drop_sql
+        Schema.drop_table_sql(@table_name)
+      end
+    end
+    
+    attr_reader :instructions
+    
+    def initialize(&block)
+      @instructions = []
+      instance_eval(&block)
+    end
+    
+    def create_table(table_name, &block)
+      @instructions << Generator.new(table_name, &block)
+    end
+    
+    def create(db)
+      @instructions.each do |s|
+        db.execute(s.create_sql)
+      end
+    end
+    
+    def drop(db)
+      @instructions.reverse_each do |s|
+        db.execute(s.drop_sql) if db.table_exists?(s.table_name)
+      end
+    end
+    
+    def recreate(db)
+      drop(db)
+      create(db)
     end
   end
 end

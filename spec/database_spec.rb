@@ -3,10 +3,6 @@ require File.join(File.dirname(__FILE__), '../lib/serverside')
 
 class ServerSide::Database
   attr_accessor :opts
-  
-  def make_connection
-    :dummy_connection
-  end
 end
 
 context "A new Database" do
@@ -17,10 +13,6 @@ context "A new Database" do
   
   specify "should set opts to empty hash if not specified" do
     ServerSide::Database.new.opts.should == {}
-  end
-  
-  specify "should call make_connection and store the result in @conn" do
-    ServerSide::Database.new.conn.should == :dummy_connection
   end
 end
 

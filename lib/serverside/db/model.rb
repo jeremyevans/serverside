@@ -4,12 +4,9 @@ require 'metaid'
 module ServerSide
   class Model
     @@db = nil
-    @@schemas = {}
     
     def self.db; @@db; end
     def self.db=(db); @@db = db; end
-    
-    def self.schemas; @@schemas; end
     
     def self.table_name; @table_name; end
     def self.set_table_name(t); @table_name = t; end
@@ -37,29 +34,18 @@ module ServerSide
       if @schema.primary_key_name
         set_primary_key @schema.primary_key_name
       end
-      @@schemas[name.to_sym] = @schema
-    end
-    
-    def self.recreate_schemas
-      @@schemas.each do |name, schema|
-        db.execute Schema.drop_table_sql(name)
-        db.execute schema.to_s
-      end
     end
     
     def self.table_exists?
-      dataset.count
-      true
-    rescue
-      false
+      db.table_exists?(table_name)
     end
     
     def self.create_table
-      db.execute get_schema.to_s
+      db.execute get_schema.create_sql
     end
     
     def self.drop_table
-      db.execute Schema.drop_table_sql(table_name)
+      db.execute get_schema.drop_sql
     end
     
     def self.recreate_table

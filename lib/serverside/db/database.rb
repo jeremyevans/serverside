@@ -1,5 +1,7 @@
 require 'thread'
 
+require File.join(File.dirname(__FILE__), 'schema')
+
 module ServerSide
   class Database
     def initialize(opts = {})
@@ -26,6 +28,21 @@ module ServerSide
       when String: "'%s'" % v
       else v.to_s
       end
+    end
+    
+    def create_table(name, columns, indexes = nil)
+      execute Schema.create_table_sql(name, columns, indexes)
+    end
+    
+    def drop_table(name)
+      execute Schema.drop_table_sql(name)
+    end
+    
+    def table_exists?(name)
+      from(name).count
+      true
+    rescue
+      false
     end
   end
 end

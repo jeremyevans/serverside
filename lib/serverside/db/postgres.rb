@@ -105,6 +105,10 @@ module Postgres
       execute(SQL_ROLLBACK)
       raise e
     end
+
+    def table_exists?(name)
+      from(:pg_class).filter(:relname => name, :relkind => 'r').count > 0
+    end
   end
   
   class Dataset < ServerSide::Dataset
@@ -113,6 +117,7 @@ module Postgres
     def literal(v)
       case v
       when Time: PGconn.quote(v.to_f)
+      when Symbol: PGconn.quote(v.to_s)
       else
         PGconn.quote(v)
       end
@@ -259,25 +264,34 @@ module Postgres
       @result.each {|r| return fetch_row(r)}
     end
     
-    TRANSLATE = ".%s".freeze
-    FETCH_FIELD = "%s => r[%s]%s".freeze
-    FETCH = "lambda {|r| {%s}}".freeze
-    FETCH_RECORD_CLASS = "lambda {|r| %s.new(%s)}".freeze
+    TEMP_VAR = 't%d'.freeze
+    ASSIGN = '%s = r[%s]'.freeze
+    FETCH_FIELD_TRANSLATE = "%s => (%s ? %s.%s : nil)".freeze
+    FETCH_FIELD = "%s => %s".freeze
+    FETCH = "lambda {|r| %s;{%s}}".freeze
+    FETCH_RECORD_CLASS = "lambda {|r| %s;%s.new(%s)}".freeze
+    COMMA = ','.freeze
+    SEMICOLON = ';'.freeze
 
     def compile_row_fetcher(use_record_class)
       used_fields = []
-      parts = (0...@result.num_fields).inject([]) do |m, f|
-        field = @fields[f]
+      assignments = []
+      kvs = []
+      @fields.each_with_index do |field, idx|
         next m if used_fields.include?(field)
-        
+
         used_fields << field
-        translate_fn = PG_TYPES[@types[f]]
-        translator = translate_fn ? (TRANSLATE % translate_fn) : EMPTY
-        m << (FETCH_FIELD % [field.inspect, f, translator])
+        temp_var = TEMP_VAR % idx
+        assignments << (ASSIGN % [temp_var, idx])
+        translate_fn = PG_TYPES[@types[idx]]
+        kvs << ((translate_fn ? FETCH_FIELD_TRANSLATE : FETCH_FIELD) %
+          [field.inspect, temp_var, temp_var, translate_fn])
       end
       s = (use_record_class && @record_class) ?
-        (FETCH_RECORD_CLASS % [@record_class, parts.join(',')]) : 
-        (FETCH % parts.join(','))
+        (FETCH_RECORD_CLASS % [
+          assignments.join(SEMICOLON), @record_class, kvs.join(COMMA)
+        ]) : 
+        (FETCH % [assignments.join(SEMICOLON), kvs.join(COMMA)])
       l = eval(s)
       meta_def(:fetch_row, &l)
     end

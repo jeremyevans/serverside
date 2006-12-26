@@ -1,5 +1,19 @@
 *SVN*
 
+* Fixed Postgres row fetcher to return nil values correctly.
+
+* Added Database#create_table, drop_table and table_exists? methods. Implemented Postgres#table_exists?.
+
+* Added Schema#create and Schema#drop methods.
+
+* Added Schema::Generator#create_sql drop_sql methods.
+
+* Added Schema::Generator#foreign_key construct.
+
+* Refactored Schema slightly to allow Schema instances that make sense.
+
+* Removed Model.schemas - schema should be unrelated.
+
 * Added foreign key support in Schema.
 
 * Changed Postgres#synchronize to acquire connection from connection pool, and be re-entrant.
