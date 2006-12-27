@@ -1,5 +1,11 @@
 *SVN*
 
+* Added table option to one_to_one and one_to_many. This allows relations without defining custom classes.
+
+* Added order option to one_to_many construct.
+
+* Fixed Dataset#count when order is specified.
+
 * Added Model#refresh and Model#exists? methods.
 
 * Fixed Postgres row fetcher to return nil values correctly.

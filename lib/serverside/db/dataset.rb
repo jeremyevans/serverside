@@ -186,16 +186,16 @@ module ServerSide
       join_clause = join_type ? 
         JOIN_CLAUSE % [join_type, join_table, join_cond] : EMPTY
       
-      order = opts[:order]
-      order_clause = order ? ORDER % order.join(COMMA_SEPARATOR) : EMPTY
-      
       where = opts[:where]
       where_clause = where ? WHERE % where_list(where) : EMPTY
+      
+      order = opts[:order]
+      order_clause = order ? ORDER % order.join(COMMA_SEPARATOR) : EMPTY
       
       limit = opts[:limit]
       limit_clause = limit ? LIMIT % limit : EMPTY
       
-      [select_clause, join_clause, order_clause, where_clause, limit_clause].
+      [select_clause, join_clause, where_clause, order_clause, limit_clause].
         join(SPACE)
     end
     
@@ -249,7 +249,7 @@ module ServerSide
     end
     
     COUNT = "COUNT(*)".freeze
-    SELECT_COUNT = {:select => COUNT}.freeze
+    SELECT_COUNT = {:select => COUNT, :order => nil}.freeze
     
     def count_sql(opts = nil)
       select_sql(opts ? opts.merge(SELECT_COUNT) : SELECT_COUNT)
