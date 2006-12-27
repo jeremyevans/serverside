@@ -107,6 +107,17 @@ module ServerSide
       @pkey = values[primary_key]
     end
     
+    def exists?
+      self.class.filter(primary_key => @pkey).count == 1
+    end
+    
+    def refresh
+      record = self.class.find(primary_key => @pkey)
+      record ? (@values = record.values) : 
+        (raise RuntimeError, "Record not found")
+      self
+    end
+    
     def self.find(cond)
       dataset.filter(cond).first # || (raise RuntimeError, "Record not found.")
     end

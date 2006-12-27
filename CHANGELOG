@@ -1,5 +1,7 @@
 *SVN*
 
+* Added Model#refresh and Model#exists? methods.
+
 * Fixed Postgres row fetcher to return nil values correctly.
 
 * Added Database#create_table, drop_table and table_exists? methods. Implemented Postgres#table_exists?.
