@@ -227,7 +227,7 @@ module Postgres
     
     SELECT_LASTVAL = ';SELECT lastval()'.freeze
     
-    def insert(values, opts = nil)
+    def insert(values = nil, opts = nil)
       db.synchronize do
         perform insert_sql(values, opts) + SELECT_LASTVAL
         result_first[:lastval]
@@ -278,7 +278,7 @@ module Postgres
       assignments = []
       kvs = []
       @fields.each_with_index do |field, idx|
-        next m if used_fields.include?(field)
+        next if used_fields.include?(field)
 
         used_fields << field
         temp_var = TEMP_VAR % idx

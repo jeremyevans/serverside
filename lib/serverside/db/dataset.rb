@@ -200,23 +200,26 @@ module ServerSide
     end
     
     INSERT = "INSERT INTO %s (%s) VALUES (%s)".freeze
+    INSERT_EMPTY = "INSERT INTO %s DEFAULT VALUES".freeze
     
     def insert_sql(values, opts = nil)
       opts = opts ? @opts.merge(opts) : @opts
 
-      field_list = []
-      value_list = []
+      if values.nil? || values.empty?
+        INSERT_EMPTY % opts[:from]
+      else
+        field_list = []
+        value_list = []
+        values.each do |k, v|
+          field_list << k
+          value_list << literal(v)
+        end
       
-      values.each do |k, v|
-        field_list << k
-        value_list << literal(v)
+        INSERT % [
+          opts[:from], 
+          field_list.join(COMMA_SEPARATOR), 
+          value_list.join(COMMA_SEPARATOR)]
       end
-      
-      INSERT % [
-        opts[:from], 
-        field_list.join(COMMA_SEPARATOR), 
-        value_list.join(COMMA_SEPARATOR)
-      ]
     end
     
     UPDATE = "UPDATE %s SET %s".freeze
@@ -254,6 +257,15 @@ module ServerSide
     def count_sql(opts = nil)
       select_sql(opts ? opts.merge(SELECT_COUNT) : SELECT_COUNT)
     end
+    
+    # aggregates
+    def min(field)
+      select(field.MIN).first[:min]
+    end
+    
+    def max(field)
+      select(field.MAX).first[:max]
+    end
   end
 end
 
@@ -264,7 +276,10 @@ class Symbol
   
   def AS(target)
     "#{field_name} AS #{target}"
-  end  
+  end
+  
+  def MIN; "MIN(#{to_field_name})"; end
+  def MAX; "MAX(#{to_field_name})"; end
 
   AS_REGEXP = /(.*)___(.*)/.freeze
   AS_FORMAT = "%s AS %s".freeze
@@ -277,6 +292,10 @@ class Symbol
       s = AS_FORMAT % [$1, $2]
     end
     s.split(DOUBLE_UNDERSCORE).join(PERIOD)
+  end
+  
+  def ALL
+    "#{to_s}.*"
   end
 end
 

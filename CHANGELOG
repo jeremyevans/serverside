@@ -1,5 +1,10 @@
 *SVN*
 
+
+* Added Dataset#min and Dataset#max aggregate methods.
+
+* Added Dataset#insert and Model.create with default (no) values.
+
 * Added table option to one_to_one and one_to_many. This allows relations without defining custom classes.
 
 * Added order option to one_to_many construct.

@@ -141,7 +141,7 @@ module ServerSide
       find key.is_a?(Hash) ? key : {primary_key => key}
     end
     
-    def self.create(values)
+    def self.create(values = nil)
       obj = find(primary_key => dataset.insert(values))
       obj.run_hooks(:after_create)
       obj
