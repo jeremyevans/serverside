@@ -120,6 +120,9 @@ module ServerSide
     
     def where(*where)
       where = where.first if where.size == 1
+      if @opts[:where].is_a?(Hash) && where.is_a?(Hash)
+        where = @opts[:where].merge(where)
+      end
       dup_merge(:where => where)
     end
     

@@ -1,5 +1,8 @@
 *SVN*
 
+* Fixed behavior of filter to be additive for hashes.
+
+* Added support for <column> IN (<list>) syntax notation for arrays of values.
 
 * Added Dataset#min and Dataset#max aggregate methods.
 

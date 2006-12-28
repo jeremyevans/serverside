@@ -126,10 +126,15 @@ module Postgres
     LIKE = '%s ~ %s'.freeze
     LIKE_CI = '%s ~* %s'.freeze
     
+    IN_ARRAY = '%s IN (%s)'.freeze
+    
     def where_equal_condition(left, right)
-      if right.is_a?(Regexp)
+      case right
+      when Regexp:
         (right.casefold? ? LIKE_CI : LIKE) %
           [field_name(left), PGconn.quote(right.source)]
+      when Array:
+        IN_ARRAY % [field_name(left), right.join(COMMA_SEPARATOR)]
       else
         super
       end
