@@ -175,8 +175,6 @@ module ServerSide
     def [](field); @values[field]; end
     
     def set(values)
-      puts "##############################################"
-      p values
       self.class.dataset.filter(primary_key => @pkey).update(values)
       @values.merge!(values)
     end
