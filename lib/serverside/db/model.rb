@@ -70,7 +70,8 @@ module ServerSide
     ONE_TO_MANY_PROC = "proc {%s.filter(:%s => @pkey)}".freeze
     ONE_TO_MANY_ORDER_PROC = "proc {%s.filter(:%s => @pkey).order(%s)}".freeze
     def self.one_to_many(name, opts)
-      klass = opts[:class] ? opts[:class] : (FROM_DATASET % name.inspect)
+      klass = opts[:class] ? opts[:class] :
+        (FROM_DATASET % (opts[:table] || name.inspect))
       key = opts[:on]
       order = opts[:order]
       define_method name, &eval(
