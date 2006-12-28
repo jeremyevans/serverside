@@ -1,5 +1,7 @@
 *SVN*
 
+* Fixed Model#delete_all to delete each record separately only when before_delete hooks are defined.
+
 * Fixed behavior of filter to be additive for hashes.
 
 * Added support for <column> IN (<list>) syntax notation for arrays of values.

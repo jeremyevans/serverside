@@ -134,7 +134,11 @@ module ServerSide
     def self.count; dataset.count; end
     def self.join(*args); dataset.join(*args); end
     def self.delete_all
-      db.transaction {dataset.all.each {|r| r.delete}}
+      if has_hooks?(:before_delete)
+        db.transaction {dataset.all.each {|r| r.delete}}
+      else
+        dataset.delete
+      end
     end
     
     def self.[](key)
