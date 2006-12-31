@@ -127,6 +127,7 @@ module Postgres
     LIKE_CI = '%s ~* %s'.freeze
     
     IN_ARRAY = '%s IN (%s)'.freeze
+    EMPTY_ARRAY = 'NULL'.freeze
     
     def where_equal_condition(left, right)
       case right
@@ -134,7 +135,8 @@ module Postgres
         (right.casefold? ? LIKE_CI : LIKE) %
           [field_name(left), PGconn.quote(right.source)]
       when Array:
-        IN_ARRAY % [field_name(left), right.join(COMMA_SEPARATOR)]
+        IN_ARRAY % [field_name(left), 
+          right.empty? ? EMPTY_ARRAY : right.join(COMMA_SEPARATOR)]
       else
         super
       end

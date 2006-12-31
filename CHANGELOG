@@ -1,5 +1,7 @@
 *SVN*
 
+* Fixed Postgres::Dataset#where_equal_condition to construct (NULL) subquery for empty arrays.
+
 * Added Model.lock method.
 
 * Fixed Model.one_to_many to accept :table option or use the relation name as default.
