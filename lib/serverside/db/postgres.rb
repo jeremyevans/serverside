@@ -214,7 +214,7 @@ module Postgres
     ACCESS_EXCLUSIVE = 'ACCESS EXCLUSIVE'.freeze
     
     # Locks the table with the specified mode.
-    def lock(mode, &block)
+    def lock(mode)
       sql = LOCK % [@opts[:from], mode]
       db.synchronize do
         if block # perform locking inside a transaction and yield to block

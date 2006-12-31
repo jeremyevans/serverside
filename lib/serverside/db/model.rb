@@ -134,6 +134,7 @@ module ServerSide
     def self.first; dataset.first; end
     def self.count; dataset.count; end
     def self.join(*args); dataset.join(*args); end
+    def self.lock(mode, &block); dataset.lock(mode, &block); end
     def self.delete_all
       if has_hooks?(:before_delete)
         db.transaction {dataset.all.each {|r| r.delete}}

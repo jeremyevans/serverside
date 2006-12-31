@@ -1,5 +1,7 @@
 *SVN*
 
+* Added Model.lock method.
+
 * Fixed Model.one_to_many to accept :table option or use the relation name as default.
 
 * Fixed Model#delete_all to delete each record separately only when before_delete hooks are defined.
