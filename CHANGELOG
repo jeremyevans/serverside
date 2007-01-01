@@ -1,5 +1,7 @@
 *SVN*
 
+* Fixed bug in schema where default values would not be included in column definition if they were null or false.
+
 * Refactored value list expression in Postgres adapter.
 
 * Added support for boolean and timestamp columns in Postgres adapter.

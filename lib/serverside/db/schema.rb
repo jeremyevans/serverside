@@ -35,7 +35,7 @@ module ServerSide
       c = COLUMN_DEF % [column[:name], TYPES[column[:type]]]
       c << UNIQUE if column[:unique]
       c << NOT_NULL if column[:null] == false
-      c << DEFAULT % PGconn.quote(column[:default]) if column[:default]
+      c << DEFAULT % PGconn.quote(column[:default]) if column.include?(:default)
       c << PRIMARY_KEY if column[:primary_key]
       c << REFERENCES % column[:table] if column[:table]
       c << ON_DELETE % on_delete_action(column[:on_delete]) if 
