@@ -1,5 +1,7 @@
 *SVN*
 
+* Changed Schema.drop_table_sql to use DROP <table> CASCADE.
+
 * Fixed Postgres::Dataset#where_equal_condition to construct (NULL) subquery for empty arrays.
 
 * Added Model.lock method.

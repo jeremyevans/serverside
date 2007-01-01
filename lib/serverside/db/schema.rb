@@ -72,7 +72,7 @@ module ServerSide
       sql
     end
     
-    DROP_TABLE = "DROP TABLE %s;".freeze
+    DROP_TABLE = "DROP TABLE %s CASCADE;".freeze
     
     def self.drop_table_sql(name)
       DROP_TABLE % name
