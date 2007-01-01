@@ -184,6 +184,10 @@ module ServerSide
     
     def [](field); @values[field]; end
     
+    def ==(obj)
+      (obj.class == model) && (obj.pkey == @pkey)
+    end
+    
     def set(values)
       model.dataset.filter(primary_key => @pkey).update(values)
       @values.merge!(values)

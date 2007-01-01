@@ -83,8 +83,8 @@ module Postgres
     end
     
     def execute(sql)
-      puts "****************************************"
-      puts sql
+#      puts "****************************************"
+#      puts sql
       @pool.hold_connection do |conn|
         begin
           conn.exec(sql)

@@ -1,5 +1,7 @@
 *SVN*
 
+* Added Model#== method for comparing records.
+
 * Fixed bug in schema where default values would not be included in column definition if they were null or false.
 
 * Refactored value list expression in Postgres adapter.
