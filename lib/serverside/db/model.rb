@@ -105,8 +105,12 @@ module ServerSide
     
     attr_reader :values, :pkey
     
+    def model
+      self.class
+    end
+    
     def primary_key
-      self.class.primary_key
+      model.primary_key
     end
     
     def initialize(values)
@@ -115,7 +119,7 @@ module ServerSide
     end
     
     def exists?
-      self.class.filter(primary_key => @pkey).count == 1
+      model.filter(primary_key => @pkey).count == 1
     end
     
     def refresh
@@ -156,7 +160,7 @@ module ServerSide
     def delete
       db.transaction do
         run_hooks(:before_delete)
-        self.class.dataset.filter(primary_key => @pkey).delete
+        model.dataset.filter(primary_key => @pkey).delete
       end
     end
     
@@ -181,7 +185,7 @@ module ServerSide
     def [](field); @values[field]; end
     
     def set(values)
-      self.class.dataset.filter(primary_key => @pkey).update(values)
+      model.dataset.filter(primary_key => @pkey).update(values)
       @values.merge!(values)
     end
   end
@@ -192,31 +196,3 @@ module ServerSide
     end
   end
 end
-
-__END__
-
-class Node < ServerSide::Model(:nodes)
-end
-
-class NodeAttribute < ServerSide::Model(:node_attributes)
-end
-
-
-
-
-ServerSide::Model.db = Postgres::Database.new
-
-class Node < ServerSide::Model
-  schema :nodes do
-    
-  end
-
-  one_to_one :parent, :class => Node, :key => :parent_id
-  one_to_many :children, :class => Node, :key => {:parent_id => :id}
-end
-
-$atts = ServerSide::Model.db[:node_attributes] 
-
-#Node.dataset.filter(:path => '/sas').delete
-
- 

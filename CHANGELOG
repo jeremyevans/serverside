@@ -1,5 +1,11 @@
 *SVN*
 
+* Refactored value list expression in Postgres adapter.
+
+* Added support for boolean and timestamp columns in Postgres adapter.
+
+* Added Model#model method to get the model's class.
+
 * Changed Schema.drop_table_sql to use DROP <table> CASCADE.
 
 * Fixed Postgres::Dataset#where_equal_condition to construct (NULL) subquery for empty arrays.

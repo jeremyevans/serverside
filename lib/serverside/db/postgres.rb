@@ -24,15 +24,32 @@ end
 require File.join(File.dirname(__FILE__), 'database')
 require File.join(File.dirname(__FILE__), 'dataset')
 
+class String
+  def postgres_to_bool
+    if self == 't'
+      true
+    elsif self == 'f'
+      false
+    else
+      nil
+    end
+  end
+  
+  def postgres_to_time
+    Time.parse(self)
+  end
+end
+
 module Postgres
   PG_TYPES = {
-    16 => :to_bool,
+    16 => :postgres_to_bool,
     20 => :to_i,
     21 => :to_i,
     22 => :to_i,
     23 => :to_i,
     700 => :to_f,
-    701 => :to_f
+    701 => :to_f,
+    1114 => :postgres_to_time
   }
 
   class Database < ServerSide::Database
@@ -116,8 +133,9 @@ module Postgres
   
     def literal(v)
       case v
-      when Time: PGconn.quote(v.to_f)
+      when Time: v.to_sql_timestamp
       when Symbol: PGconn.quote(v.to_s)
+      when Array: v.empty? ? EMPTY_ARRAY : v.join(COMMA_SEPARATOR)
       else
         PGconn.quote(v)
       end
@@ -135,8 +153,7 @@ module Postgres
         (right.casefold? ? LIKE_CI : LIKE) %
           [field_name(left), PGconn.quote(right.source)]
       when Array:
-        IN_ARRAY % [field_name(left), 
-          right.empty? ? EMPTY_ARRAY : right.join(COMMA_SEPARATOR)]
+        IN_ARRAY % [field_name(left), literal(right)]
       else
         super
       end
