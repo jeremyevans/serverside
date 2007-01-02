@@ -24,6 +24,32 @@ module ServerSide
     end
     def self.set_dataset(ds); @dataset = ds; @dataset.record_class = self; end
     
+    def self.cache_by(column, expiration)
+      @cache_column = column
+      
+      prefix = "#{name}.#{column}."
+      define_method(:cache_key) do
+        prefix + @values[column].to_s
+      end
+      
+      define_method("find_by_#{column}".to_sym) do |arg|
+        key = cache_key
+        rec = CACHE[key]
+        if !rec
+          rec = find(column => arg)
+          CACHE.set(key, rec, expiration)
+        end
+        rec
+      end
+      
+      alias_method :delete, :delete_and_invalidate_cache
+      alias_method :set, :set_and_update_cache
+    end
+    
+    def self.cache_column
+      @cache_column
+    end
+    
     def self.primary_key; @primary_key ||= :id; end
     def self.set_primary_key(k); @primary_key = k; end
     
