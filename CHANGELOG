@@ -1,5 +1,7 @@
 *SVN*
 
+* Added HTTP::StaticServer class for serving static files only.
+
 * Refactored Postgres::Dataset row fetcher code.
 
 * Refactored Dataset#where and Dataset#select_sql for slightly better performance.

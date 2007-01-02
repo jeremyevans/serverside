@@ -23,5 +23,15 @@ module ServerSide
         end
       end
     end
+    
+    class StaticServer < Server
+      def initialize(addr, port, root_path, show_dir = true)
+        request_class = Class.new(Request) do
+          define_method(:respond) {serve_static(root_path/@path)}
+        end
+        super(addr, port, request_class)
+      end
+    end
   end
 end
+
