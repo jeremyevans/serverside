@@ -11,6 +11,10 @@ class String
     tr('+', ' ').gsub(/((?:%[0-9a-fA-F]{2})+)/n){[$1.delete('%')].pack('H*')}
   end
   
+  def html_escape
+    gsub(/&/, "&amp;").gsub(/\"/, "&quot;").gsub(/>/, "&gt;").gsub(/</, "&lt;")
+  end
+  
   # Concatenates a path (do we really need this sugar?)
   def /(o)
     File.join(self, o.to_s)
@@ -21,6 +25,10 @@ class String
     gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').gsub(/([a-z\d])([A-Z])/,'\1_\2').
       tr("-", "_").downcase
   end
+  
+  def camelize
+    gsub(/\/(.?)/) {"::" + $1.upcase}.gsub(/(^|_)(.)/) {$2.upcase}
+  end
 end
 
 # Symbol extensions and overrides.
@@ -29,6 +37,10 @@ class Symbol
   # performance between 10%-35% better.
   def to_s
     @_to_s || (@_to_s = id2name)
+  end
+  
+  def /(o)
+    File.join(self, o.to_s)
   end
 end
 

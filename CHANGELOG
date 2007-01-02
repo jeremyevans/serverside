@@ -1,5 +1,9 @@
 *SVN*
 
+* Added HTTP::Request#render_template method.
+
+* Added String#camelize method.
+
 * Added HTTP::StaticServer class for serving static files only.
 
 * Refactored Postgres::Dataset row fetcher code.

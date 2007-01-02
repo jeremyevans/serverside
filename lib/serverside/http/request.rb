@@ -1,4 +1,5 @@
 require File.join(File.dirname(__FILE__), 'static')
+require File.join(File.dirname(__FILE__), '../template')
 require 'time'
 
 module ServerSide
@@ -177,6 +178,10 @@ module ServerSide
         @response_headers[CONTENT_DISPOSITION] = disposition
         @response_headers[CONTENT_DESCRIPTION] = description if description
         send_response(200, content_type, content)
+      end
+      
+      def render_template(content_type, name, binding)
+        send_response(200, content_type, Template.render(name, binding))
       end
       
       # Send a redirect response.
