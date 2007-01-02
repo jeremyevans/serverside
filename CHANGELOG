@@ -1,5 +1,9 @@
 *SVN*
 
+* Refactored Postgres::Dataset row fetcher code.
+
+* Refactored Dataset#where and Dataset#select_sql for slightly better performance.
+
 * Added Model#== method for comparing records.
 
 * Fixed bug in schema where default values would not be included in column definition if they were null or false.

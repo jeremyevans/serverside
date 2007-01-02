@@ -93,7 +93,9 @@ module Postgres
             conn.reset
             conn.exec(sql)
           else
+            p sql
             p e
+#            puts e.backtrace.join("\r\n")
             raise e
           end
         end
@@ -274,9 +276,7 @@ module Postgres
     
     def perform(sql, use_record_class = false)
       @result = @db.execute(sql)
-      @fields = @result.fields.map {|s| s.to_sym}
-      @types = (0..(@result.num_fields - 1)).map {|idx| @result.type(idx)}
-      compile_row_fetcher(use_record_class)
+      prepare_row_fetcher(use_record_class)
       @result
     end
     
@@ -288,36 +288,46 @@ module Postgres
       @result.each {|r| return fetch_row(r)}
     end
     
-    TEMP_VAR = 't%d'.freeze
-    ASSIGN = '%s = r[%s]'.freeze
-    FETCH_FIELD_TRANSLATE = "%s => (%s ? %s.%s : nil)".freeze
-    FETCH_FIELD = "%s => %s".freeze
-    FETCH = "lambda {|r| %s;{%s}}".freeze
-    FETCH_RECORD_CLASS = "lambda {|r| %s;%s.new(%s)}".freeze
     COMMA = ','.freeze
-    SEMICOLON = ';'.freeze
+    
+    def prepare_row_fetcher(use_record_class)
+      @fields = @result.fields.map {|s| s.to_sym}
+      @types = (0..(@result.num_fields - 1)).map {|idx| @result.type(idx)}
+      @result_class = use_record_class ? @record_class : nil
+      signature = @fields.join(COMMA) + @types.join(COMMA) + @result_class.to_s
+      meta_def(:fetch_row, &fetcher_by_signature(signature))
+    end
+    
+    @@signatures_mutex = Mutex.new
+    @@signatures = {}
 
-    def compile_row_fetcher(use_record_class)
+    def fetcher_by_signature(signature)
+      @@signatures_mutex.synchronize do
+        @@signatures[signature] ||= compile_row_fetcher
+      end
+    end
+    
+    FETCH = "lambda {|r| {%s}}".freeze
+    FETCH_RECORD_CLASS = "lambda {|r| %2$s.new(%1$s)}".freeze
+    
+    FETCH_FIELD = ':%s => r[%d]'.freeze
+    FETCH_FIELD_TRANSLATE = ':%s => ((t = r[%d]) ? t.%s : nil)'.freeze
+
+    def compile_row_fetcher
       used_fields = []
-      assignments = []
       kvs = []
       @fields.each_with_index do |field, idx|
         next if used_fields.include?(field)
-
         used_fields << field
-        temp_var = TEMP_VAR % idx
-        assignments << (ASSIGN % [temp_var, idx])
+        
         translate_fn = PG_TYPES[@types[idx]]
-        kvs << ((translate_fn ? FETCH_FIELD_TRANSLATE : FETCH_FIELD) %
-          [field.inspect, temp_var, temp_var, translate_fn])
+        kvs << (translate_fn ? FETCH_FIELD_TRANSLATE : FETCH_FIELD) %
+          [field.to_s, idx, translate_fn]
       end
-      s = (use_record_class && @record_class) ?
-        (FETCH_RECORD_CLASS % [
-          assignments.join(SEMICOLON), @record_class, kvs.join(COMMA)
-        ]) : 
-        (FETCH % [assignments.join(SEMICOLON), kvs.join(COMMA)])
-      l = eval(s)
-      meta_def(:fetch_row, &l)
+      s = (@result_class ? FETCH_RECORD_CLASS : FETCH) %
+        [kvs.join(COMMA), @result_class]
+      eval(s)
     end
   end
 end
+

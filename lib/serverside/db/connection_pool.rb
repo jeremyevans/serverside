@@ -23,14 +23,12 @@ module ServerSide
     end
     
     def acquire_connection
-      thread = Thread.current
       conn = nil
       while !conn
-        conn = find_available_connection(thread)
-        break if conn
-        sleep 0.1
+        conn = find_available_connection(Thread.current)
+        return conn if conn
+        sleep 0.001
       end
-      conn
     end
     
     def find_available_connection(thread)

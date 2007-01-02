@@ -119,9 +119,11 @@ module ServerSide
     end
     
     def where(*where)
-      where = where.first if where.size == 1
-      if @opts[:where].is_a?(Hash) && where.is_a?(Hash)
-        where = @opts[:where].merge(where)
+      if where.size == 1
+        where = where.first
+        if @opts[:where] && @opts[:where].is_a?(Hash) && where.is_a?(Hash)
+          where = @opts[:where].merge(where)
+        end
       end
       dup_merge(:where => where)
     end
@@ -166,10 +168,10 @@ module ServerSide
     end
 
     SELECT = "SELECT %s FROM %s".freeze
-    LIMIT = "LIMIT %s".freeze
-    ORDER = "ORDER BY %s".freeze
-    WHERE = "WHERE %s".freeze
-    JOIN_CLAUSE = "%s %s ON %s".freeze
+    LIMIT = " LIMIT %s".freeze
+    ORDER = " ORDER BY %s".freeze
+    WHERE = " WHERE %s".freeze
+    JOIN_CLAUSE = " %s %s ON %s".freeze
     
     EMPTY = ''.freeze
     
@@ -180,26 +182,28 @@ module ServerSide
 
       fields = opts[:select]
       select_fields = fields ? field_list(fields) : WILDCARD
-      select_source = source_list(opts[:from]) 
-      select_clause = SELECT % [select_fields, select_source]
+      select_source = source_list(opts[:from])
+      sql = SELECT % [select_fields, select_source]
       
-      join_type = opts[:join_type]
-      join_table = opts[:join_table]
-      join_cond = join_type ? join_cond_list(opts[:join_cond], join_table) : nil
-      join_clause = join_type ? 
-        JOIN_CLAUSE % [join_type, join_table, join_cond] : EMPTY
+      if join_type = opts[:join_type]
+        join_table = opts[:join_table]
+        join_cond = join_cond_list(opts[:join_cond], join_table)
+        sql << (JOIN_CLAUSE % [join_type, join_table, join_cond])
+      end
       
-      where = opts[:where]
-      where_clause = where ? WHERE % where_list(where) : EMPTY
+      if where = opts[:where]
+        sql << (WHERE % where_list(where))
+      end
       
-      order = opts[:order]
-      order_clause = order ? ORDER % order.join(COMMA_SEPARATOR) : EMPTY
+      if order = opts[:order]
+        sql << (ORDER % order.join(COMMA_SEPARATOR))
+      end
       
-      limit = opts[:limit]
-      limit_clause = limit ? LIMIT % limit : EMPTY
+      if limit = opts[:limit]
+        sql << (LIMIT % limit)
+      end
       
-      [select_clause, join_clause, where_clause, order_clause, limit_clause].
-        join(SPACE)
+      sql
     end
     
     INSERT = "INSERT INTO %s (%s) VALUES (%s)".freeze
