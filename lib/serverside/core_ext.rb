@@ -35,9 +35,9 @@ end
 class Symbol
   # A faster to_s method. This is called a lot, and memoization gives us
   # performance between 10%-35% better.
-  def to_s
-    @_to_s || (@_to_s = id2name)
-  end
+#  def to_s
+#    @_to_s || (@_to_s = id2name)
+#  end
   
   def /(o)
     File.join(self, o.to_s)
