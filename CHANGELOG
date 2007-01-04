@@ -1,5 +1,9 @@
 *SVN*
 
+* Added Model#map and Model#hash methods.
+
+* Implemented Dataset#hash method for creating a hash out of a dataset using two columns (key and value).
+
 * Added HTTP::Request#render_template method.
 
 * Added String#camelize method.
