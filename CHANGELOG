@@ -1,5 +1,7 @@
 *SVN*
 
+* Fixed Model.filter to work with any number of arguments.
+
 * Added Model#map and Model#hash methods.
 
 * Implemented Dataset#hash method for creating a hash out of a dataset using two columns (key and value).
