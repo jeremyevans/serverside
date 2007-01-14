@@ -1,5 +1,7 @@
 *SVN*
 
+* Fixed a small bug in postgres row fetcher compiler that prevented Postgres::Dataset#explain from working.
+
 * Fixed Model.filter to work with any number of arguments.
 
 * Added Model#map and Model#hash methods.

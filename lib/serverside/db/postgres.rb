@@ -310,8 +310,8 @@ module Postgres
     FETCH = "lambda {|r| {%s}}".freeze
     FETCH_RECORD_CLASS = "lambda {|r| %2$s.new(%1$s)}".freeze
     
-    FETCH_FIELD = ':%s => r[%d]'.freeze
-    FETCH_FIELD_TRANSLATE = ':%s => ((t = r[%d]) ? t.%s : nil)'.freeze
+    FETCH_FIELD = '%s => r[%d]'.freeze
+    FETCH_FIELD_TRANSLATE = '%s => ((t = r[%d]) ? t.%s : nil)'.freeze
 
     def compile_row_fetcher
       used_fields = []
@@ -322,7 +322,7 @@ module Postgres
         
         translate_fn = PG_TYPES[@types[idx]]
         kvs << (translate_fn ? FETCH_FIELD_TRANSLATE : FETCH_FIELD) %
-          [field.to_s, idx, translate_fn]
+          [field.inspect, idx, translate_fn]
       end
       s = (@result_class ? FETCH_RECORD_CLASS : FETCH) %
         [kvs.join(COMMA), @result_class]
