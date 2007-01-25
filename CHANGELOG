@@ -1,5 +1,7 @@
 *SVN*
 
+* Fixed small bug where Postgres::Dataset#result_first returned @result instead of nil when the query result is empty.
+
 * Fixed a small bug in postgres row fetcher compiler that prevented Postgres::Dataset#explain from working.
 
 * Fixed Model.filter to work with any number of arguments.

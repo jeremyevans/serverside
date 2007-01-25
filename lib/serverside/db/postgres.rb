@@ -286,6 +286,7 @@ module Postgres
     
     def result_first
       @result.each {|r| return fetch_row(r)}
+      nil
     end
     
     COMMA = ','.freeze
