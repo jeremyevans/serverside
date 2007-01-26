@@ -19,6 +19,40 @@ class PGconn
   def connected?
     status == PGconn::CONNECTION_OK
   end
+  
+  SQL_BEGIN = 'BEGIN'.freeze
+  SQL_COMMIT = 'COMMIT'.freeze
+  SQL_ROLLBACK = 'ROLLBACK'.freeze
+  
+  def execute(sql)
+    begin
+      exec(sql)
+    rescue PGError => e
+      unless connected?
+        reset
+        exec(sql)
+      else
+        p sql
+        p e
+        raise e
+      end
+    end
+  end
+  
+  def transaction
+    if @transaction_in_progress
+      return yield
+    end
+    @transaction_in_progress = true
+    execute(SQL_BEGIN)
+    result = yield
+    execute(SQL_COMMIT)
+    @transaction_in_progress = nil
+    result
+  rescue => e
+    execute(SQL_ROLLBACK)
+    raise e
+  end
 end
 
 require File.join(File.dirname(__FILE__), 'database')
@@ -86,19 +120,7 @@ module Postgres
 #      puts "****************************************"
 #      puts sql
       @pool.hold_connection do |conn|
-        begin
-          conn.exec(sql)
-        rescue PGError => e
-          unless conn.connected?
-            conn.reset
-            conn.exec(sql)
-          else
-            p sql
-            p e
-#            puts e.backtrace.join("\r\n")
-            raise e
-          end
-        end
+        conn.execute(sql)
       end
     end
     
@@ -106,23 +128,10 @@ module Postgres
       @pool.hold_connection(&block)
     end
     
-    SQL_BEGIN = 'BEGIN'.freeze
-    SQL_COMMIT = 'COMMIT'.freeze
-    SQL_ROLLBACK = 'ROLLBACK'.freeze
-    
-    def transaction
-      if @transaction_in_progress
-        return yield
+    def transaction(&block)
+      @pool.hold_connection do |conn|
+        conn.transaction(&block)
       end
-      @transaction_in_progress = true
-      execute(SQL_BEGIN)
-      result = yield
-      execute(SQL_COMMIT)
-      @transaction_in_progress = nil
-      result
-    rescue => e
-      execute(SQL_ROLLBACK)
-      raise e
     end
 
     def table_exists?(name)
