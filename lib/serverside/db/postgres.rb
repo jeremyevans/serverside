@@ -39,19 +39,22 @@ class PGconn
     end
   end
   
+  attr_reader :transaction_in_progress
+  
   def transaction
     if @transaction_in_progress
       return yield
     end
     @transaction_in_progress = true
-    execute(SQL_BEGIN)
+    exec(SQL_BEGIN)
     result = yield
-    execute(SQL_COMMIT)
-    @transaction_in_progress = nil
+    exec(SQL_COMMIT)
     result
   rescue => e
-    execute(SQL_ROLLBACK)
+    exec(SQL_ROLLBACK)
     raise e
+  ensure
+    @transaction_in_progress = nil
   end
 end
 
@@ -119,19 +122,15 @@ module Postgres
     def execute(sql)
 #      puts "****************************************"
 #      puts sql
-      @pool.hold_connection do |conn|
-        conn.execute(sql)
-      end
+      @pool.hold {|conn| conn.execute(sql)}
     end
     
     def synchronize(&block)
-      @pool.hold_connection(&block)
+      @pool.hold(&block)
     end
     
     def transaction(&block)
-      @pool.hold_connection do |conn|
-        conn.transaction(&block)
-      end
+      @pool.hold {|conn| conn.transaction(&block)}
     end
 
     def table_exists?(name)

@@ -1,5 +1,7 @@
 *SVN*
 
+* Rewrote connection pool code to actually work, duh.
+
 * Refactored transaction support in Postgres adapter.
 
 * Added JSON renderer.

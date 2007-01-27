@@ -2,61 +2,55 @@ require 'thread'
 
 module ServerSide
   class ConnectionPool
-    attr_reader :max_size, :connections, :mutex, :conn_maker
+    attr_reader :max_size, :mutex, :conn_maker
+    attr_reader :available_connections, :allocated, :created_count
   
     def initialize(max_size = 4, &block)
       @max_size = max_size
       @mutex = Mutex.new
-      @connections = {}
       @conn_maker = block
+
+      @available_connections = []
+      @allocated = {}
+      @created_count = 0
     end
     
     def size
-      @connections.size
+      @created_count
     end
     
-    def hold_connection
-      conn = acquire_connection
-      yield conn
-    ensure
-      release_connection(conn)
-    end
-    
-    def acquire_connection
-      conn = nil
-      while !conn
-        conn = find_available_connection(Thread.current)
-        return conn if conn
+    def hold
+      while !(conn = acquire)
         sleep 0.001
       end
+      yield conn
+    ensure
+      release
     end
     
-    def find_available_connection(thread)
+    def acquire
       @mutex.synchronize do
-        conn = owned_connection(thread) || free_connection ||
-          create_connection
-        if conn
-          @connections[conn] = thread
-          return conn
-        end
+        @allocated[Thread.current] ||= available
       end
     end
     
-    def owned_connection(thread)
-      @connections.each {|k, v| return k if v == thread}; nil
+    def available
+      @available_connections.pop || make_new
     end
     
-    def free_connection
-      @connections.each {|k, v| return k unless v}; nil
+    def make_new
+      if @created_count < @max_size
+        @created_count += 1
+        @conn_maker.call
+      end
     end
     
-    def create_connection
-      return nil if @connections.size >= @max_size
-      @conn_maker.call
-    end
-    
-    def release_connection(conn)
-      @mutex.synchronize {@connections[conn] = nil}
+    def release
+      t = Thread.current
+      @mutex.synchronize do
+        @available_connections << @allocated[t]
+        @allocated[t] = nil
+      end
     end
   end
 end
