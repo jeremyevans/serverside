@@ -45,16 +45,18 @@ class PGconn
     if @transaction_in_progress
       return yield
     end
-    @transaction_in_progress = true
     exec(SQL_BEGIN)
-    result = yield
-    exec(SQL_COMMIT)
-    result
-  rescue => e
-    exec(SQL_ROLLBACK)
-    raise e
-  ensure
-    @transaction_in_progress = nil
+    begin
+      @transaction_in_progress = true
+      result = yield
+      exec(SQL_COMMIT)
+      result
+    rescue => e
+      exec(SQL_ROLLBACK)
+      raise e
+    ensure
+      @transaction_in_progress = nil
+    end
   end
 end
 
