@@ -1,5 +1,7 @@
 *SVN*
 
+* Renamed JSON to JS, and rewrote large parts thereof. Instead of the magic of instance_eval we now just pass self to the block.
+
 * Fixed bug in PGconn#transaction.
 
 * Rewrote connection pool code to actually work, duh.

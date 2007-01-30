@@ -2,30 +2,38 @@ require 'metaid'
 
 module ServerSide
   # Handles serialization of data into JSON format.
-  class JSON
+  class JS
     # blank slate
     instance_methods.each { |m| 
-      undef_method m unless (m =~ /^__|instance_eval|meta/)
-    }
+      undef_method m unless (m =~ /^__|instance_eval|meta|respond_to/)}
   
     # Initializes a new JSON document.
     def initialize(callback = nil, &block)
       @callback = callback
       @stack = [self]
-      instance_eval(&block) if block
+      block.call(self) if block
+    end
+    
+    def __js
+      true
     end
     
     # Performs most of the work by adding new values.
     def method_missing(key, *args, &block)
-      unless block.nil?
-        @stack.push JSON.new
-        block.call(self)
-        child = @stack.pop
-        @stack.last._add_value(child._content, (key == :_item) ? nil : key)
-      else
-        @stack.last._add_value(args.first, (key == :_item) ? nil : key)
+      meta_def(key) do |*args|
+        value = nil
+        if block
+          @stack.push JS.new
+          block.call(self)
+          value = @stack.pop.__content
+        else
+          value = args.first
+          value = value.__content if value.respond_to?(:__js)
+        end
+        @stack.last.__add_hash_value(key, value)
+        self
       end
-      self
+      __send__(key, *args)
     end
     
     # Returns the internal data structure in text format.
@@ -33,30 +41,34 @@ module ServerSide
       @content.inspect.to_s
     end
     
-    # Adds the value as hash or array item.
-    def _add_value(value, key = nil)
-      if key.nil?
-        @content ||= []
-        @content << value
-      else
-        @content ||= {}
-        @content[key] = value
-      end
+    def __add_hash_value(key, value)
+      @content ||= {}
+      @content[key] = value
+    end
+    
+    def __add_array_value(value)
+      @content ||= []
+      @content << value
+    end
+    
+    def <<(value)
+      value = value.__content if value.respond_to?(:__js)
+      @stack.last.__add_array_value(value)
     end
     
     # Returns the current document content.
-    def _content
+    def __content
       @content
     end
     
     # Serializes the specified content in JSON format. 
-    def _jsonize(obj)
+    def __jsonize(obj)
       if obj.nil?
         "null"
       elsif obj.is_a? Array
-        "[#{obj.map{|v| _jsonize(v)}.join(', ')}]"
+        "[#{obj.map{|v| __jsonize(v)}.join(', ')}]"
       elsif obj.is_a? Hash
-        fields = obj.to_a.map{|kv| "#{kv[0]}: #{_jsonize(kv[1])}"}
+        fields = obj.to_a.map{|kv| "#{kv[0]}: #{__jsonize(kv[1])}"}
         "{#{fields.join(', ')}}"
       elsif obj.is_a? Symbol
         obj.to_s
@@ -69,7 +81,7 @@ module ServerSide
     
     # Returns the document content in JSON format.
     def to_s
-      j = _jsonize(@content)
+      j = __jsonize(@content)
       @callback ? "#{@callback}(#{j})" : j
     end
   end
