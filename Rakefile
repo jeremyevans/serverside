@@ -6,7 +6,7 @@ require 'fileutils'
 include FileUtils
 
 NAME = "serverside"
-VERS = "0.4.0"
+VERS = "0.4.0a"
 CLEAN.include ['**/.*.sw?', 'pkg/*', '.config', 'doc/*', 'coverage/*']
 RDOC_OPTS = ['--quiet', '--title', "ServerSide Documentation",
   "--opname", "index.html",
