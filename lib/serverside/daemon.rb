@@ -1,15 +1,5 @@
 require 'fileutils'
 
-class Object
-  def backtrace
-    raise RuntimeError
-  rescue => e
-    bt = e.backtrace.dup
-    bt.shift
-    bt
-  end
-end
-
 # The Daemon module takes care of starting and stopping daemons.
 module Daemon
   WorkingDirectory = FileUtils.pwd
@@ -75,7 +65,7 @@ module Daemon
   # Stops the daemon by sending it a TERM signal.
   def self.stop(daemon)
     pid = PidFile.recall(daemon)
-    pid && Process.kill("TERM", pid)
+    pid && Process.kill("TERM", pid) rescue nil
     PidFile.remove(daemon)
   end
 

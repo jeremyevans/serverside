@@ -1,5 +1,7 @@
 *SVN*
 
+* Fixed exception in Daemon.stop if the daemon process is not running.
+
 * Removed pathname conversion from String#camelize.
 
 * Removed Symbol#to_s override.
