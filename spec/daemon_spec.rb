@@ -62,35 +62,35 @@ context "Daemon::PidFile" do
 end
 
 context "Daemon.control" do
-#  teardown {Daemon.control(TestDaemon, :stop) rescue nil}
+  teardown {Daemon.control(TestDaemon, :stop) rescue nil}
   
-#  specify "should start and stop the daemon" do
-#    Daemon::PidFile.remove(TestDaemon)
-#    Daemon.control(TestDaemon, :start)
-#    sleep 0.2
-#    File.file?(TestDaemon.pid_fn).should == true
-#    sleep 0.5
-#    proc {Daemon::PidFile.recall(TestDaemon)}.should_not_raise
-#    Daemon.control(TestDaemon, :stop)
-#    sleep 0.2
-#    File.file?(TestDaemon.result_fn).should == false
-#  end
+  specify "should start and stop the daemon" do
+    Daemon::PidFile.remove(TestDaemon)
+    Daemon.control(TestDaemon, :start)
+    sleep 0.2
+    File.file?(TestDaemon.pid_fn).should == true
+    sleep 0.5
+    proc {Daemon::PidFile.recall(TestDaemon)}.should_not_raise
+    Daemon.control(TestDaemon, :stop)
+    sleep 0.2
+    File.file?(TestDaemon.result_fn).should == false
+  end
   
-#  specify "should restart the daemon" do
-#    Daemon::PidFile.remove(TestDaemon)
-#    Daemon.control(TestDaemon, :start)
-#    begin
-#      sleep 1
-#      pid1 = Daemon::PidFile.recall(TestDaemon)
-#      Daemon.control(TestDaemon, :restart)
-#      sleep 1
-#      pid2 = Daemon::PidFile.recall(TestDaemon)
-#      pid1.should_not == pid2
-#    ensure
-#      Daemon.control(TestDaemon, :stop)
-#      Daemon::PidFile.remove(TestDaemon)
-#    end
-#  end
+  specify "should restart the daemon" do
+    Daemon::PidFile.remove(TestDaemon)
+    Daemon.control(TestDaemon, :start)
+    begin
+      sleep 1
+      pid1 = Daemon::PidFile.recall(TestDaemon)
+      Daemon.control(TestDaemon, :restart)
+      sleep 1
+      pid2 = Daemon::PidFile.recall(TestDaemon)
+      pid1.should_not == pid2
+    ensure
+      Daemon.control(TestDaemon, :stop)
+      Daemon::PidFile.remove(TestDaemon)
+    end
+  end
   
   specify "should raise RuntimeError for invalid command" do
     proc {Daemon.control(TestDaemon, :invalid)}.should_raise RuntimeError

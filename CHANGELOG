@@ -1,5 +1,11 @@
 *SVN*
 
+* Removed pathname conversion from String#camelize.
+
+* Removed Symbol#to_s override.
+
+* Re-enabled daemon spec testing.
+
 * Renamed JSON to JS, and rewrote large parts thereof. Instead of the magic of instance_eval we now just pass self to the block.
 
 * Fixed bug in PGconn#transaction.

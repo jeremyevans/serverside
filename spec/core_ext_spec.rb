@@ -21,34 +21,18 @@ context "String" do
     ('touch'/'/me/'/'hold'/'/me').should == 'touch/me/hold/me'
   end
   
-  specify ".underscore should turn camel-cased phrases to underscored ones" do
+  specify "#underscore should turn camel-cased phrases to underscored ones" do
     'CamelCase'.underscore.should == 'camel_case'
     'Content-Type'.underscore.should == 'content_type'
+  end
+  
+  specify "#camelize should turn an underscore name to camelcase" do
+    'wowie_zowie'.camelize.should == 'WowieZowie'
   end
 end
 
 # Symbol extensions
-
-class Symbol
-  attr_reader :_to_s
-end
-
-context "Symbol.to_s" do
-  specify "should convert the symbol to a string" do
-    :abc_def.to_s.should == 'abc_def'
-    :def_ghi.to_s.should_be_instance_of String
-    :ghi_jkl.to_s.should == :ghi_jkl.id2name
-  end
-  
-  specify "should cache the id2name value" do
-    :kwantz_mit_krantz._to_s.should_be_nil
-    :kwantz_mit_krantz.to_s
-    :kwantz_mit_krantz._to_s.should == :kwantz_mit_krantz.id2name
-  end
-  
-  specify "should always return the same cached value" do
-    :item.to_s.should_be :item.to_s
-  end
+context "Symbol" do
 end
 
 context "Proc.proc_tag" do
