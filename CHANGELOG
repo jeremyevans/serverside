@@ -1,4 +1,8 @@
-*SVN*
+*0.4.0a*
+
+* Implemented SQLite adapter.
+
+* Moved Postgres classes into ServerSide module.
 
 * Removed Kernel.backtrace. Deprecated...
 

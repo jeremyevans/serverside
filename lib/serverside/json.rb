@@ -1,24 +1,23 @@
 require 'metaid'
 
 module ServerSide
-  # Handles serialization of data into JSON format.
+  # Serializes data into a Javscript literal hash format. For example:
+  # ServerSide::JS.new {|j| j}
   class JS
     # blank slate
-    instance_methods.each { |m| 
-      undef_method m unless (m =~ /^__|instance_eval|meta|respond_to/)}
+    instance_methods.each do |m| 
+      undef_method m unless (m =~ /^__|instance_eval|meta|respond_to|nil|is_a/)
+    end
   
-    # Initializes a new JSON document.
+    # Initializes a new document. A callback function name can be supplied to
+    # wrap the hash.
     def initialize(callback = nil, &block)
       @callback = callback
       @stack = [self]
       block.call(self) if block
     end
     
-    def __js
-      true
-    end
-    
-    # Performs most of the work by adding new values.
+    # Catches calls to define keys and creates methods on the fly.
     def method_missing(key, *args, &block)
       meta_def(key) do |*args|
         value = nil
@@ -28,17 +27,11 @@ module ServerSide
           value = @stack.pop.__content
         else
           value = args.first
-          value = value.__content if value.respond_to?(:__js)
         end
         @stack.last.__add_hash_value(key, value)
         self
       end
       __send__(key, *args)
-    end
-    
-    # Returns the internal data structure in text format.
-    def inspect
-      @content.inspect.to_s
     end
     
     def __add_hash_value(key, value)
@@ -61,10 +54,12 @@ module ServerSide
       @content
     end
     
-    # Serializes the specified content in JSON format. 
+    NULL = 'null'.freeze
+    
+    # Serializes the specified object into JS/JSON format. 
     def __jsonize(obj)
       if obj.nil?
-        "null"
+        NULL
       elsif obj.is_a? Array
         "[#{obj.map{|v| __jsonize(v)}.join(', ')}]"
       elsif obj.is_a? Hash
@@ -79,10 +74,13 @@ module ServerSide
       end
     end
     
-    # Returns the document content in JSON format.
+    # Returns the document content in JS format. If a callback was specified,
+    # the object is wrapped in a Javascript function call.
     def to_s
       j = __jsonize(@content)
       @callback ? "#{@callback}(#{j})" : j
     end
+    
+    alias_method :inspect, :to_s
   end
 end
