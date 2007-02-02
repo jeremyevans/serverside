@@ -1,5 +1,7 @@
 *SVN*
 
+* Removed Kernel.backtrace. Deprecated...
+
 * Fixed exception in Daemon.stop if the daemon process is not running.
 
 * Removed pathname conversion from String#camelize.

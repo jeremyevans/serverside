@@ -1,15 +1,3 @@
-module Kernel
-  # Returns a backtrace from the current execution point, for debugging
-  # purposes.
-  def backtrace
-    raise
-  rescue => e
-    bt = e.backtrace.dup
-    bt.shift
-    bt
-  end
-end
-
 # String extensions
 class String
   # Encodes a normal string to a URI string.
