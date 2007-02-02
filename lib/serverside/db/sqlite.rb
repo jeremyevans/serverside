@@ -1,6 +1,5 @@
 require 'sqlite3'
 require 'metaid'
-require 'mutex_m'
 
 module ServerSide
   module SQLite
@@ -65,7 +64,7 @@ module ServerSide
     
     class Dataset < ServerSide::Dataset
       def each(opts = nil, &block)
-        @db.result_set(select_sql(opts), @result_class, &block)
+        @db.result_set(select_sql(opts), @record_class, &block)
         self
       end
     
@@ -73,7 +72,7 @@ module ServerSide
     
       def first(opts = nil)
         opts = opts ? opts.merge(LIMIT_1) : LIMIT_1
-        @db.result_set(select_sql(opts), @result_class) {|r| return r}
+        @db.result_set(select_sql(opts), @record_class) {|r| return r}
       end
     
       def last(opts = nil)
@@ -82,7 +81,7 @@ module ServerSide
       
         opts = {:order => reverse_order(@opts[:order])}.
           merge(opts ? opts.merge(LIMIT_1) : LIMIT_1)
-          @db.result_set(select_sql(opts), @result_class) {|r| return r}
+        @db.result_set(select_sql(opts), @record_class) {|r| return r}
       end
       
       def count(opts = nil)

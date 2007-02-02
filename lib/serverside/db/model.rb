@@ -159,6 +159,7 @@ module ServerSide
       dataset.filter(cond).first # || (raise RuntimeError, "Record not found.")
     end
     
+    def self.each(&block); dataset.each(&block); end
     def self.all; dataset.all; end
     def self.filter(*arg); dataset.filter(*arg); end
     def self.first; dataset.first; end
