@@ -100,28 +100,30 @@ end
 context "Daemon.alive?" do
   teardown {Daemon.control(TestDaemon, :stop) rescue nil}
   
-  specify "should return nil if not running" do
-    Daemon.alive?(TestDaemon).should_be_nil
+  specify "should return false if not running" do
+    Daemon.alive?(TestDaemon).should_be false
   end
   
   specify "should return true if running" do
     Daemon.control(TestDaemon, :start)
-    sleep 0.2
+    sleep 1
     Daemon.alive?(TestDaemon).should_be true
-    sleep 0.5
+    sleep 1
     Daemon.control(TestDaemon, :stop)
-    sleep 0.2
-    Daemon.alive?(TestDaemon).should_be_nil
+    sleep 1
+    Daemon.alive?(TestDaemon).should_be false
   end
   
-  specify "should return nil if the daemon process is killed" do
+  specify "should return false if the daemon process is killed" do
     Daemon.control(TestDaemon, :start)
     sleep 1
     pid = Daemon::PidFile.recall(TestDaemon)
     Daemon.alive?(TestDaemon).should_be true
     Process.kill("TERM", pid)
-    sleep 1
-    Daemon.alive?(TestDaemon).should_be_nil
+    while `ps #{pid}` =~ /#{pid}/
+      sleep 0.2
+    end
+    Daemon.alive?(TestDaemon).should_be false
     Daemon.control(TestDaemon, :stop)
   end
 end

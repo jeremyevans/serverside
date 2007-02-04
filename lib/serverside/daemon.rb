@@ -54,9 +54,9 @@ module Daemon
       PidFile.store(daemon, Process.pid)
       Dir.chdir WorkingDirectory
       File.umask 0000
-#      STDIN.reopen "/dev/null"
-#      STDOUT.reopen "/dev/null", "a"
-#      STDERR.reopen STDOUT
+      STDIN.reopen "/dev/null"
+      STDOUT.reopen "/dev/null", "a"
+      STDERR.reopen STDOUT
       trap("TERM") {daemon.stop; exit}
       daemon.start
     end
@@ -71,7 +71,6 @@ module Daemon
 
   def self.alive?(daemon)
     pid = PidFile.recall(daemon) rescue nil
-    return nil if !pid
-    `ps #{pid}` =~ /#{pid}/ ? true : nil
+    pid ? Process.exists?(pid) : false
   end
 end

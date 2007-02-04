@@ -74,3 +74,18 @@ context "Object.const_tag" do
     @o2.const_tag.should == 'C' + @o2.object_id.to_s(36).upcase.sub('-', '_')
   end
 end
+
+context "Process.exists?" do
+  specify "should return false for a non-existing process" do
+    # bogus pid   
+    pid = nil
+    while pid = rand(10000)
+      break if `ps #{pid}` !~ /#{pid}/
+    end
+    Process.exists?(pid).should_be false
+  end
+  
+  specify "should return true for an existing process" do
+    Process.exists?(Process.pid).should_be true
+  end
+end

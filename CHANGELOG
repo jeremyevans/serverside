@@ -1,5 +1,7 @@
 *SVN*
 
+* Added Process.exists? method to check if a process is alive.
+
 * Added Model.each method.
 
 * Fixed fetching of SQLite records using model instances.

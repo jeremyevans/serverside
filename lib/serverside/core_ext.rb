@@ -56,3 +56,11 @@ end
 
 def true.to_i; -1; end
 def false.to_i; 0; end
+
+module Process
+  # Checks for the existance of a process.
+  def self.exists?(pid)
+    getpgid(pid) && true rescue false  
+  end
+end
+  
