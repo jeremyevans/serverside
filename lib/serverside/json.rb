@@ -78,7 +78,7 @@ module ServerSide
     # the object is wrapped in a Javascript function call.
     def to_s
       j = __jsonize(@content)
-      @callback ? "#{@callback}(#{j})" : j
+      @callback ? "#{@callback}(#{j});" : j
     end
     
     alias_method :inspect, :to_s
