@@ -318,7 +318,8 @@ module ServerSide
           value
         end
       rescue => e
-        p @result.rows
+        puts e.message
+        puts e.backtrace.first
         raise e
       end
     
