@@ -25,7 +25,7 @@ Rake::RDocTask.new do |rdoc|
   rdoc.options += RDOC_OPTS
   rdoc.main = "README"
   rdoc.title = "ServerSide Documentation"
-  rdoc.rdoc_files.add ['README', 'CHANGELOG', 'COPYING', 'lib/serverside.rb', 'lib/serverside/*.rb']
+  rdoc.rdoc_files.add ['README', 'CHANGELOG', 'COPYING', 'lib/serverside.rb', 'lib/serverside/**/*.rb']
 end
 
 spec = Gem::Specification.new do |s|

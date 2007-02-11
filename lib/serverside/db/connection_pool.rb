@@ -20,17 +20,27 @@ module ServerSide
     end
     
     def hold
-      while !(conn = acquire)
-        sleep 0.001
+      t = Thread.current
+      if (conn = owned_connection(t))
+        return yield(conn)
       end
-      yield conn
-    ensure
-      release
+      while !(conn = acquire(t))
+        sleep 0.01
+      end
+      begin
+        yield conn
+      ensure
+        release(t)
+      end
     end
     
-    def acquire
+    def owned_connection(thread)
+      @mutex.synchronize {@allocated[thread]}
+    end
+    
+    def acquire(thread)
       @mutex.synchronize do
-        @allocated[Thread.current] ||= available
+        @allocated[thread] ||= available
       end
     end
     
@@ -45,11 +55,10 @@ module ServerSide
       end
     end
     
-    def release
-      t = Thread.current
+    def release(thread)
       @mutex.synchronize do
-        @available_connections << @allocated[t]
-        @allocated[t] = nil
+        @available_connections << @allocated[thread]
+        @allocated[thread] = nil
       end
     end
   end

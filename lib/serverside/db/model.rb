@@ -181,9 +181,11 @@ module ServerSide
     end
     
     def self.create(values = nil)
-      obj = find(primary_key => dataset.insert(values))
-      obj.run_hooks(:after_create)
-      obj
+      db.transaction do
+        obj = find(primary_key => dataset.insert(values))
+        obj.run_hooks(:after_create)
+        obj
+      end
     end
     
     def delete

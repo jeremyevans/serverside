@@ -1,5 +1,19 @@
 *SVN*
 
+* Rewrote large parts of ConnectionPool. Now it works properly.
+
+* Major refactoring to Postgres code. Now using PGconn#async_exec to allow multithreaded apps.
+
+* Fixed Model.create to wrap record creation in a transaction.
+
+* Added HTTP::Caching.cache method.
+
+* Moved Static under ServerSide::HTTP module.
+
+* Added MIME type for .ico files.
+
+* Fixed rake doc task to cover all source files in lib.
+
 * Added Process.exists? method to check if a process is alive.
 
 * Added Model.each method.

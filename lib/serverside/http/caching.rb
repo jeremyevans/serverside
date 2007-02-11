@@ -94,6 +94,11 @@ module ServerSide
           block ? block.call : nil
         end
       end
+      
+      def cache(max_age, &block)
+        stamp = Time.now
+        validate_cache(stamp, max_age, expiry_etag(stamp, max_age), &block)
+      end
 
       # Renders a 304 not modified response.      
       def send_not_modified_response

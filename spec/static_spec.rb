@@ -49,7 +49,7 @@ context "Static.serve_file" do
     resp.should_match /HTTP\/1.1\s200(.*)\r\n/
     fc = IO.read(__FILE__)
     stat = File.stat(__FILE__)
-    etag = (ServerSide::Static::ETAG_FORMAT % 
+    etag = (ServerSide::HTTP::Static::ETAG_FORMAT % 
       [stat.mtime.to_i, stat.size, stat.ino])
     resp.should_match /ETag:\s"#{etag}"\r\n/
     resp.should_match /Content-Length:\s#{stat.size.to_s}\r\n/
@@ -57,7 +57,7 @@ context "Static.serve_file" do
   
   specify "should send a not modified response only if a correct etag is specified in the request" do
     stat = File.stat(__FILE__)
-    etag = (ServerSide::Static::ETAG_FORMAT % 
+    etag = (ServerSide::HTTP::Static::ETAG_FORMAT % 
       [stat.mtime.to_i, stat.size, stat.ino])
 
     # normal response
@@ -103,7 +103,7 @@ context "Static.serve_file" do
     
     resp.should_match /HTTP\/1.1\s200(.*)\r\n/
     stat = File.stat(__FILE__)
-    etag = (ServerSide::Static::ETAG_FORMAT % 
+    etag = (ServerSide::HTTP::Static::ETAG_FORMAT % 
       [stat.mtime.to_i, stat.size, stat.ino])
     resp.should_match /ETag:\s"#{etag}"\r\n/
     resp.should_match /Content-Length:\s#{stat.size.to_s}\r\n/
@@ -206,7 +206,7 @@ context "Static.serve_static" do
     # normal response
     resp.should_match /HTTP\/1.1\s200(.*)\r\n/
     stat = File.stat(__FILE__)
-    etag = (ServerSide::Static::ETAG_FORMAT % 
+    etag = (ServerSide::HTTP::Static::ETAG_FORMAT % 
       [stat.mtime.to_i, stat.size, stat.ino])
     resp.should_match /ETag:\s"#{etag}"\r\n/
     resp.should_match /Content-Length:\s#{stat.size.to_s}\r\n/

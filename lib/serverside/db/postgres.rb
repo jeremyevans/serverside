@@ -25,11 +25,11 @@ class PGconn
   
   def execute(sql)
     begin
-      exec(sql)
+      async_exec(sql)
     rescue PGError => e
       unless connected?
         reset
-        exec(sql)
+        async_exec(sql)
       else
         p sql
         p e
@@ -44,14 +44,14 @@ class PGconn
     if @transaction_in_progress
       return yield
     end
-    exec(SQL_BEGIN)
+    async_exec(SQL_BEGIN)
     begin
       @transaction_in_progress = true
       result = yield
-      exec(SQL_COMMIT)
+      async_exec(SQL_COMMIT)
       result
     rescue => e
-      exec(SQL_ROLLBACK)
+      async_exec(SQL_ROLLBACK)
       raise e
     ensure
       @transaction_in_progress = nil
@@ -93,7 +93,7 @@ module ServerSide
     
       def initialize(opts = {})
         super
-        @pool = ServerSide::ConnectionPool.new(@opts[:max_connections] || 4) do
+        @pool = ServerSide::ConnectionPool.new(@opts[:max_connections] || 20) do
           PGconn.connect(
             @opts[:host] || 'localhost',
             @opts[:port] || 5432,
@@ -117,17 +117,21 @@ module ServerSide
       def tables
         query(RELATION_QUERY).filter(RELATION_FILTER).map(:relname)
       end
+      
+      def locks
+        query.from("pg_class, pg_locks").
+          select("pg_class.relname, pg_locks.*").
+          filter("pg_class.relfilenode=pg_locks.relation")
+      end
     
       def execute(sql)
-  #      puts "****************************************"
-  #      puts sql
         @pool.hold {|conn| conn.execute(sql)}
       end
     
       def synchronize(&block)
         @pool.hold(&block)
       end
-    
+      
       def transaction(&block)
         @pool.hold {|conn| conn.transaction(&block)}
       end
@@ -169,10 +173,7 @@ module ServerSide
       end
     
       def each(opts = nil, &block)
-        @db.synchronize do
-          perform select_sql(opts), true
-          result_each(&block)
-        end
+        query_each(select_sql(opts), true, &block)
         self
       end
     
@@ -180,10 +181,7 @@ module ServerSide
     
       def first(opts = nil)
         opts = opts ? opts.merge(LIMIT_1) : LIMIT_1
-        @db.synchronize do
-          perform select_sql(opts), true
-          result_first
-        end
+        query_first(select_sql(opts), true)
       end
     
       def last(opts = nil)
@@ -193,10 +191,7 @@ module ServerSide
         opts = {:order => reverse_order(@opts[:order])}.
           merge(opts ? opts.merge(LIMIT_1) : LIMIT_1)
       
-        @db.synchronize do
-          perform select_sql(opts), true
-          result_first
-        end
+        query_first(select_sql(opts), true)
       end
     
       FOR_UPDATE = ' FOR UPDATE'.freeze
@@ -224,10 +219,11 @@ module ServerSide
       QUERY_PLAN = 'QUERY PLAN'.to_sym
     
       def explain(opts = nil)
-        db.synchronize {perform EXPLAIN + select_sql(opts)}
-        result = []
-        result_each {|r| result << r[QUERY_PLAN]}
-        result.join("\r\n")
+        analysis = []
+        query_each(select_sql(EXPLAIN + select_sql(opts))) do |r|
+          analysis << r[QUERY_PLAN]
+        end
+        analysis.join("\r\n")
       end
     
       LOCK = 'LOCK TABLE %s IN %s MODE;'.freeze
@@ -242,86 +238,117 @@ module ServerSide
       ACCESS_EXCLUSIVE = 'ACCESS EXCLUSIVE'.freeze
     
       # Locks the table with the specified mode.
-      def lock(mode)
+      def lock(mode, &block)
         sql = LOCK % [@opts[:from], mode]
-        db.synchronize do
+        @db.synchronize do
           if block # perform locking inside a transaction and yield to block
-            db.transaction {perform sql; yield}
+            @db.transaction {@db.execute(sql).clear; yield}
           else
-            perform sql # lock without a transaction
+            @db.execute(sql).clear # lock without a transaction
             self
           end
         end
       end
   
       def count(opts = nil)
-        db.synchronize {perform count_sql(opts); result_first[:count]}
+        query_single_value(count_sql(opts)).to_i
       end
     
       SELECT_LASTVAL = ';SELECT lastval()'.freeze
     
       def insert(values = nil, opts = nil)
-        db.synchronize do
-          perform insert_sql(values, opts) + SELECT_LASTVAL
-          result_first[:lastval]
-        end
+        @db.execute(insert_sql(values, opts))
+        query_single_value(SELECT_LASTVAL).to_i
       end
     
       def update(values, opts = nil)
-        db.synchronize do
-          perform update_sql(values, opts)
-          @result.cmdtuples
+        @db.synchronize do
+          result = @db.execute(update_sql(values))
+          affected = result.cmdtuples
+          result.clear
+          affected
         end
       end
     
       def delete(opts = nil)
-        db.synchronize do
-          perform delete_sql(opts)
-          @result.cmdtuples
+        @db.synchronize do
+          result = @db.execute(delete_sql(opts))
+          affected = result.cmdtuples
+          result.clear
+          affected
+        end
+      end
+      
+      def query_all(sql, use_record_class = false)
+        @db.synchronize do
+          @result = @db.execute(sql)
+          prepare_row_converter(use_record_class)
+          all = []
+          @result.each {|r| all << convert_row(r)}
+          @result.clear
+          all
         end
       end
     
-      def perform(sql, use_record_class = false)
-        @result = @db.execute(sql)
-        prepare_row_fetcher(use_record_class)
-        @result
+      def query_each(sql, use_record_class = false)
+        @db.synchronize do
+          @result = @db.execute(sql)
+          prepare_row_converter(use_record_class)
+          @result.each {|r| yield convert_row(r)}
+          @result.clear
+        end
       end
-    
-      def result_each
-        @result.each {|r| yield fetch_row(r)}
+      
+      def query_first(sql, use_record_class = false)
+        @db.synchronize do
+          @result = @db.execute(sql)
+          prepare_row_converter(use_record_class)
+          row = nil
+          @result.each {|r| row = convert_row(r)}
+          @result.clear
+          row
+        end
       end
-    
-      def result_first
-        @result.each {|r| return fetch_row(r)}
-        nil
+      
+      def query_single_value(sql)
+        @db.synchronize do
+          @result = @db.execute(sql)
+          value = @result.getvalue(0, 0)
+          @result.clear
+          value
+        end
+      rescue => e
+        p @result.rows
+        raise e
       end
     
       COMMA = ','.freeze
     
-      def prepare_row_fetcher(use_record_class)
+      def prepare_row_converter(use_record_class)
         @fields = @result.fields.map {|s| s.to_sym}
         @types = (0..(@result.num_fields - 1)).map {|idx| @result.type(idx)}
         @result_class = use_record_class ? @record_class : nil
-        signature = @fields.join(COMMA) + @types.join(COMMA) + @result_class.to_s
-        meta_def(:fetch_row, &fetcher_by_signature(signature))
+        signature = @fields.join(COMMA) + @types.join(COMMA) +
+          @result_class.to_s
+        meta_def(:convert_row, &converter_by_signature(signature))
       end
     
       @@signatures_mutex = Mutex.new
       @@signatures = {}
 
-      def fetcher_by_signature(signature)
+      def converter_by_signature(signature)
         @@signatures_mutex.synchronize do
-          @@signatures[signature] ||= compile_row_fetcher
+          @@signatures[signature] ||= compile_row_converter
         end
       end
     
-      FETCH = "lambda {|r| {%s}}".freeze
-      FETCH_RECORD_CLASS = "lambda {|r| %2$s.new(%1$s)}".freeze
+      CONVERT = "lambda {|r| {%s}}".freeze
+      CONVERT_RECORD_CLASS = "lambda {|r| %2$s.new(%1$s)}".freeze
     
-      FETCH_FIELD = '%s => r[%d]'.freeze
-      FETCH_FIELD_TRANSLATE = '%s => ((t = r[%d]) ? t.%s : nil)'.freeze
+      CONVERT_FIELD = '%s => r[%d]'.freeze
+      CONVERT_FIELD_TRANSLATE = '%s => ((t = r[%d]) ? t.%s : nil)'.freeze
 
-      def compile_row_fetcher
+      def compile_row_converter
         used_fields = []
         kvs = []
         @fields.each_with_index do |field, idx|
@@ -329,10 +356,10 @@ module ServerSide
           used_fields << field
         
           translate_fn = PG_TYPES[@types[idx]]
-          kvs << (translate_fn ? FETCH_FIELD_TRANSLATE : FETCH_FIELD) %
+          kvs << (translate_fn ? CONVERT_FIELD_TRANSLATE : CONVERT_FIELD) %
             [field.inspect, idx, translate_fn]
         end
-        s = (@result_class ? FETCH_RECORD_CLASS : FETCH) %
+        s = (@result_class ? CONVERT_RECORD_CLASS : CONVERT) %
           [kvs.join(COMMA), @result_class]
         eval(s)
       end
