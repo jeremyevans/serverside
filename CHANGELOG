@@ -1,5 +1,7 @@
 *SVN*
 
+* Changed Template to use Erubis instead of ERB.
+
 * Rewrote large parts of ConnectionPool. Now it works properly.
 
 * Major refactoring to Postgres code. Now using PGconn#async_exec to allow multithreaded apps.

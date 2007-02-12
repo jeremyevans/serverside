@@ -31,7 +31,7 @@ context "ServerSide::Template.set" do
     a.should_be_a_kind_of Array
     a.size.should == 2
     a.first.should_be t
-    a.last.should_be_a_kind_of ERB
+    a.last.should_be_a_kind_of Erubis::Eruby
   end
   
   specify "should set stamp to nil by default" do
@@ -39,7 +39,7 @@ context "ServerSide::Template.set" do
     Template.templates['test'].first.should_be_nil
   end
   
-  specify "should construct a new ERB instance with the body" do
+  specify "should construct a new Erubis::Eruby instance with the body" do
     Template.set('test', 'yo')
     Template.templates['test'].last.result(binding).should == 'yo'
   end
@@ -55,18 +55,18 @@ context "ServerSide::Template.validate" do
   specify "should load a file as template if the name references a file" do
     Template.reset
     t = Template.validate(__FILE__)
-    t.should_be_a_kind_of ERB
+    t.should_be_a_kind_of Erubis::Eruby
     t.result(binding).should == IO.read(__FILE__)
     Template.templates.size.should == 1
     t = Template.templates[__FILE__]
     t.first.should == File.mtime(__FILE__)
-    t.last.should_be_a_kind_of ERB
+    t.last.should_be_a_kind_of Erubis::Eruby
   end
   
-  specify "should return the ERB instance for an existing template" do
+  specify "should return the Erubis::Eruby instance for an existing template" do
     Template.reset
     t = Template.validate(__FILE__)
-    t.should_be_a_kind_of ERB
+    t.should_be_a_kind_of Erubis::Eruby
     t.result(binding).should == IO.read(__FILE__)
   end
   
@@ -120,7 +120,7 @@ context "ServerSide::Template.render" do
     FileUtils.rm('tmp')
   end
   
-  specify "should pass the binding to the ERB instance for processing" do
+  specify "should pass the binding to the Erubis::Eruby instance for processing" do
     @x = 23
     Template.reset
     Template.set('test', '<' + '%= @x %' + '>')

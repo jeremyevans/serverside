@@ -1,8 +1,8 @@
-require 'erb'
+require 'erubis'
 
 module ServerSide
-  # The Template module implements an ERB template rendering system. Templates
-  # are cached and automatically reloaded if the file changes.
+  # The Template module implements an Erubis template rendering system. 
+  # Templates are cached and automatically reloaded if the file changes.
   class Template
     # The @@templates variable caches templates in use. The values are
     # arrays containing 2 objects: a file stamp (if the template comes from a 
@@ -12,7 +12,7 @@ module ServerSide
     # Caches a template for later use. The stamp parameter is used only when
     # the content of a template file is stored.
     def self.set(name, body, stamp = nil)
-      @@templates[name] = [stamp, ERB.new(body)]
+      @@templates[name] = [stamp, Erubis::Eruby.new(body)]
     end
 
     # Validates the referenced template by checking its stamp. If the name

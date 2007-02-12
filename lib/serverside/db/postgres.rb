@@ -93,7 +93,7 @@ module ServerSide
     
       def initialize(opts = {})
         super
-        @pool = ServerSide::ConnectionPool.new(@opts[:max_connections] || 20) do
+        @pool = ServerSide::ConnectionPool.new(@opts[:max_connections] || 4) do
           PGconn.connect(
             @opts[:host] || 'localhost',
             @opts[:port] || 5432,
@@ -317,10 +317,6 @@ module ServerSide
           @result.clear
           value
         end
-      rescue => e
-        puts e.message
-        puts e.backtrace.first
-        raise e
       end
     
       COMMA = ','.freeze
