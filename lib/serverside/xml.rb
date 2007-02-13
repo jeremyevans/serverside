@@ -51,23 +51,28 @@ module ServerSide
     end
   
     def method_missing(tag, *args, &block)
-      if block
-        __open_tag(tag, args.first)
-        block.call(self)
-        __close_tag(tag)
-      else
-        value, atts = args.pop, args.pop
-        subtags, atts = atts, nil if atts.is_a?(Array)
-        if subtags
-          __open_tag(tag, atts)
-          subtags.each {|k| __send__(k, value[k])}
-          __close_tag(tag)
-        else
-          __open_tag(tag, atts)
-          __value(value)
-          __close_tag(tag)
-        end
+      Thread.exclusive do
+        meta_def(tag) do |*a|
+          if block_given?
+            __open_tag(tag, a.first)
+            yield self
+            __close_tag(tag)
+          else
+            value, atts = a.pop, a.pop
+            subtags, atts = atts, nil if atts.is_a?(Array)
+            if subtags
+              __open_tag(tag, atts)
+              subtags.each {|k| __send__(k, value[k])}
+              __close_tag(tag)
+            else
+              __open_tag(tag, atts)
+              __value(value)
+              __close_tag(tag)
+            end
+          end
+        end unless respond_to?(tag)
       end
+      __send__(tag, *args)
     end
   
     def instruct!(atts = nil)
