@@ -257,24 +257,30 @@ module ServerSide
       SELECT_LASTVAL = ';SELECT lastval()'.freeze
     
       def insert(values = nil, opts = nil)
-        @db.execute(insert_sql(values, opts))
+        @db.execute(insert_sql(values, opts)).clear
         query_single_value(SELECT_LASTVAL).to_i
       end
     
       def update(values, opts = nil)
         @db.synchronize do
-          result = @db.execute(update_sql(values))
-          affected = result.cmdtuples
-          result.clear
+          @result = @db.execute(update_sql(values))
+          begin
+            affected = @result.cmdtuples
+          ensure
+            @result.clear
+          end
           affected
         end
       end
     
       def delete(opts = nil)
         @db.synchronize do
-          result = @db.execute(delete_sql(opts))
-          affected = result.cmdtuples
-          result.clear
+          @result = @db.execute(delete_sql(opts))
+          begin
+            affected = @result.cmdtuples
+          ensure
+            @result.clear
+          end
           affected
         end
       end
@@ -282,10 +288,13 @@ module ServerSide
       def query_all(sql, use_record_class = false)
         @db.synchronize do
           @result = @db.execute(sql)
-          prepare_row_converter(use_record_class)
-          all = []
-          @result.each {|r| all << convert_row(r)}
-          @result.clear
+          begin
+            prepare_row_converter(use_record_class)
+            all = []
+            @result.each {|r| all << convert_row(r)}
+          ensure
+            @result.clear
+          end
           all
         end
       end
@@ -293,19 +302,25 @@ module ServerSide
       def query_each(sql, use_record_class = false)
         @db.synchronize do
           @result = @db.execute(sql)
-          prepare_row_converter(use_record_class)
-          @result.each {|r| yield convert_row(r)}
-          @result.clear
+          begin
+            prepare_row_converter(use_record_class)
+            @result.each {|r| yield convert_row(r)}
+          ensure
+            @result.clear
+          end
         end
       end
       
       def query_first(sql, use_record_class = false)
         @db.synchronize do
           @result = @db.execute(sql)
-          prepare_row_converter(use_record_class)
-          row = nil
-          @result.each {|r| row = convert_row(r)}
-          @result.clear
+          begin
+            prepare_row_converter(use_record_class)
+            row = nil
+            @result.each {|r| row = convert_row(r)}
+          ensure
+            @result.clear
+          end
           row
         end
       end
@@ -313,8 +328,11 @@ module ServerSide
       def query_single_value(sql)
         @db.synchronize do
           @result = @db.execute(sql)
-          value = @result.getvalue(0, 0)
-          @result.clear
+          begin
+            value = @result.getvalue(0, 0)
+          ensure
+            @result.clear
+          end
           value
         end
       end

@@ -1,5 +1,7 @@
 *SVN*
 
+* Wrapped Postgres result.clear in ensure for better error handling.
+
 * Changed Template to use Erubis instead of ERB.
 
 * Rewrote large parts of ConnectionPool. Now it works properly.
