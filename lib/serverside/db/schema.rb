@@ -135,7 +135,7 @@ module ServerSide
     
     def initialize(&block)
       @instructions = []
-      instance_eval(&block)
+      instance_eval(&block) if block
     end
     
     def create_table(table_name, &block)

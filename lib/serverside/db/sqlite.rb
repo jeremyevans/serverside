@@ -15,7 +15,6 @@ module ServerSide
         end
       end
     
-    
       def query(opts = nil)
         SQLite::Dataset.new(self, opts)
       end

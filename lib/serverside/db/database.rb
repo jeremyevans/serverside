@@ -33,8 +33,14 @@ module ServerSide
     end
     
     # Creates a table.
-    def create_table(name, columns, indexes = nil)
-      execute Schema.create_table_sql(name, columns, indexes)
+    def create_table(name, columns = nil, indexes = nil, &block)
+      if block
+        schema = Schema.new
+        schema.create_table(name, &block)
+        schema.create(self)
+      else
+        execute Schema.create_table_sql(name, columns, indexes)
+      end
     end
     
     # Drops a table.

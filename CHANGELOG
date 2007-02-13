@@ -1,5 +1,7 @@
 *SVN*
 
+* Improved Database#create_table to also accept a block for defining tables using the schema DSL.
+
 * Wrapped Postgres result.clear in ensure for better error handling.
 
 * Changed Template to use Erubis instead of ERB.
