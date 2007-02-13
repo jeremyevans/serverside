@@ -3,7 +3,8 @@ require 'metaid'
 module ServerSide
   class XML
     # blank slate
-    instance_methods.each { |m| undef_method m unless (m =~ /^__|instance_eval|meta/)}
+    instance_methods.each {|m|
+      undef_method m unless (m =~ /^__|instance_eval|meta|respond_to/)}
   
     TAG_LEFT_OPEN = '<'.freeze
     TAG_LEFT_CLOSE = '</'.freeze
@@ -52,7 +53,6 @@ module ServerSide
     def method_missing(tag, *args, &block)
       Thread.exclusive do
         meta_def(tag) do |*args|
-          @__to_s = nil # invalidate to_s cache
           if block
             __open_tag(tag, args.first)
             block.call(self)
@@ -70,7 +70,7 @@ module ServerSide
               __close_tag(tag)
             end
           end
-        end
+        end unless respond_to?(tag)
       end
       __send__(tag, *args)
     end
