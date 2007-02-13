@@ -58,7 +58,7 @@ module ServerSide
     def release(thread)
       @mutex.synchronize do
         @available_connections << @allocated[thread]
-        @allocated[thread] = nil
+        @allocated.delete(thread)
       end
     end
   end
