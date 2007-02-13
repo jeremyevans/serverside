@@ -184,8 +184,12 @@ module ServerSide
         query_first(select_sql(opts), true)
       rescue => e
         puts "******************************"
+        puts e.message
+        puts e.backtrace.join("\r\n")
+        puts "******************************"
         p self
         puts "******************************"
+        gets
         raise e
       end
     
