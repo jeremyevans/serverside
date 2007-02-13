@@ -45,7 +45,7 @@ module ServerSide
     def initialize(tag = nil, atts = nil, &block)
       @doc = ''
       __open_tag(tag, atts) if tag
-      instance_eval(&block) if block
+      block.call(self) if block
       __close_tag(tag) if tag
     end
   
@@ -54,7 +54,7 @@ module ServerSide
         @__to_s = nil # invalidate to_s cache
         if block
           __open_tag(tag, args.first)
-          instance_eval(&block)
+          block.call(self)
           __close_tag(tag)
         else
           value, atts = args.pop, args.pop
