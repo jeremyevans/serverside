@@ -182,6 +182,11 @@ module ServerSide
       def first(opts = nil)
         opts = opts ? opts.merge(LIMIT_1) : LIMIT_1
         query_first(select_sql(opts), true)
+      rescue => e
+        puts "******************************"
+        p self
+        puts "******************************"
+        raise e
       end
     
       def last(opts = nil)
