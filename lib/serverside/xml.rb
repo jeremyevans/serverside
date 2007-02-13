@@ -50,23 +50,25 @@ module ServerSide
     end
   
     def method_missing(tag, *args, &block)
-      meta_def(tag) do |*args|
-        @__to_s = nil # invalidate to_s cache
-        if block
-          __open_tag(tag, args.first)
-          block.call(self)
-          __close_tag(tag)
-        else
-          value, atts = args.pop, args.pop
-          subtags, atts = atts, nil if atts.is_a?(Array)
-          if subtags
-            __open_tag(tag, atts)
-            subtags.each {|k| __send__(k, value[k])}
+      Thread.exclusive do
+        meta_def(tag) do |*args|
+          @__to_s = nil # invalidate to_s cache
+          if block
+            __open_tag(tag, args.first)
+            block.call(self)
             __close_tag(tag)
           else
-            __open_tag(tag, atts)
-            __value(value)
-            __close_tag(tag)
+            value, atts = args.pop, args.pop
+            subtags, atts = atts, nil if atts.is_a?(Array)
+            if subtags
+              __open_tag(tag, atts)
+              subtags.each {|k| __send__(k, value[k])}
+              __close_tag(tag)
+            else
+              __open_tag(tag, atts)
+              __value(value)
+              __close_tag(tag)
+            end
           end
         end
       end
