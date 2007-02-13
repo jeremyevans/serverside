@@ -52,13 +52,13 @@ module ServerSide
   
     def method_missing(tag, *args, &block)
       Thread.exclusive do
-        meta_def(tag) do |*args|
+        meta_def(tag) do |*a|
           if block
-            __open_tag(tag, args.first)
+            __open_tag(tag, a.first)
             block.call(self)
             __close_tag(tag)
           else
-            value, atts = args.pop, args.pop
+            value, atts = a.pop, a.pop
             subtags, atts = atts, nil if atts.is_a?(Array)
             if subtags
               __open_tag(tag, atts)
