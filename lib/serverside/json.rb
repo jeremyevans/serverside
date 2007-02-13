@@ -19,19 +19,16 @@ module ServerSide
     
     # Catches calls to define keys and creates methods on the fly.
     def method_missing(key, *args, &block)
-      meta_def(key) do |*args|
-        value = nil
-        if block
-          @stack.push JS.new
-          block.call(self)
-          value = @stack.pop.__content
-        else
-          value = args.first
-        end
-        @stack.last.__add_hash_value(key, value)
-        self
+      value = nil
+      if block
+        @stack.push JS.new
+        block.call(self)
+        value = @stack.pop.__content
+      else
+        value = args.first
       end
-      __send__(key, *args)
+      @stack.last.__add_hash_value(key, value)
+      self
     end
     
     def __add_hash_value(key, value)

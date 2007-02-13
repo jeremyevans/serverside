@@ -1,5 +1,7 @@
 *SVN*
 
+* Rewrote method_missing for both JSON and XML classes. Turns out it's a problem to meta_def method which take blocks. Cargo-cult programming.
+
 * Deprecated use of instance_eval in XML builder.
 
 * Fixed nasty bug in ConnectionPool#release that caused a serious memory leak (and possibly a segmentation fault?).
