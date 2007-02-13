@@ -43,7 +43,8 @@ spec = Gem::Specification.new do |s|
   s.homepage = 'http://code.google.com/p/serverside/'
   s.executables = ['serverside']
 
-  s.add_dependency('metaid', 'erubis')
+  s.add_dependency('metaid')
+  s.add_dependency('erubis')
   s.required_ruby_version = '>= 1.8.2'
 
   s.files = %w(COPYING README Rakefile) + Dir.glob("{bin,doc,spec,lib}/**/*") 
