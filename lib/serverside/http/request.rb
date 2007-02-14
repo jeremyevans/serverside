@@ -164,8 +164,9 @@ module ServerSide
           [status, Time.now.httpdate, content_type, h, @response_cookies, 
             content_length])
         @socket << body if body
-      rescue
+      rescue => e
         @persistent = false
+        raise e
       end
       
       CONTENT_DISPOSITION = 'Content-Disposition'.freeze
@@ -188,7 +189,6 @@ module ServerSide
       def redirect(location, permanent = false)
         @socket << (STATUS_REDIRECT % 
           [permanent ? 301 : 302, Time.now.httpdate, location])
-      rescue
       ensure
         @persistent = false
       end

@@ -25,9 +25,11 @@ class PGconn
   
   def execute(sql)
     begin
+      ServerSide.info(sql)
       async_exec(sql)
     rescue PGError => e
       unless connected?
+        ServerSide.warn('Reconnecting to Postgres server')
         reset
         async_exec(sql)
       else
@@ -44,13 +46,16 @@ class PGconn
     if @transaction_in_progress
       return yield
     end
+    ServerSide.info('BEGIN')
     async_exec(SQL_BEGIN)
     begin
       @transaction_in_progress = true
       result = yield
+      ServerSide.info('COMMIT')
       async_exec(SQL_COMMIT)
       result
     rescue => e
+      ServerSide.info('ROLLBACK')
       async_exec(SQL_ROLLBACK)
       raise e
     ensure
