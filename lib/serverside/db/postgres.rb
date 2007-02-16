@@ -25,6 +25,7 @@ class PGconn
   
   def execute(sql)
     begin
+      puts sql
       ServerSide.info(sql)
       async_exec(sql)
     rescue PGError => e
@@ -131,6 +132,10 @@ module ServerSide
     
       def execute(sql)
         @pool.hold {|conn| conn.execute(sql)}
+      end
+    
+      def execute_and_forget(sql)
+        @pool.hold {|conn| conn.execute(sql).clear}
       end
     
       def synchronize(&block)
@@ -256,9 +261,9 @@ module ServerSide
         sql = LOCK % [@opts[:from], mode]
         @db.synchronize do
           if block # perform locking inside a transaction and yield to block
-            @db.transaction {@db.execute(sql).clear; yield}
+            @db.transaction {@db.execute_and_forget(sql); yield}
           else
-            @db.execute(sql).clear # lock without a transaction
+            @db.execute_and_forget(sql) # lock without a transaction
             self
           end
         end
@@ -271,17 +276,17 @@ module ServerSide
       SELECT_LASTVAL = ';SELECT lastval()'.freeze
     
       def insert(values = nil, opts = nil)
-        @db.execute(insert_sql(values, opts)).clear
+        @db.execute_and_forget(insert_sql(values, opts))
         query_single_value(SELECT_LASTVAL).to_i
       end
     
       def update(values, opts = nil)
         @db.synchronize do
-          @result = @db.execute(update_sql(values))
+          result = @db.execute(update_sql(values))
           begin
-            affected = @result.cmdtuples
+            affected = result.cmdtuples
           ensure
-            @result.clear
+            result.clear
           end
           affected
         end
@@ -289,11 +294,11 @@ module ServerSide
     
       def delete(opts = nil)
         @db.synchronize do
-          @result = @db.execute(delete_sql(opts))
+          result = @db.execute(delete_sql(opts))
           begin
-            affected = @result.cmdtuples
+            affected = result.cmdtuples
           ensure
-            @result.clear
+            result.clear
           end
           affected
         end
@@ -301,13 +306,13 @@ module ServerSide
       
       def query_all(sql, use_record_class = false)
         @db.synchronize do
-          @result = @db.execute(sql)
+          result = @db.execute(sql)
           begin
-            prepare_row_converter(use_record_class)
+            prepare_row_converter(result, use_record_class)
             all = []
-            @result.each {|r| all << convert_row(r)}
+            result.each {|r| all << convert_row(r)}
           ensure
-            @result.clear
+            result.clear
           end
           all
         end
@@ -315,25 +320,25 @@ module ServerSide
     
       def query_each(sql, use_record_class = false)
         @db.synchronize do
-          @result = @db.execute(sql)
+          result = @db.execute(sql)
           begin
-            prepare_row_converter(use_record_class)
-            @result.each {|r| yield convert_row(r)}
+            prepare_row_converter(result, use_record_class)
+            result.each {|r| yield convert_row(r)}
           ensure
-            @result.clear
+            result.clear
           end
         end
       end
       
       def query_first(sql, use_record_class = false)
         @db.synchronize do
-          @result = @db.execute(sql)
+          result = @db.execute(sql)
           begin
-            prepare_row_converter(use_record_class)
+            prepare_row_converter(result, use_record_class)
             row = nil
-            @result.each {|r| row = convert_row(r)}
+            result.each {|r| row = convert_row(r)}
           ensure
-            @result.clear
+            result.clear
           end
           row
         end
@@ -341,11 +346,11 @@ module ServerSide
       
       def query_single_value(sql)
         @db.synchronize do
-          @result = @db.execute(sql)
+          result = @db.execute(sql)
           begin
-            value = @result.getvalue(0, 0)
+            value = result.getvalue(0, 0)
           ensure
-            @result.clear
+            result.clear
           end
           value
         end
@@ -353,9 +358,9 @@ module ServerSide
     
       COMMA = ','.freeze
     
-      def prepare_row_converter(use_record_class)
-        @fields = @result.fields.map {|s| s.to_sym}
-        @types = (0..(@result.num_fields - 1)).map {|idx| @result.type(idx)}
+      def prepare_row_converter(result, use_record_class)
+        @fields = result.fields.map {|s| s.to_sym}
+        @types = (0..(result.num_fields - 1)).map {|idx| result.type(idx)}
         @result_class = use_record_class ? @record_class : nil
         signature = @fields.join(COMMA) + @types.join(COMMA) +
           @result_class.to_s
