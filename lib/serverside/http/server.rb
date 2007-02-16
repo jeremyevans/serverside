@@ -35,8 +35,6 @@ module ServerSide
       
       def start_connection(conn)
         thread = Thread.new do
-          Thread.current[:conn_start] = Time.now
-          Thread.current.priority = 1000
           begin
             while true
               break unless @request_class.new(conn).process
@@ -49,6 +47,8 @@ module ServerSide
             conn.close rescue nil
           end
         end
+        thread[:conn_start] = Time.now
+        thread.priority = 1000
         nil
       end
       
