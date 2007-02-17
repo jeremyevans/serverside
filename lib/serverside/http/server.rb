@@ -39,15 +39,15 @@ module ServerSide
             conn.close rescue nil
           end
         end
+        thread[:request_start] = Time.now
         thread[:server] = self
-        thread.priority = 1000
         thread
       end
       
       def start_reaper
-        reaper = Thread.new do
+        Thread.new do
           while true
-            sleep 10
+            sleep 30
             now = Time.now
             Thread.exclusive do
               Thread.list.each do |t|
@@ -58,7 +58,6 @@ module ServerSide
             end
           end
         end
-        reaper.priority = 1000
       end
     end
     
