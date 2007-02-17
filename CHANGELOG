@@ -1,5 +1,7 @@
 *SVN*
 
+* Refactored HTTP::Connection into HTTP::Server. Removed deprecated http/connection.rb.
+
 * Solved some more memory leaks and dead thread issues.
 
 * Added thread reaping to HTTP::Server.

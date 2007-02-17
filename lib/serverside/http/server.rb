@@ -48,6 +48,7 @@ module ServerSide
         reaper = Thread.new do
           while true
             sleep 10
+            now = Time.now
             @workers.list.each do |t|
               t.raise 'Timed out' if (now - t[:request_start]) > 300
             end
