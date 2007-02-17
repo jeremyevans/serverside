@@ -45,7 +45,7 @@ module ServerSide
       end
       
       def start_reaper
-        Thread.new do
+        reaper = Thread.new do
           while true
             sleep 10
             @workers.list.each do |t|
@@ -53,7 +53,7 @@ module ServerSide
             end
           end
         end
-        @@thread_reaper.priority = 1000
+        reaper.priority = 1000
       end
     end
     
@@ -67,7 +67,5 @@ module ServerSide
     end
   end
 end
-
-ServerSide::HTTP::Server.configure_socket_options
 
 require 'extras/mem'
