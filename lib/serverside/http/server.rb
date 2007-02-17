@@ -48,6 +48,7 @@ module ServerSide
           end
         end
         thread[:conn_start] = Time.now
+        thread[:name] = 'connection'
         thread.priority = 1000
         nil
       end
@@ -57,7 +58,6 @@ module ServerSide
       def self.start_thread_reaper
         @@thread_reaper ||= Thread.new do
           puts 'start thread reaper'
-          Thread.current.priority = 1000
           while true
             sleep 10
             now = Time.now
@@ -77,6 +77,8 @@ module ServerSide
             end
           end
         end
+        @@thread_reaper.priority = 1000
+        @@thread_reaper[:name] = 'reaper'
       end
 
       # Shamelessly ripped from Mongrel
