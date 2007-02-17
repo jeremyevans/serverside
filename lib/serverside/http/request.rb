@@ -89,8 +89,6 @@ module ServerSide
           parse_body
         end
         
-        p self
-        
         @headers
       end
       
