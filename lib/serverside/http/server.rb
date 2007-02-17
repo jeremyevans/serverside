@@ -11,7 +11,6 @@ module ServerSide
       # Creates a new server by opening a listening socket.
       def initialize(host, port, request_class)
         @host, @port, @request_class = host, port, request_class
-        @workers = ThreadGroup.new
       end
       
       # starts an accept loop. When a new connection is accepted, a new 
@@ -21,7 +20,7 @@ module ServerSide
         @listener = TCPServer.new(@host, @port)
         start_reaper
         while true
-          @workers.add(start_connection_thread(@listener.accept))
+          start_connection_thread(@listener.accept)
         end
       end
       
@@ -40,6 +39,7 @@ module ServerSide
             conn.close rescue nil
           end
         end
+        thread[:server] = self
         thread.priority = 1000
         thread
       end
@@ -49,8 +49,12 @@ module ServerSide
           while true
             sleep 10
             now = Time.now
-            @workers.list.each do |t|
-              t.raise 'Timed out' if (now - t[:request_start]) > 300
+            Thread.exclusive do
+              Thread.list.each do |t|
+                if t[:server].equal?(self) && (t[:request_start])
+                  t.raise 'Timed out' if (now - t[:request_start]) > 300
+                end
+              end
             end
           end
         end
