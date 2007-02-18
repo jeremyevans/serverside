@@ -71,5 +71,3 @@ module ServerSide
     end
   end
 end
-
-require 'extras/mem'

@@ -95,6 +95,8 @@ module ServerSide
     }
 
     class Database < ServerSide::Database
+      set_adapter_scheme :postgres
+    
       attr_reader :pool
     
       def initialize(opts = {})

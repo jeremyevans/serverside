@@ -1,5 +1,7 @@
 *SVN*
 
+* Added Database.connect method for creating database instances from connection strings.
+
 * Refactored HTTP::Connection into HTTP::Server. Removed deprecated http/connection.rb.
 
 * Solved some more memory leaks and dead thread issues.

@@ -1,4 +1,4 @@
-require 'thread'
+require 'uri'
 
 require File.join(File.dirname(__FILE__), 'schema')
 
@@ -55,6 +55,31 @@ module ServerSide
       true
     rescue
       false
+    end
+    
+    @@adapters = Hash.new
+    
+    # Sets the adapter scheme for the database class.
+    def self.set_adapter_scheme(scheme)
+      @@adapters[scheme.to_sym] = self
+    end
+    
+    # Converts a uri to an options hash.
+    def self.uri_to_options(uri)
+      {
+        :user => uri.user,
+        :password => uri.password,
+        :host => uri.host,
+        :port => uri.port,
+        :database => (uri.path =~ /\/(.*)/) && ($1)
+      }
+    end
+    
+    def self.connect(conn_string)
+      uri = URI.parse(conn_string)
+      c = @@adapters[uri.scheme.to_sym]
+      raise "Invalid database scheme" unless c
+      c.new(c.uri_to_options(uri))
     end
   end
 end

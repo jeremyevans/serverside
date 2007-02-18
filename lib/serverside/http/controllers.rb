@@ -60,32 +60,3 @@ module ServerSide
   end
 end
 
-__END__
-
-class ServerSide::ActionController < ServerSide::Controller
-  def self.default_routing_rule
-    if name.split('::').last =~ /(.+)Controller$/
-      controller = Inflector.underscore($1) 
-      {:path => ["/#{controller}", "/#{controller}/:action", "/#{controller}/:action/:id"]}
-    end
-  end
-
-  def self.inherited(c)
-    routing_rule = c.respond_to?(:routing_rule) ?
-      c.routing_rule : c.default_routing_rule
-    if routing_rule
-      ServerSide::Router.route(routing_rule) {c.new(self)}
-    end
-  end
-  
-  def self.route(arg = nil, &block)
-    rule = arg || block
-    meta_def(:get_route) {rule}
-  end
-end
-
-class MyController < ActionController
-  route "hello"
-end
-
-p MyController.get_route
