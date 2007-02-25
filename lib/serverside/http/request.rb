@@ -49,6 +49,7 @@ module ServerSide
       attr_reader :socket, :method, :path, :query, :version, :parameters,
         :headers, :persistent, :cookies, :response_cookies, :body,
         :content_length, :content_type, :response_headers
+      attr_writer :persistent
       
       # Initializes the request instance. Any descendants of HTTP::Request
       # which override the initialize method must receive socket as the
@@ -60,7 +61,9 @@ module ServerSide
 
       # Processes the request by parsing it and then responding.      
       def process
-        parse && ((respond || true) && @persistent)
+        parse && (respond || true) && @persistent
+      ensure
+        @socket = nil
       end
       
       # Parses an HTTP request. If the request is not valid, nil is returned.
@@ -78,8 +81,9 @@ module ServerSide
             @headers[$1.freeze] = $2.freeze
           end
         end
-        @persistent = (@version == VERSION_1_1) && 
-          (@headers[CONNECTION] != CLOSE)
+        @persistent = false
+#        @persistent = (@version == VERSION_1_1) && 
+#          (@headers[CONNECTION] != CLOSE)
         @cookies = @headers[COOKIE] ? parse_cookies : EMPTY_HASH
         @response_cookies = nil
         

@@ -13,50 +13,47 @@ module ServerSide
         @host, @port, @request_class = host, port, request_class
       end
       
+
       # starts an accept loop. When a new connection is accepted, a new 
       # instance of the supplied connection class is instantiated and passed 
       # the connection for processing.
       def start
         @listener = TCPServer.new(@host, @port)
-        start_reaper
         while true
           start_connection_thread(@listener.accept)
         end
       end
       
       def start_connection_thread(conn)
+        while Thread.list.size > 100
+          sleep 1
+        end
         thread = Thread.new do
           begin
             while true
-              Thread.current[:request_start] = Time.now
+              Thread.current[:timeout_stamp] = Time.now + 10
               break unless @request_class.new(conn).process
             end
           rescue => e
             ServerSide.log_error(e)
-            raise e
             # We don't care. Just close the connection.
           ensure
             conn.close rescue nil
           end
         end
-        thread[:request_start] = Time.now
-        thread[:server] = self
-        thread
+        thread.abort_on_exception = true
+        thread = nil
+      rescue => e
+        puts "****************"
+        puts e.message
+        puts e.backtrace.first
       end
       
-      def start_reaper
-        Thread.new do
-          while true
-            sleep 30
-            now = Time.now
-            Thread.exclusive do
-              Thread.list.each do |t|
-                if t[:server].equal?(self) && (t[:request_start])
-                  t.raise 'Timed out' if (now - t[:request_start]) > 300
-                end
-              end
-            end
-          end
+      def self.reap_old_workers
+        now = Time.now
+        Thread.list.each do |t|
+          stamp = t[:timeout_stamp]
+          t.raise 'Timed out' if stamp && (now >= stamp)
         end
       end
     end

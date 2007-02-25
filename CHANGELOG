@@ -1,5 +1,15 @@
 *SVN*
 
+* HTTP persistent connections are currently disabled.
+
+* Refactored thread spawning in HTTP::Server for simplicity and performance. The server now limits the total amount of (green) threads in the process to 100. Any further requests are blocked until previous threads are done or reaped.
+
+* Refactored Postgres::Dataset code to use row converters as Proc objects rather then redefine a convert_row method.
+
+* Implemented custom time stamp parsing code in String#postgres_to_time. Time.parse apparently leaks memory for some reason.
+
+* Renamed Dataset#hash and Model.hash to hash_column.
+
 * Added Database.connect method for creating database instances from connection strings.
 
 * Refactored HTTP::Connection into HTTP::Server. Removed deprecated http/connection.rb.

@@ -1,5 +1,4 @@
 require 'postgres'
-require 'metaid'
 
 class PGconn
   # the pure-ruby postgres adapter does not have a quote method.
@@ -25,7 +24,6 @@ class PGconn
   
   def execute(sql)
     begin
-      puts sql
       ServerSide.info(sql)
       async_exec(sql)
     rescue PGError => e
@@ -75,9 +73,15 @@ class String
       nil
     end
   end
+
+  TIME_REGEXP = /(\d{4})-(\d{2})-(\d{2})\s(\d{2}):(\d{2}):(\d{2})/
   
   def postgres_to_time
-    Time.parse(self)
+    if self =~ TIME_REGEXP
+      Time.local($1.to_i, $2.to_i, $3.to_i, $4.to_i, $5.to_i, $6.to_i)
+    else
+      nil
+    end
   end
 end
 
@@ -194,15 +198,6 @@ module ServerSide
       def first(opts = nil)
         opts = opts ? opts.merge(LIMIT_1) : LIMIT_1
         query_first(select_sql(opts), true)
-      rescue => e
-        puts "******************************"
-        puts e.message
-        puts e.backtrace.join("\r\n")
-        puts "******************************"
-        p self
-        puts "******************************"
-        gets
-        raise e
       end
     
       def last(opts = nil)
@@ -222,8 +217,8 @@ module ServerSide
         row_lock_mode = opts ? opts[:lock] : @opts[:lock]
         sql = super
         case row_lock_mode
-        when :update : sql << FOR_UPDATE.freeze
-        when :share  : sql << FOR_SHARE.freeze
+        when :update : sql << FOR_UPDATE
+        when :share  : sql << FOR_SHARE
         end
         sql
       end
@@ -310,9 +305,9 @@ module ServerSide
         @db.synchronize do
           result = @db.execute(sql)
           begin
-            prepare_row_converter(result, use_record_class)
+            conv = row_converter(result, use_record_class)
             all = []
-            result.each {|r| all << convert_row(r)}
+            result.each {|r| all << conv[r]}
           ensure
             result.clear
           end
@@ -324,8 +319,8 @@ module ServerSide
         @db.synchronize do
           result = @db.execute(sql)
           begin
-            prepare_row_converter(result, use_record_class)
-            result.each {|r| yield convert_row(r)}
+            conv = row_converter(result, use_record_class)
+            result.each {|r| yield conv[r]}
           ensure
             result.clear
           end
@@ -336,9 +331,9 @@ module ServerSide
         @db.synchronize do
           result = @db.execute(sql)
           begin
-            prepare_row_converter(result, use_record_class)
             row = nil
-            result.each {|r| row = convert_row(r)}
+            conv = row_converter(result, use_record_class)
+            result.each {|r| row = conv.call(r)}
           ensure
             result.clear
           end
@@ -360,21 +355,18 @@ module ServerSide
     
       COMMA = ','.freeze
     
-      def prepare_row_converter(result, use_record_class)
-        @fields = result.fields.map {|s| s.to_sym}
-        @types = (0..(result.num_fields - 1)).map {|idx| result.type(idx)}
-        @result_class = use_record_class ? @record_class : nil
-        signature = @fields.join(COMMA) + @types.join(COMMA) +
-          @result_class.to_s
-        meta_def(:convert_row, &converter_by_signature(signature))
-      end
-    
-      @@signatures_mutex = Mutex.new
-      @@signatures = {}
+      @@converters_mutex = Mutex.new
+      @@converters = {}
 
-      def converter_by_signature(signature)
-        @@signatures_mutex.synchronize do
-          @@signatures[signature] ||= compile_row_converter
+      def row_converter(result, use_record_class)
+        fields = result.fields.map {|s| s.to_sym}
+        types = (0..(result.num_fields - 1)).map {|idx| result.type(idx)}
+        klass = use_record_class ? @record_class : nil
+        
+        # create result signature and memoize the converter
+        sig = fields.join(COMMA) + types.join(COMMA) + klass.to_s
+        @@converters_mutex.synchronize do
+          @@converters[sig] ||= compile_converter(fields, types, klass)
         end
       end
     
@@ -384,19 +376,19 @@ module ServerSide
       CONVERT_FIELD = '%s => r[%d]'.freeze
       CONVERT_FIELD_TRANSLATE = '%s => ((t = r[%d]) ? t.%s : nil)'.freeze
 
-      def compile_row_converter
+      def compile_converter(fields, types, klass)
         used_fields = []
         kvs = []
-        @fields.each_with_index do |field, idx|
+        fields.each_with_index do |field, idx|
           next if used_fields.include?(field)
           used_fields << field
         
-          translate_fn = PG_TYPES[@types[idx]]
+          translate_fn = PG_TYPES[types[idx]]
           kvs << (translate_fn ? CONVERT_FIELD_TRANSLATE : CONVERT_FIELD) %
             [field.inspect, idx, translate_fn]
         end
-        s = (@result_class ? CONVERT_RECORD_CLASS : CONVERT) %
-          [kvs.join(COMMA), @result_class]
+        s = (klass ? CONVERT_RECORD_CLASS : CONVERT) %
+          [kvs.join(COMMA), klass]
         eval(s)
       end
     end

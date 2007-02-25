@@ -167,7 +167,7 @@ module ServerSide
       end
     end
     
-    def hash(key_column, value_column)
+    def hash_column(key_column, value_column)
       inject({}) do |m, r|
         m[r[key_column]] = r[value_column]
         m

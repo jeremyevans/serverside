@@ -25,7 +25,7 @@ module ServerSide
         return yield(conn)
       end
       while !(conn = acquire(t))
-        sleep 0.01
+        sleep 0.001
       end
       begin
         yield conn

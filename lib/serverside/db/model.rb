@@ -141,7 +141,7 @@ module ServerSide
     
     def initialize(values)
       @values = values
-      @pkey = values[primary_key]
+      @pkey = values[self.class.primary_key]
     end
     
     def exists?
@@ -165,7 +165,7 @@ module ServerSide
     def self.first; dataset.first; end
     def self.count; dataset.count; end
     def self.map(column); dataset.map(column); end
-    def self.hash(column); dataset.hash(primary_key, column); end
+    def self.hash_column(column); dataset.hash_column(primary_key, column); end
     def self.join(*args); dataset.join(*args); end
     def self.lock(mode, &block); dataset.lock(mode, &block); end
     def self.delete_all
