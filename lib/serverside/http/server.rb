@@ -20,7 +20,7 @@ module ServerSide
       def start
         @listener = TCPServer.new(@host, @port)
         while true
-          start_connection_thread(@listener.accept)
+          start_connection_thread(@listener.accept) rescue nil
         end
       end
       

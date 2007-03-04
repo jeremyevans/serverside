@@ -75,8 +75,13 @@ end
 
 require 'spec/rake/spectask'
 
-desc "Run specs with coverage"
+desc "Run specs"
 Spec::Rake::SpecTask.new('spec') do |t|
+  t.spec_files = FileList['spec/*_spec.rb']
+end
+
+desc "Run specs with coverage"
+Spec::Rake::SpecTask.new('spec_coverage') do |t|
   t.spec_files = FileList['spec/*_spec.rb']
   t.rcov = true
 end

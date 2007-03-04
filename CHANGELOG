@@ -1,5 +1,9 @@
 *SVN*
 
+* Small fixes.
+
+* Refactored JS code.
+
 * HTTP persistent connections are currently disabled.
 
 * Refactored thread spawning in HTTP::Server for simplicity and performance. The server now limits the total amount of (green) threads in the process to 100. Any further requests are blocked until previous threads are done or reaped.
@@ -54,7 +58,7 @@
 
 * Fixed fetching of SQLite records using model instances.
 
-*0.4.0a*
+*0.3.2*
 
 * Implemented SQLite adapter.
 

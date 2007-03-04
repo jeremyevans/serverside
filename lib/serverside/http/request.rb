@@ -81,7 +81,6 @@ module ServerSide
             @headers[$1.freeze] = $2.freeze
           end
         end
-        @persistent = false
 #        @persistent = (@version == VERSION_1_1) && 
 #          (@headers[CONNECTION] != CLOSE)
         @cookies = @headers[COOKIE] ? parse_cookies : EMPTY_HASH
