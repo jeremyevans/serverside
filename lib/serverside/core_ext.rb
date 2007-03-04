@@ -1,4 +1,4 @@
-# String extensions
+# String extensions.
 class String
   # Encodes a normal string to a URI string.
   def uri_escape
@@ -15,7 +15,7 @@ class String
     gsub(/&/, "&amp;").gsub(/\"/, "&quot;").gsub(/>/, "&gt;").gsub(/</, "&lt;")
   end
   
-  # Concatenates a path (do we really need this sugar?)
+  # Concatenates a path (purely sugar)
   def /(o)
     File.join(self, o.to_s)
   end
@@ -32,9 +32,9 @@ class String
   end
 end
 
-# Symbol extensions and overrides.
+# Symbol extensions.
 class Symbol
-  #
+  # Concatenates a path (purely sugar)
   def /(o)
     File.join(self, o.to_s)
   end
@@ -54,13 +54,15 @@ class Object
   end
 end
 
+# Coercion of boolean values to integer
 def true.to_i; -1; end
 def false.to_i; 0; end
 
+# Process extensions.
 module Process
   # Checks for the existance of a process.
   def self.exists?(pid)
-    getpgid(pid) && true rescue false  
+    getpgid(pid) && true rescue false
   end
 end
   

@@ -5,7 +5,7 @@ module ServerSide
   # ServerSide::JS.new {|j| j}
   class JS
     # blank slate
-    instance_methods.each do |m| 
+    instance_methods.each do |m|
       undef_method m unless (m =~ /^__|instance_eval|meta|respond_to|nil|is_a/)
     end
   
@@ -54,13 +54,17 @@ module ServerSide
     NULL = 'null'.freeze
     
     # Serializes the specified object into JS/JSON format. 
-    def __jsonize(obj)
+    def __serialize(obj, quote_keys)
       if obj.nil?
         NULL
       elsif obj.is_a? Array
-        "[#{obj.map{|v| __jsonize(v)}.join(', ')}]"
+        "[#{obj.map{|v| __serialize(v)}.join(', ')}]"
       elsif obj.is_a? Hash
-        fields = obj.to_a.map{|kv| "#{kv[0]}: #{__jsonize(kv[1])}"}
+        if quote_keys
+          fields = obj.to_a.map{|kv| "\"#{kv[0]}\": #{__serialize(kv[1])}"}
+        else
+          fields = obj.to_a.map{|kv| "#{kv[0]}: #{__serialize(kv[1])}"}
+        end
         "{#{fields.join(', ')}}"
       elsif obj.is_a? Symbol
         obj.to_s
@@ -71,11 +75,16 @@ module ServerSide
       end
     end
     
-    # Returns the document content in JS format. If a callback was specified,
+    # Returns the document content as a literal Javascript object. If a callback was specified,
     # the object is wrapped in a Javascript function call.
     def to_s
-      j = __jsonize(@content)
+      j = __serialize(@content, false)
       @callback ? "#{@callback}(#{j});" : j
+    end
+    
+    # Returns the content in JSON format.
+    def to_json
+      __serialize(@content, true)
     end
     
     alias_method :inspect, :to_s
