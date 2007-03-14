@@ -58,12 +58,12 @@ module ServerSide
       if obj.nil?
         NULL
       elsif obj.is_a? Array
-        "[#{obj.map{|v| __serialize(v)}.join(', ')}]"
+        "[#{obj.map{|v| __serialize(v, quote_keys)}.join(', ')}]"
       elsif obj.is_a? Hash
         if quote_keys
-          fields = obj.to_a.map{|kv| "\"#{kv[0]}\": #{__serialize(kv[1])}"}
+          fields = obj.to_a.map{|kv| "\"#{kv[0]}\": #{__serialize(kv[1], quote_keys)}"}
         else
-          fields = obj.to_a.map{|kv| "#{kv[0]}: #{__serialize(kv[1])}"}
+          fields = obj.to_a.map{|kv| "#{kv[0]}: #{__serialize(kv[1], quote_keys)}"}
         end
         "{#{fields.join(', ')}}"
       elsif obj.is_a? Symbol

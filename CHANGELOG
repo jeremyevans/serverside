@@ -1,3 +1,9 @@
+*SVN*
+
+* Added Request#start_stream method.
+
+* Fixed JS rendering.
+
 *0.3.2b*
 
 * Small fixes.

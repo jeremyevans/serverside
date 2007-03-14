@@ -196,6 +196,11 @@ module ServerSide
         @persistent = false
       end
       
+      def start_stream(content_type, body = nil)
+        send_response(200, content_type)
+        (@socket << body if body) rescue (@persistent = false)
+      end
+      
       # Streams additional data to the client.
       def stream(body)
         (@socket << body if body) rescue (@persistent = false)
