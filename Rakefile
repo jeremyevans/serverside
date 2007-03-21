@@ -6,9 +6,9 @@ require 'fileutils'
 include FileUtils
 
 NAME = "serverside"
-VERS = "0.3.2"
+VERS = "0.3.3"
 CLEAN.include ['**/.*.sw?', 'pkg/*', '.config', 'doc/*', 'coverage/*']
-RDOC_OPTS = ['--quiet', '--title', "ServerSide Documentation",
+RDOC_OPTS = ['--quiet', '--title', "ServerSide: a Fast Ruby Web Framework",
   "--opname", "index.html",
   "--line-numbers", 
   "--main", "README",
@@ -24,8 +24,8 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_dir = 'doc/rdoc'
   rdoc.options += RDOC_OPTS
   rdoc.main = "README"
-  rdoc.title = "ServerSide Documentation"
-  rdoc.rdoc_files.add ['README', 'CHANGELOG', 'COPYING', 'lib/serverside.rb', 'lib/serverside/**/*.rb']
+  rdoc.title = "ServerSide: a Fast Ruby Web Framework"
+  rdoc.rdoc_files.add ['README', 'COPYING', 'lib/serverside.rb', 'lib/serverside/**/*.rb']
 end
 
 spec = Gem::Specification.new do |s|
@@ -33,7 +33,7 @@ spec = Gem::Specification.new do |s|
   s.version = VERS
   s.platform = Gem::Platform::RUBY
   s.has_rdoc = true
-  s.extra_rdoc_files = ["README", "CHANGELOG", "COPYING"]
+  s.extra_rdoc_files = ["README", "COPYING"]
   s.rdoc_options += RDOC_OPTS + 
     ['--exclude', '^(examples|extras)\/', '--exclude', 'lib/serverside.rb']
   s.summary = "Performance-oriented web framework."
@@ -47,7 +47,7 @@ spec = Gem::Specification.new do |s|
   s.add_dependency('erubis')
   s.required_ruby_version = '>= 1.8.2'
 
-  s.files = %w(COPYING README Rakefile) + Dir.glob("{bin,doc,spec,lib}/**/*") 
+  s.files = %w(COPYING README Rakefile) + Dir.glob("{bin,doc,spec,lib}/**/*")
       
   s.require_path = "lib"
   s.bindir = "bin"

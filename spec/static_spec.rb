@@ -142,7 +142,7 @@ context "Static.serve_template" do
     c.serve_template('tmp.rhtml', binding)
     c.socket.rewind
     resp = c.socket.read
-    resp.should.match /\r\n\r\n#{@t}$/
+    resp.should_match(/\r\n\r\n#{@t}$/)
     FileUtils.rm('tmp.rhtml')
   end
   
@@ -156,7 +156,7 @@ context "Static.serve_template" do
     c.serve_template('tmp.rhtml')
     c.socket.rewind
     resp = c.socket.read
-    resp.should.match /\r\n\r\n\/test\/hey$/
+    resp.should_match(/\r\n\r\n\/test\/hey$/)
     FileUtils.rm('tmp.rhtml')
   end
 end

@@ -1,9 +1,9 @@
-= about ServerSide
+== ServerSide: A Fast Web Framework for Ruby
 
 ServerSide is an HTTP server framework designed to be as fast as possible, and
 as easy as possible to use. ServerSide includes a full-featured HTTP server, a
-controller-view system and a bunch of other tools to easily create servers and
-clusters of servers.
+controller-view system and a bunch of other tools to easily create web servers 
+and server clusters.
 
 == Resources
 
@@ -15,6 +15,10 @@ clusters of servers.
 To check out the source code:
   
   svn co http://serverside.googlecode.com/svn/trunk
+
+=== Contact
+
+If you have any comments or suggestions please send an email to ciconia at gmail.com and I'll get back to you.
 
 == Installation
 

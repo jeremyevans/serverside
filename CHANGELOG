@@ -1,4 +1,6 @@
-*SVN*
+*0.3.3*
+
+* Moved ORM code into separate project: Sequel.
 
 * Added Request#start_stream method.
 
