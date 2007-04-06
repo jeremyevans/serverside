@@ -1,3 +1,9 @@
+*SVN*
+
+* Changed Caching.disable_caching to not look for related headers.
+
+* Changed JS builder to use JSON gem.
+
 *0.3.3*
 
 * Moved ORM code into separate project: Sequel.

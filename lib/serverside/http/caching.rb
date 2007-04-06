@@ -32,10 +32,10 @@ module ServerSide
       # caching-related headers in the response.      
       def disable_caching
         @response_headers[CACHE_CONTROL] = NO_CACHE
-        @response_headers.delete(ETAG)
-        @response_headers.delete(LAST_MODIFIED)
-        @response_headers.delete(EXPIRES)
-        @response_headers.delete(VARY)
+#        @response_headers.delete(ETAG)
+#        @response_headers.delete(LAST_MODIFIED)
+#        @response_headers.delete(EXPIRES)
+#        @response_headers.delete(VARY)
       end
     
       # Returns an array containing all etag validators specified in the 
