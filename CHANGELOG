@@ -1,5 +1,7 @@
 *SVN*
 
+* Added support for domain-specific cookies.
+
 * Changed Caching.disable_caching to not look for related headers.
 
 * Changed JS builder to use JSON gem.

@@ -38,6 +38,7 @@ module ServerSide
       LOCATION = 'Location'.freeze
       COOKIE = 'Cookie'
       SET_COOKIE = "Set-Cookie: %s=%s; path=/; expires=%s\r\n".freeze
+      SET_COOKIE_DOMAIN = "Set-Cookie: %s=%s; path=/; expires=%s; domain=%s\r\n".freeze
       COOKIE_SPLIT = /[;,] */n.freeze
       COOKIE_REGEXP = /\s*(.+)=(.*)\s*/.freeze
       COOKIE_EXPIRED_TIME  = Time.at(0).freeze
@@ -207,16 +208,18 @@ module ServerSide
       end
       
       # Sets a cookie to be included in the response.
-      def set_cookie(name, value, expires)
+      def set_cookie(name, value, expires, domain = nil)
+        cookie = (domain ? SET_COOKIE_DOMAIN : SET_COOKIE) %
+          [name, value.to_s.uri_escape, expires.rfc2822, domain]
+        
         @response_cookies ||= ""
-        @response_cookies <<
-          (SET_COOKIE % [name, value.to_s.uri_escape, expires.rfc2822])
+        @response_cookies << cookie
       end
       
       # Marks a cookie as deleted. The cookie is given an expires stamp in 
       # the past.
-      def delete_cookie(name)
-        set_cookie(name, nil, COOKIE_EXPIRED_TIME)
+      def delete_cookie(name, domain = nil)
+        set_cookie(name, nil, COOKIE_EXPIRED_TIME, domain)
       end
     end
   end
