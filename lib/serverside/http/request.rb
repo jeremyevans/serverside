@@ -172,6 +172,18 @@ module ServerSide
         @persistent = false
         raise e
       end
+
+      def send_empty_response(status, headers = nil)
+        @response_headers.merge!(headers) if headers
+        if @response_headers.empty?
+          @socket << "HTTP/1.1 #{status}\r\n\r\n"
+        else
+          h = @response_headers.map {|k, v| "#{k}: #{v}"}.join(LINE_BREAK)
+          @socket << "HTTP/1.1 #{status}\r\n#{h}\r\n\r\n"
+        end
+      ensure
+        @persistent = false
+      end
       
       CONTENT_DISPOSITION = 'Content-Disposition'.freeze
       CONTENT_DESCRIPTION = 'Content-Description'.freeze

@@ -1,5 +1,7 @@
 *SVN*
 
+* Simplified cluster operation.
+
 * Added support for domain-specific cookies.
 
 * Changed Caching.disable_caching to not look for related headers.
