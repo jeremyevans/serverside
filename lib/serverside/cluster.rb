@@ -21,7 +21,13 @@ module Daemon
   
     # Stops child processes.
     def self.stop_servers
-      @@pids.each {|pid| begin; Process.kill('TERM', pid); rescue; end}
+      @@pids.each do |pid|
+        begin
+          Process.kill('TERM', pid)
+          while Process.exists?(pid); sleep 0.5; end
+        rescue
+        end
+      end
     end
   
     # The main daemon loop. Does nothing for now.

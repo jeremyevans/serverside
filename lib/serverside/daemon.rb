@@ -39,7 +39,7 @@ module Daemon
     when :stop
       stop(daemon)
     when :restart
-      stop(daemon)
+      stop(daemon) rescue nil
       start(daemon)
     else
       raise 'Invalid command. Please specify start, stop or restart.'

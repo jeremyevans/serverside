@@ -1,5 +1,7 @@
 *SVN*
 
+* Hardened daemon restart.
+
 * Simplified cluster operation.
 
 * Added support for domain-specific cookies.
