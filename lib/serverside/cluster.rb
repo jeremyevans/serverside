@@ -28,6 +28,7 @@ module Daemon
         rescue
         end
       end
+      sleep 1
     end
   
     # The main daemon loop. Does nothing for now.
