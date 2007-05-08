@@ -24,11 +24,10 @@ module Daemon
       @@pids.each do |pid|
         begin
           Process.kill('TERM', pid)
-          while Process.exists?(pid); sleep 0.5; end
         rescue
         end
       end
-      sleep 1
+      sleep 2
     end
   
     # The main daemon loop. Does nothing for now.
