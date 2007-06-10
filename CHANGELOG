@@ -1,5 +1,7 @@
 *SVN*
 
+* Added max_age argument to serve_file method.
+
 * Fixed bug that prevented caching when disable_caching was called before a cache call.
 
 * Hardened daemon restart.

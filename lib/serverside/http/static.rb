@@ -36,10 +36,10 @@ module ServerSide
       # If the If-None-Match header is included with an ETag, it is checked
       # against the file's current ETag. If there's a match, a 304 response is
       # rendered.
-      def serve_file(fn)
+      def serve_file(fn, max_age = nil)
         stat = File.stat(fn)
         etag = (ETAG_FORMAT % [stat.mtime.to_i, stat.size, stat.ino]).freeze
-        validate_cache(stat.mtime, MAX_AGE, etag) do
+        validate_cache(stat.mtime, max_age || MAX_AGE, etag) do
           send_response(200, @@mime_types[File.extname(fn)], IO.read(fn), 
             stat.size)
         end
