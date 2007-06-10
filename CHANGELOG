@@ -1,5 +1,7 @@
 *SVN*
 
+* Fixed bug that prevented caching when disable_caching was called before a cache call.
+
 * Hardened daemon restart.
 
 * Simplified cluster operation.

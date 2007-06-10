@@ -89,7 +89,11 @@ module ServerSide
             [etag || expiry_etag(stamp, max_age)]
           @response_headers[LAST_MODIFIED] = stamp.httpdate
           @response_headers[EXPIRES] = (Time.now + max_age).httpdate
-          @response_headers[CACHE_CONTROL] = cache_control if cache_control
+          if cache_control
+            @response_headers[CACHE_CONTROL] = cache_control
+          elsif
+            @response_headers.delete(CACHE_CONTROL)
+          end
           @response_headers[VARY] = vary if vary
           block ? block.call : nil
         end
