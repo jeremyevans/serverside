@@ -50,4 +50,27 @@ module ServerSide
       @@logger.error("#{e.message}:\r\n" + e.backtrace.join("\r\n"))
     end
   end
+  
+  REFERER = "Referer".freeze
+  USER_AGENT = "User-Agent".freeze
+  HOST = "Host".freeze
+  
+  def self.log_request(r)
+    if @@logger
+      req_line = r.req_line.chomp
+      if r.method == :post && r.content_type == HTTP::Request::CONTENT_TYPE_URL_ENCODED
+        req_line << " (#{r.body})"
+      end
+      msg = "%s %s %s %s %s %s %s" % [
+        r.client_addr,
+        (r.headers[HOST] || "").inspect,
+        req_line.inspect,
+        r.status || '?',
+        r.content_length || '?',
+        (r.headers[REFERER] || "").inspect,
+        (r.headers[USER_AGENT] || "").inspect
+      ]
+      @@logger.info(msg)
+    end
+  end
 end

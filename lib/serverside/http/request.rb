@@ -44,12 +44,14 @@ module ServerSide
       COOKIE_EXPIRED_TIME  = Time.at(0).freeze
       CONTENT_TYPE = "Content-Type".freeze
       CONTENT_TYPE_URL_ENCODED = 'application/x-www-form-urlencoded'.freeze
+      X_FORWARDED_FOR = "X-Forwarded-For".freeze
       
       include Static
       
       attr_reader :socket, :method, :path, :query, :version, :parameters,
         :headers, :persistent, :cookies, :response_cookies, :body,
-        :content_length, :content_type, :response_headers
+        :content_length, :content_type, :response_headers, :req_line, 
+        :client_addr, :status, :content_length
       attr_writer :persistent
       
       # Initializes the request instance. Any descendants of HTTP::Request
@@ -72,7 +74,7 @@ module ServerSide
       # connection is persistent (by checking the HTTP version and the 
       # 'Connection' header).
       def parse
-        return nil unless @socket.gets =~ REQUEST_REGEXP
+        return nil unless (@req_line = @socket.gets) =~ REQUEST_REGEXP
         @method, @path, @query, @version = $1.downcase.to_sym, $2, $3, $4
         @parameters = @query ? parse_parameters(@query) : {}
         @headers = {}
@@ -82,8 +84,12 @@ module ServerSide
             @headers[$1.freeze] = $2.freeze
           end
         end
+        # get client address
+        @client_addr = @headers[X_FORWARDED_FOR] || @socket.peeraddr.last
+
 #        @persistent = (@version == VERSION_1_1) && 
 #          (@headers[CONNECTION] != CLOSE)
+
         @cookies = @headers[COOKIE] ? parse_cookies : EMPTY_HASH
         @response_cookies = nil
         
@@ -153,6 +159,7 @@ module ServerSide
       # Sends an HTTP response.
       def send_response(status, content_type, body = nil, content_length = nil, 
         headers = nil)
+        @status = status
         @response_headers.merge!(headers) if headers
         h = @response_headers.inject('') {|m, kv| m << (HEADER % kv)}
         
@@ -161,6 +168,7 @@ module ServerSide
         # and so the connection will not be persistent.
         content_length = body.length if content_length.nil? && body
         @persistent = false if content_length.nil?
+        @content_length = content_length
         
         # Select the right format to use according to circumstances.
         @socket << ((@persistent ? STATUS_PERSIST : 
@@ -174,6 +182,7 @@ module ServerSide
       end
 
       def send_empty_response(status, headers = nil)
+        @status = status
         @response_headers.merge!(headers) if headers
         if @response_headers.empty?
           @socket << "HTTP/1.1 #{status}\r\n\r\n"
@@ -203,8 +212,8 @@ module ServerSide
       
       # Send a redirect response.
       def redirect(location, permanent = false)
-        @socket << (STATUS_REDIRECT % 
-          [permanent ? 301 : 302, Time.now.httpdate, location])
+        @status = permanent ? 301 : 302
+        @socket << (STATUS_REDIRECT % [@status, Time.now.httpdate, location])
       ensure
         @persistent = false
       end

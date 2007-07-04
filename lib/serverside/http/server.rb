@@ -18,6 +18,8 @@ module ServerSide
       # instance of the supplied connection class is instantiated and passed 
       # the connection for processing.
       def start
+        BasicSocket.do_not_reverse_lookup = true
+        
         @listener = TCPServer.new(@host, @port)
         while true
           start_connection_thread(@listener.accept) rescue nil
@@ -32,7 +34,10 @@ module ServerSide
           begin
             while true
               Thread.current[:timeout_stamp] = Time.now + 10
-              break unless @request_class.new(conn).process
+              r = @request_class.new(conn)
+              should_close = r.process
+              ServerSide.log_request(r)
+              break unless should_close
             end
           rescue => e
             ServerSide.log_error(e)
