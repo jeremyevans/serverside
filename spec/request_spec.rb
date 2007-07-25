@@ -19,19 +19,19 @@ end
 context "HTTP::Request.process" do
   specify "should call parse and and short-circuit if the result is nil" do
     r = DummyRequest2.new(nil)
-    r.process.should_be_nil
+    r.process.should be_nil
     r.calls.should == [:parse]
 
     r.calls = []
     r.parse_result = false
-    r.process.should_be false
+    r.process.should be_false
     r.calls.should == [:parse]
   end
   
   specify "should follow parse with respond and return @persistent" do
     r = DummyRequest2.new(nil)
     r.parse_result = true
-    r.process.should_be_nil
+    r.process.should be_nil
     r.calls.should == [:parse, :respond]
     
     r.calls = []
@@ -49,46 +49,46 @@ context "HTTP::Request.parse" do
   specify "should return nil for invalid requests" do
     r = ServerSide::HTTP::Request.new(nil)
     r.socket = StringIO.new('POST /test')
-    r.parse.should_be_nil
+    r.parse.should be_nil
     r.socket = StringIO.new('invalid string')
-    r.parse.should_be_nil
+    r.parse.should be_nil
     r.socket = StringIO.new('GET HTTP/1.1')
-    r.parse.should_be_nil
+    r.parse.should be_nil
     r.socket = StringIO.new('GET /test http')
-    r.parse.should_be_nil
+    r.parse.should be_nil
     r.socket = StringIO.new('GET /test HTTP')
-    r.parse.should_be_nil
+    r.parse.should be_nil
     r.socket = StringIO.new('GET /test HTTP/')
-    r.parse.should_be_nil
+    r.parse.should be_nil
     r.socket = StringIO.new('POST /test HTTP/1.1')
-    r.parse.should_be_nil
+    r.parse.should be_nil
   end
   
   specify "should parse valid requests and return request headers" do
     r = ServerSide::HTTP::Request.new(nil)
     r.socket = StringIO.new(
       "POST /test HTTP/1.1\r\nContent-Type: text/html\r\n\r\n")
-    r.parse.should_be r.headers
+    r.parse.should be(r.headers)
     r.method.should == :post
     r.path.should == '/test'
-    r.query.should_be_nil
+    r.query.should be_nil
     r.version.should == '1.1'
     r.parameters.should == {}
     r.headers.should == {'Content-Type' => 'text/html'}
     r.cookies.should == {}
-    r.response_cookies.should_be_nil
+    r.response_cookies.should be_nil
 #    r.persistent.should == true
   end
   
   specify "should correctly handle trailing slash in path" do
     r = ServerSide::HTTP::Request.new(nil)
     r.socket = StringIO.new("POST /test/asdf/qw/ HTTP/1.1\r\n\r\n")
-    r.parse.should_not_be_nil
+    r.parse.should_not be_nil
     r.path.should == '/test/asdf/qw'
 
     r.socket = StringIO.new(
       "POST /test/asdf/qw/?time=24%20hours HTTP/1.1\r\n\r\n")
-    r.parse.should_not_be_nil
+    r.parse.should_not be_nil
     r.path.should == '/test/asdf/qw'
   end
   
@@ -96,7 +96,7 @@ context "HTTP::Request.parse" do
     r = ServerSide::HTTP::Request.new(nil)
     r.socket = StringIO.new(
       "POST /test?q=node_history&time=24%20hours HTTP/1.1\r\n\r\n")
-    r.parse.should_not_be_nil
+    r.parse.should_not be_nil
     r.parameters.size.should == 2
     r.parameters[:time].should == '24 hours'
     r.parameters[:q].should == 'node_history'
@@ -106,30 +106,30 @@ context "HTTP::Request.parse" do
     r = ServerSide::HTTP::Request.new(nil)
     r.socket = StringIO.new(
       "POST / HTTP/1.0\r\n\r\n")
-    r.parse.should_not_be_nil
+    r.parse.should_not be_nil
     r.version.should == '1.0'
     r.socket = StringIO.new(
       "POST / HTTP/3.2\r\n\r\n")
-    r.parse.should_not_be_nil
+    r.parse.should_not be_nil
     r.version.should == '3.2'
   end
   
   specify "should set @persistent correctly" do
     r = ServerSide::HTTP::Request.new(nil)
     r.socket = StringIO.new("POST / HTTP/1.0\r\n\r\n")
-    r.parse.should_not_be_nil
+    r.parse.should_not be_nil
 #    r.persistent.should == false
     r.socket = StringIO.new("POST / HTTP/1.1\r\n\r\n")
-    r.parse.should_not_be_nil
+    r.parse.should_not be_nil
 #    r.persistent.should == true
     r.socket = StringIO.new("POST / HTTP/0.6\r\n\r\n")
-    r.parse.should_not_be_nil
+    r.parse.should_not be_nil
 #    r.persistent.should == false
     r.socket = StringIO.new("POST / HTTP/1.1\r\nConnection: close\r\n\r\n")
-    r.parse.should_not_be_nil
+    r.parse.should_not be_nil
 #    r.persistent.should == false
     r.socket = StringIO.new("POST / HTTP/1.1\r\nConnection: keep-alive\r\n\r\n")
-    r.parse.should_not_be_nil
+    r.parse.should_not be_nil
 #    r.persistent.should == true
   end
   
@@ -137,7 +137,7 @@ context "HTTP::Request.parse" do
     r = ServerSide::HTTP::Request.new(nil)
     r.socket = StringIO.new(
       "POST / HTTP/1.0\r\nCookie: abc=1342; def=7%2f4\r\n\r\n")
-    r.parse.should_not_be_nil
+    r.parse.should_not be_nil
     r.headers['Cookie'].should == 'abc=1342; def=7%2f4'
     r.cookies.size.should == 2
     r.cookies[:abc].should == '1342'
@@ -148,7 +148,7 @@ context "HTTP::Request.parse" do
     r = ServerSide::HTTP::Request.new(nil)
     r.socket = StringIO.new(
       "POST /?q=node_history HTTP/1.0\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 15\r\n\r\ntime=24%20hours")
-    r.parse.should_not_be_nil
+    r.parse.should_not be_nil
     r.parameters.size.should == 2
     r.parameters[:q].should == 'node_history'
     r.parameters[:time].should == '24 hours'
@@ -235,7 +235,7 @@ context "HTTP::Request.send_file" do
     r = ServerSide::HTTP::Request.new(socket)
     r.send_file('text', 'text/plain', :attachment)
     socket.rewind
-    socket.read.should_match /Content-Disposition: attachment\r\n/
+    socket.read.should match(/Content-Disposition: attachment\r\n/)
   end
   
   specify "should use :inline as default disposition" do
@@ -243,7 +243,7 @@ context "HTTP::Request.send_file" do
     r = ServerSide::HTTP::Request.new(socket)
     r.send_file('text', 'text/plain')
     socket.rewind
-    socket.read.should_match /Content-Disposition: inline\r\n/
+    socket.read.should match(/Content-Disposition: inline\r\n/)
   end
   
   specify "should include filename parameter if specified" do
@@ -251,7 +251,7 @@ context "HTTP::Request.send_file" do
     r = ServerSide::HTTP::Request.new(socket)
     r.send_file('text', 'text/plain', :attachment, 'text.txt')
     socket.rewind
-    socket.read.should_match /Content-Disposition: attachment; filename=text.txt\r\n/
+    socket.read.should match(/Content-Disposition: attachment; filename=text.txt\r\n/)
   end
   
   specify "should include a description header if specified" do
@@ -259,13 +259,13 @@ context "HTTP::Request.send_file" do
     r = ServerSide::HTTP::Request.new(socket)
     r.send_file('text', 'text/plain', :attachment, 'text.txt')
     socket.rewind
-    socket.read.should_not_match /Content-Description:\s/
+    socket.read.should_not match(/Content-Description:\s/)
 
     socket = StringIO.new
     r = ServerSide::HTTP::Request.new(socket)
     r.send_file('text', 'text/plain', :attachment, 'text.txt', 'this is text.')
     socket.rewind
-    socket.read.should_match /Content-Description:\sthis is text\./
+    socket.read.should match(/Content-Description:\sthis is text\./)
   end
 end
 

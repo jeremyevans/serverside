@@ -1,5 +1,7 @@
 *SVN*
 
+* Fixed small bug in ServerSide::log_request.
+
 * Implemented Apache-style request logging.
 
 * Added max_age argument to serve_file method.

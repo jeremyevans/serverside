@@ -85,7 +85,10 @@ module ServerSide
           end
         end
         # get client address
-        @client_addr = @headers[X_FORWARDED_FOR] || @socket.peeraddr.last
+        @client_addr = @headers[X_FORWARDED_FOR]
+        if !@client_addr && @socket.respond_to?(:peeraddr)
+          @client_addr = @socket.peeraddr.last
+        end
 
 #        @persistent = (@version == VERSION_1_1) && 
 #          (@headers[CONNECTION] != CLOSE)

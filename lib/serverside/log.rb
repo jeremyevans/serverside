@@ -58,7 +58,8 @@ module ServerSide
   
   def self.log_request(r)
     if @@logger
-      req_line = r.req_line.chomp
+      return unless req_line = r.req_line
+      req_line.chomp!
       if r.method == :post && r.content_type == HTTP::Request::CONTENT_TYPE_URL_ENCODED
         req_line << " (#{r.body})"
       end
