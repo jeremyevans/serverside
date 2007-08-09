@@ -1,9 +1,9 @@
-== ServerSide: A Fast Web Framework for Ruby
+== ServerSide: A Fast HTTP Server for Ruby
 
-ServerSide is an HTTP server framework designed to be as fast as possible, and
-as easy as possible to use. ServerSide includes a full-featured HTTP server, a
-controller-view system and a bunch of other tools to easily create web servers 
-and server clusters.
+ServerSide is an HTTP server based on EventMachine, a fast event processing
+library that offers superior scalability. ServerSide offers features such as
+persistent connections, HTTP streaming, HTTP caching, and more. ServerSide
+also includes tools to easily serve static files and create clusters.
 
 == Resources
 
@@ -38,7 +38,7 @@ To run the server without forking, use the 'serve' command:
 
   serverside serve .
 
-== Serving ERb Templates
+=== Serving ERb Templates
 
 ServerSide can render ERb[http://www.ruby-doc.org/stdlib/libdoc/erb/rdoc/] 
 templates in a fashion similar to PHP. You can store templates in .rhtml files, 
@@ -46,15 +46,15 @@ and ServerSide takes care of all the rest. ServerSide is also smart enough to
 allow you to use nice looking URL's with your templates, and automatically adds 
 the .rhtml extension if the file is there.
  
-== Serving Dynamic Content
+=== Serving Dynamic Content
 
 By default ServerSide serves static files, but you can change the behavior by
 creating custom {routing rules}[classes/ServerSide/Connection/Router.html].
 Here's a simple routing rule:
 
-  ServerSide::Router.route(:path => '/hello/:name') {
-    send_response(200, 'text', "Hello #{@parameters[:name]}!")
-  }
+route :path => '/hello/:name' do
+  send_response(200, 'text', "Hello #{@params[:name]}")
+end
 
 The ServerSide framework also lets you route requests based on any attribute of
 incoming requests, such as host name, path, URL parameters etc.
@@ -64,7 +64,7 @@ or tell serverside to explicitly load a specific file:
 
   serverside start ~/myapp/myapp.rb
 
-== Running a Cluster of Servers
+=== Running a Cluster of Servers
 
 ServerSide makes it easy to control a cluster of servers. Just supply a range of
 ports instead of a single port:

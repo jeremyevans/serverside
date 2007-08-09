@@ -6,7 +6,7 @@ require 'fileutils'
 include FileUtils
 
 NAME = "serverside"
-VERS = "0.3.3"
+VERS = "0.4"
 CLEAN.include ['**/.*.sw?', 'pkg/*', '.config', 'doc/*', 'coverage/*']
 RDOC_OPTS = ['--quiet', '--title', "ServerSide: a Fast Ruby Web Framework",
   "--opname", "index.html",
@@ -24,7 +24,7 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_dir = 'doc/rdoc'
   rdoc.options += RDOC_OPTS
   rdoc.main = "README"
-  rdoc.title = "ServerSide: a Fast Ruby Web Framework"
+  rdoc.title = "ServerSide: a Fast Ruby HTTP Server"
   rdoc.rdoc_files.add ['README', 'COPYING', 'lib/serverside.rb', 'lib/serverside/**/*.rb']
 end
 
@@ -36,17 +36,17 @@ spec = Gem::Specification.new do |s|
   s.extra_rdoc_files = ["README", "COPYING"]
   s.rdoc_options += RDOC_OPTS + 
     ['--exclude', '^(examples|extras)\/', '--exclude', 'lib/serverside.rb']
-  s.summary = "Performance-oriented web framework."
+  s.summary = "Fast Ruby HTTP Server."
   s.description = s.summary
   s.author = "Sharon Rosner"
   s.email = 'ciconia@gmail.com'
   s.homepage = 'http://code.google.com/p/serverside/'
   s.executables = ['serverside']
 
-  s.add_dependency('metaid')
+  s.add_dependency('eventmachine')
   s.add_dependency('erubis')
-  s.add_dependency('json')
-  s.required_ruby_version = '>= 1.8.2'
+  s.add_dependency('metaid')
+  s.required_ruby_version = '>= 1.8.5'
 
   s.files = %w(COPYING README Rakefile) + Dir.glob("{bin,doc,spec,lib}/**/*")
       

@@ -10,10 +10,10 @@ $cmd_config = {
 }
 
 opts = OptionParser.new do |opts|
-  opts.banner = "Usage: serverside start|stop|restart|serve [app1]"
+  opts.banner = "Usage: serverside start|stop|restart|serve [app_file]"
   opts.define_head "ServerSide, a fast and simple web framework for ruby."
   opts.separator ""
-  opts.separator "The supplied app path can be directory or file references. \
+  opts.separator "The supplied application path can be directory or file references. \
 If the path refers to a directory the system will try to load serverside.rb in \
 that directory. If no path is given, the current working directory is assumed."
   opts.separator ""
@@ -57,15 +57,22 @@ unless %w(start stop restart serve).include?($cmd)
   exit
 end
 
-path = ARGV.shift || '.'
-if File.file?(path)
-  require path
-else
-  fn = File.join(path, 'serverside.rb')
-  require fn if File.file?(fn)
+$path = ARGV.shift || '.'
+if File.file?($path)
+  app_code = IO.read($path)
+elsif File.file?($path/'serverside.rb')
+  app_code = IO.read($path/'serverside.rb')
 end
-unless ServerSide::Router.routes_defined?
-  ServerSide::Router.default_route {serve_static('.'/@path)}
+
+$server = ServerSide::HTTP::Server.new do
+  if app_code
+    module_eval(app_code)
+  else
+    include ServerSide::HTTP::Static
+    def handle
+      serve_static($path/@uri)
+    end
+  end
 end
 
 if $cmd == 'serve'
@@ -75,18 +82,15 @@ if $cmd == 'serve'
   end
   puts "Serving at #{$cmd_config[:host]}:#{$cmd_config[:ports].begin}..."
   trap('INT') {exit}
-  ServerSide::HTTP::Server.new($cmd_config[:host], $cmd_config[:ports].begin,
-    ServerSide::Router).start
+  
+  $server.start($cmd_config[:host], $cmd_config[:ports].begin)
 else
   daemon_class = Class.new(Daemon::Cluster) do
     meta_def(:pid_fn) {Daemon::WorkingDirectory/'serverside.pid'}
     meta_def(:server_loop) do |port|
-      ServerSide::HTTP::Server.new(
-        $cmd_config[:host], port, ServerSide::Router).start
+      $server.start($cmd_config[:host], port)
     end
     meta_def(:ports) {$cmd_config[:ports]}
   end
   Daemon.control(daemon_class, $cmd)
-
-#  ServerSide::Application.daemonize($cmd_config, $cmd)
 end

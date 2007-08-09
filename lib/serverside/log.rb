@@ -56,18 +56,18 @@ module ServerSide
   HOST = "Host".freeze
   HOST_REGEXP = /([^\:]*)(\:(.*))?$/
   
-  def self.log_request(r)
+  def self.log_request(c)
     if @@logger
-      return unless req_line = r.req_line
+      return unless request_line = c.request_line
       req_line.chomp!
-      if r.method == :post && r.content_type == HTTP::Request::CONTENT_TYPE_URL_ENCODED
+      if c.method == :post && c.content_type == HTTP::Request::CONTENT_TYPE_URL_ENCODED
         req_line << " (#{r.body})"
       end
-      host = (r.headers[HOST] || "") =~ HOST_REGEXP ? $1 : ""
+      host = (r.request_headers[HOST] || "") =~ HOST_REGEXP ? $1 : ""
       msg = "%s %s %s %s %s %s %s" % [
-        r.client_addr,
+        r.client_name,
         host.inspect,
-        req_line.inspect,
+        request_line.inspect,
         r.status || '?',
         r.content_length || '?',
         (r.headers[REFERER] || "").inspect,

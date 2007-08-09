@@ -1,5 +1,17 @@
 *SVN*
 
+* Merged em branch into trunk.
+
+* Fixed bug where state_response would erroneously send an error response when streaming.
+
+* Added use of epoll in EventMachine.
+
+* Fixed bug in streaming_periodically.
+
+* Added attribute reader for request_body.
+
+* Rewritten HTTP server to use EventMachine.
+
 * Fixed small bug in ServerSide::log_request.
 
 * Implemented Apache-style request logging.

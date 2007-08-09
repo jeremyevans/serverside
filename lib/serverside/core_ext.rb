@@ -1,3 +1,5 @@
+require 'md5'
+
 # String extensions.
 class String
   # Encodes a normal string to a URI string.
@@ -29,6 +31,33 @@ class String
   # Converts an underscored name into a camelized name
   def camelize
     gsub(/(^|_)(.)/) {$2.upcase}
+  end
+  
+  LINE_RE = /^([^\r]*)\r\n/n.freeze
+  EMPTY_STRING = ''.freeze
+  
+  def get_line
+    sub!(LINE_RE, EMPTY_STRING) ? $1 : nil
+  end
+  
+  def get_up_to_boundary(boundary)
+    if i = index(boundary)
+      part = i > 0 ? self[0..(i - 1)] : ''
+      slice!(0..(i + boundary.size - 1))
+      part
+    end
+  end
+
+  def get_up_to_boundary_with_crlf(boundary)
+    if i = index(boundary)
+      part = i > 0 ? self[0..(i - 1)] : ''
+      slice!(0..(i + boundary.size + 1))
+      part
+    end
+  end
+  
+  def etag
+    MD5.hexdigest(self)
   end
 end
 

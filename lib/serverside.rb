@@ -9,11 +9,14 @@
 module ServerSide
 end
 
-module Kernel
-  def require_dir(dir)
-    Dir.foreach(dir) {|fn| require File.join(dir, fn) if fn =~ /\.rb$/}
-  end
-end
+lib_dir = File.join(File.dirname(__FILE__), 'serverside')
 
-require_dir File.join(File.dirname(__FILE__), 'serverside')
+require File.join(lib_dir, 'core_ext')
+require File.join(lib_dir, 'http')
+require File.join(lib_dir, 'daemon')
+require File.join(lib_dir, 'cluster')
+require File.join(lib_dir, 'log')
+require File.join(lib_dir, 'template')
+require File.join(lib_dir, 'js')
+require File.join(lib_dir, 'xml')
 

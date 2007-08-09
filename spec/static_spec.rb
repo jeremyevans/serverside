@@ -1,3 +1,5 @@
+__END__
+
 require File.join(File.dirname(__FILE__), '../lib/serverside')
 require 'stringio'
 require 'fileutils'
