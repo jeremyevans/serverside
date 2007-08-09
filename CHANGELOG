@@ -1,4 +1,4 @@
-*SVN*
+=== 0.4.1 (2007-08-09)
 
 * Merged em branch into trunk.
 
@@ -30,7 +30,7 @@
 
 * Changed JS builder to use JSON gem.
 
-*0.3.3*
+=== 0.3.3
 
 * Moved ORM code into separate project: Sequel.
 
@@ -38,7 +38,7 @@
 
 * Fixed JS rendering.
 
-*0.3.2b*
+=== 0.3.2b
 
 * Small fixes.
 
@@ -98,7 +98,7 @@
 
 * Fixed fetching of SQLite records using model instances.
 
-*0.3.2a*
+=== 0.3.2a
 
 * Implemented SQLite adapter.
 
@@ -282,13 +282,13 @@
 
 * Moved HTTP-related code to lib/http.
 
-*0.3.1*
+=== 0.3.1
 
 * Removed application.rb file and fixed serverside script.
 
 * Fixed bug in Caching.validate_stamp where the expiry stamp would be the file stamp + max_age - leading to stale resources.
 
-*0.3.0*
+=== 0.3.0
 
 * Disabled cluster_spec and parts of daemon_spec for now due to strange forking behavior.
 
@@ -344,7 +344,7 @@
 
 * Fixed Controller.mount to build a self.inherited method, and do the routing there.
 
-==0.2.9
+=== 0.2.9
 
 * Improved rake clean task.
 
@@ -368,7 +368,7 @@
 
 * Rewrote request unit test into request spec.
 
-==0.2.8
+=== 0.2.8
 
 * Refactored ServerSide::Static to use HTTP::Caching code.
 
@@ -384,7 +384,7 @@
 
 * Added static_server.rb script.
 
-==0.2.7
+=== 0.2.7
 
 * Wrote spec for HTTP::Connection.
 
@@ -402,7 +402,7 @@
 
 * Fixed bug in serverside script that caused an exception when specifying port number.
 
-==0.2.6
+=== 0.2.6
 
 * Refactored HTTP-related code into a new HTTP::Request class and a simplified HTTP::Connection.
 
@@ -412,7 +412,7 @@
 
 * Fixed minor documentation error.
 
-==0.2.5
+=== 0.2.5
 
 * Added template serving to static file module.
 
@@ -434,7 +434,7 @@
 
 * Added /test/spec directory.
 
-==0.2.0
+=== 0.2.0
 
 * Updated RFuzz script to work, but it doesn't still do anything interesting.
 
@@ -508,7 +508,7 @@
 
 * Added daemon code and unit tests.
 
-==0.1
+=== 0.1
 
 * Added host attribute to Controller::Request.
 
