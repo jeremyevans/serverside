@@ -20,6 +20,9 @@ module ServerSide::HTTP
     def parse_header(line)
       if line =~ HEADER_RE
         k = $1.freeze
+        if k.size > MAX_HEADER_NAME_SIZE
+          raise MalformedRequestError, "Invalid header size"
+        end
         v = $2.freeze
         case k
         when CONTENT_LENGTH: @content_length = v.to_i
@@ -40,7 +43,15 @@ module ServerSide::HTTP
     def parse_query_parameters(query)
       query.split(AMPERSAND).inject({}) do |m, i|
         if i =~ PARAMETER_RE
-          m[$1.to_sym] = $2.uri_unescape
+          k = $1
+          if k.size > MAX_PARAMETER_NAME_SIZE
+            raise MalformedRequestError, "Invalid parameter size"
+          end
+          v = $2
+          if v.size > MAX_PARAMETER_VALUE_SIZE
+            raise MalformedRequestError, "Invalid parameter size"
+          end
+          m[k.to_sym] = v.uri_unescape
         else
           raise MalformedRequestError, "Invalid parameter format"
         end

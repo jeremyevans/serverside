@@ -46,7 +46,7 @@ context "An HTTP Request should be considered malformed" do
     proc {@server.receive_data(l)}.should_not raise_error(MalformedRequestError)
 
     @server.reset
-    l = "GET /#{'x' * MAX_REQUEST_LINE_SIZE}"
+    l = "GET /#{'x' * MAX_REQUEST_LINE_SIZE} HTTP/1.1\r\n"
     proc {@server.receive_data(l)}.should raise_error(MalformedRequestError)
   end
   
@@ -63,8 +63,17 @@ context "An HTTP Request should be considered malformed" do
     proc {@server.receive_data(l)}.should raise_error(MalformedRequestError)
   end
   
+  specify "if a query parameter name is too big" do
+    l = "GET /?#{'x' * MAX_PARAMETER_NAME_SIZE}=2 HTTP/1.1\r\n"
+    proc {@server.receive_data(l)}.should_not raise_error(MalformedRequestError)
+
+    @server.reset
+    l = "GET /?#{'x' * MAX_PARAMETER_NAME_SIZE + 'y'}=2 HTTP/1.1\r\n"
+    proc {@server.receive_data(l)}.should raise_error(MalformedRequestError)
+  end
+  
   specify "if the header count is too big" do
-    l = "GET / HTTP/1.1\r\n" + "Accept: *\r\n" * (MAX_HEADER_COUNT - 1)
+    l = "GET / HTTP/1.1\r\n" + ("Accept: *\r\n" * (MAX_HEADER_COUNT - 1))
     proc {@server.receive_data(l)}.should_not raise_error(MalformedRequestError)
 
     @server.reset
@@ -73,7 +82,16 @@ context "An HTTP Request should be considered malformed" do
   end
   
   specify "if a header is too big" do
-    l = "GET / HTTP/1.1\r\n#{'x' * MAX_HEADER_SIZE}: 1\r\n"
+    l = "GET / HTTP/1.1\r\nAccept: #{'x' * MAX_HEADER_SIZE}\r\n"
+    proc {@server.receive_data(l)}.should raise_error(MalformedRequestError)
+  end
+  
+  specify "if a header name is too big" do
+    l = "GET / HTTP/1.1\r\n#{'x' * MAX_HEADER_NAME_SIZE}: 1\r\n"
+    proc {@server.receive_data(l)}.should_not raise_error(MalformedRequestError)
+
+    @server.reset
+    l = "GET / HTTP/1.1\r\n#{'x' * MAX_HEADER_NAME_SIZE + 'y'}: 1\r\n"
     proc {@server.receive_data(l)}.should raise_error(MalformedRequestError)
   end
   
@@ -166,7 +184,8 @@ context "A server in the request_line state" do
   end
   
   specify "should raise MalformedRequestError on invalid request line size" do
-    proc {@server.receive_data("abc" * MAX_REQUEST_LINE_SIZE)}.should \
+    l = "GET /#{'x' * MAX_REQUEST_LINE_SIZE} HTTP/1.1\r\n"
+    proc {@server.receive_data(l)}.should \
       raise_error(MalformedRequestError)
   end
   

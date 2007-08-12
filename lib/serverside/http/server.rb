@@ -100,10 +100,10 @@ module ServerSide::HTTP
     # line supplies information including the 
     def state_request_line
       # check request line size
-      if @in.size > MAX_REQUEST_LINE_SIZE
-        raise MalformedRequestError, "Invalid request size"
-      end
       if line = @in.get_line
+        if line.size > MAX_REQUEST_LINE_SIZE
+          raise MalformedRequestError, "Invalid request size"
+        end
         parse_request_line(line)
         # HTTP 1.1 connections are persistent by default.
         @persistent = @http_version == VERSION_1_1

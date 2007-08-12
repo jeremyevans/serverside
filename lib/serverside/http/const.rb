@@ -4,9 +4,13 @@ module ServerSide::HTTP
   VERSION_1_1 = '1.1'.freeze
   
   # maximum sizes
-  MAX_REQUEST_LINE_SIZE = 8192
-  MAX_HEADER_SIZE = 8192
+  # compare to http://mongrel.rubyforge.org/security.html
+  MAX_REQUEST_LINE_SIZE = 1024
+  MAX_HEADER_SIZE = 112 * 1024 # 112KB
+  MAX_HEADER_NAME_SIZE = 256
   MAX_HEADER_COUNT = 256 # should be enough methinks
+  MAX_PARAMETER_VALUE_SIZE = 10240 # 10KB
+  MAX_PARAMETER_NAME_SIZE = 64 # should be enough
   
   # request body and response body
   CONTENT_LENGTH = 'Content-Length'.freeze
