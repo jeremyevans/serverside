@@ -21,7 +21,7 @@ class SpecHTTPServer
     @closed = false
   end
   
-  attr_reader :response, :closed
+  attr_accessor :response, :closed
   
   def send_data(data)
     @response << data
@@ -31,7 +31,7 @@ class SpecHTTPServer
     @closed = true
   end
   
-  def send_error_response(e)
+  def handle_error(e)
     raise e
   end
 end
@@ -274,5 +274,51 @@ context "A server in the request_headers state" do
   
   specify "should raise MalformedRequestError on malformed header" do
     proc {@server.receive_data("abc\r\n")}.should raise_error(MalformedRequestError)
+  end
+end
+
+context "A persistent connection" do
+  setup do
+    @server = SpecHTTPServer.new
+
+    m = Module.new do
+      define_method(:handle) {raise "hi there"}
+      define_method(:handle_error) {|e| send_error_response(e)}
+    end
+    @server.extend(m)
+  end
+  
+  specify "should correctly handle errors while reminaining persistent" do
+    @server.receive_data("GET / HTTP/1.1\r\n\r\n")
+    @server.response.scan('500').should == ['500']
+    
+    # clear response buffer
+    @server.response = ''
+
+    @server.receive_data("GET / HTTP/1.1\r\n\r\n")
+    @server.response.scan('500').should == ['500']
+
+    # clear response buffer
+    @server.response = ''
+
+    @server.receive_data("GET / HTTP/1.1\r\n\r\n")
+    @server.response.scan('500').should == ['500']
+  end
+
+  specify "should correctly handle parsing errors while reminaining persistent" do
+    @server.receive_data("GET abb\r\n\r\n")
+    @server.response.scan('400').should == ['400']
+
+    # clear response buffer
+    @server.response = ''
+
+    @server.receive_data("GET / HTTP\r\n\r\n")
+    @server.response.scan('400').should == ['400']
+
+    # clear response buffer
+    @server.response = ''
+
+    @server.receive_data("GET zzz\r\n\r\n")
+    @server.response.scan('400').should == ['400']
   end
 end

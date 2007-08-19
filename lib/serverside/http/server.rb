@@ -64,8 +64,7 @@ module ServerSide::HTTP
       @in << data
       send(@state)
     rescue => e
-      # if an error is raised, we send an error response
-      send_error_response(e) unless @state == :done
+      handle_error(e)
     end
     
     # set_state is called whenever a state transition occurs. It invokes the
@@ -74,8 +73,16 @@ module ServerSide::HTTP
       @state = s
       send(s)
     rescue => e
+      handle_error(e)
+    end
+
+    # Handle errors raised while processing a request
+    def handle_error(e)
       # if an error is raised, we send an error response
-      send_error_response(e) unless @state == :done
+      unless @response_sent || @streaming
+        send_error_response(e)
+      end
+      set_state(@persistent ? :state_initial : :state_done)
     end
     
     # state_initial initializes @request_headers, @request_header_count,
@@ -153,7 +160,6 @@ module ServerSide::HTTP
       unless @response_sent || @streaming
         raise "No handler found for this URI (#{@uri})"
       end
-    ensure
       unless @streaming
         set_state(@persistent ? :state_initial : :state_done)
       end
