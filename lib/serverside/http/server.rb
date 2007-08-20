@@ -45,7 +45,7 @@ module ServerSide::HTTP
     # attribute readers
     attr_reader :request_line, :method, :uri, :query, :http_version, :params
     attr_reader :content_length, :persistent, :request_headers
-    attr_reader :request_cookies, :request_body
+    attr_reader :request_cookies, :request_body, :response_sent
 
     # post_init creates a new @in buffer and sets the connection state to 
     # initial.
