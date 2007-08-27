@@ -1,5 +1,7 @@
 === SVN
 
+* Fixed XML generator to escape inner text.
+
 * Fixed state transitions when errors are raised.
 
 * Fixed some security-related bugs and added more size limits on incoming requests.

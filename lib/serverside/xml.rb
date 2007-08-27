@@ -24,7 +24,7 @@ module ServerSide
     end
   
     def __value(value)
-      @doc << value.to_s
+      @doc << value.to_s.html_escape
     end
   
     INSTRUCT_LEFT = '<?xml'.freeze
