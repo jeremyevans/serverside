@@ -7,9 +7,13 @@ module Daemon
     # Forks a child process with a specific port.
     def self.fork_server(port)
       fork do
-        trap('TERM') {exit}
+        trap('TERM') {server_stop}
         server_loop(port)
       end
+    end
+    
+    def self.server_stop
+      exit
     end
     
     @@pids = []
@@ -28,6 +32,10 @@ module Daemon
     def self.daemon_loop
       loop {sleep 60}
     end
+    
+    def self.daemon_stop
+      # do nothing
+    end
   
     # Starts child processes and calls the main loop.
     def self.start
@@ -37,6 +45,7 @@ module Daemon
   
     # Stops child processes.
     def self.stop
+      daemon_stop
       stop_servers
     end
   end
