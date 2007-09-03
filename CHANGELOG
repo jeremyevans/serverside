@@ -1,5 +1,7 @@
 === SVN
 
+* Added support for non-standard Content-Type header.
+
 * Added daemon_stop and server_stop hooks.
 
 * Fixed XML generator to escape inner text.

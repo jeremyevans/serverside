@@ -73,11 +73,15 @@ module ServerSide::HTTP
       end
     end
     
+    def content_type
+      get_header_value(CONTENT_TYPE)
+    end
+    
     BOUNDARY_FIX = '--'.freeze
     
     # Parses the request body.
     def parse_request_body(body)
-      case @request_headers[CONTENT_TYPE]
+      case content_type
       when MULTIPART_FORM_DATA_RE:
         parse_multi_part(body, BOUNDARY_FIX + $1) # body.dup so we keep the original request body?
       when FORM_URL_ENCODED:
@@ -178,9 +182,14 @@ module ServerSide::HTTP
       @client_name
     end
     
-    # Returns the request content type.
-    def content_type
-      @content_type ||= @request_headers[CONTENT_TYPE]
+    def get_header_value(key)
+      value = @request_headers[key]
+      if value
+        return value
+      else
+        @request_headers.each {|k, v| return v if k =~ /#{key}/i}
+      end
+      nil
     end
   end
 end
