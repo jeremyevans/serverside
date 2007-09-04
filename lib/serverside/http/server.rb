@@ -113,7 +113,7 @@ module ServerSide::HTTP
         end
         parse_request_line(line)
         # HTTP 1.1 connections are persistent by default.
-        @persistent = @http_version == VERSION_1_1
+        @persistent = false # @http_version == VERSION_1_1
         set_state(:state_request_headers)
       end
     end
