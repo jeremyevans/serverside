@@ -64,13 +64,14 @@ elsif File.file?($path/'serverside.rb')
   app_code = IO.read($path/'serverside.rb')
 end
 
+ServerSide::HTTP::Static.static_root = File.expand_path($path)
+
 $server = ServerSide::HTTP::Server.new do
   if app_code
     module_eval(app_code)
   else
-    include ServerSide::HTTP::Static
-    def handle
-      serve_static($path/@uri)
+    def handle(req)
+      ServerSide::HTTP::Response.static(req.path)
     end
   end
 end

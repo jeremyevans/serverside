@@ -37,15 +37,8 @@ module ServerSide::HTTP
       end
     end
     
-    # include the Parsing, Response and Caching modules.
-    include ServerSide::HTTP::Parsing
-    include ServerSide::HTTP::Response
-    include ServerSide::HTTP::Caching
-    
     # attribute readers
-    attr_reader :request_line, :method, :uri, :query, :http_version, :params
-    attr_reader :content_length, :persistent, :request_headers
-    attr_reader :request_cookies, :request_body, :response_sent
+    attr_reader :request, :response_sent
 
     # post_init creates a new @in buffer and sets the connection state to 
     # initial.
@@ -80,25 +73,15 @@ module ServerSide::HTTP
     def handle_error(e)
       # if an error is raised, we send an error response
       unless @response_sent || @streaming
-        send_error_response(e)
+        send_response(Response.error(e))
       end
-      set_state(@persistent ? :state_initial : :state_done)
     end
     
-    # state_initial initializes @request_headers, @request_header_count,
-    # @request_cookies and @response_headers. It immediately transitions to the 
-    # request_line state.
+    # state_initial creates a new request instance and immediately transitions
+    # to the request_line state.
     def state_initial
-      # initialize request and response variables
-      @request_line = nil
+      @request = ServerSide::HTTP::Request.new(self)
       @response_sent = false
-      @request_headers = {}
-      @request_header_count = 0
-      @request_cookies = {}
-      @response_headers = []
-      @content_length = nil
-      
-      # immediately transition to the request_line state
       set_state(:state_request_line)
     end
   
@@ -109,11 +92,9 @@ module ServerSide::HTTP
       # check request line size
       if line = @in.get_line
         if line.size > MAX_REQUEST_LINE_SIZE
-          raise MalformedRequestError, "Invalid request size"
+          raise BadRequestError, "Invalid request size"
         end
-        parse_request_line(line)
-        # HTTP 1.1 connections are persistent by default.
-        @persistent = false # @http_version == VERSION_1_1
+        @request.parse_request_line(line)
         set_state(:state_request_headers)
       end
     end
@@ -125,18 +106,13 @@ module ServerSide::HTTP
       while line = @in.get_line
         # Check header size
         if line.size > MAX_HEADER_SIZE
-          raise MalformedRequestError, "Invalid header size"
+          raise BadRequestError, "Invalid header size"
         # If the line empty then we move to the next state
         elsif line.empty?
-          expecting_body = @content_length && (@content_length > 0)
+          expecting_body = @request.content_length.to_i > 0
           set_state(expecting_body ? :state_request_body : :state_response)
         else
-          # check header count
-          if (@request_header_count += 1) > MAX_HEADER_COUNT
-            raise MalformedRequestError, "Too many headers"
-          else
-            parse_header(line)
-          end
+          @request.parse_header(line)
         end
       end
     end
@@ -145,9 +121,8 @@ module ServerSide::HTTP
     # the body. Once the body is parsed, the connection transitions to the 
     # response state.
     def state_request_body
-      if @in.size >= @content_length
-        @request_body = @in.slice!(0...@content_length)
-        parse_request_body(@request_body)
+      if @in.size >= @request.content_length
+        @request.parse_body(@in.slice!(0...@request.content_length))
         set_state(:state_response)
       end
     end
@@ -156,12 +131,21 @@ module ServerSide::HTTP
     # error is raised. After the response is sent, the connection is either
     # closed or goes back to the initial state.
     def state_response
-      handle
-      unless @response_sent || @streaming
-        raise "No handler found for this URI (#{@uri})"
+      unless resp = handle(@request)
+        raise "No handler found for this URI (#{@request.url})"
       end
-      unless @streaming
-        set_state(@persistent ? :state_initial : :state_done)
+      send_response(resp)
+    end
+    
+    def send_response(resp)
+      persistent = @request.persistent && resp.persistent?
+      if !persistent
+        resp.headers << CONNECTION_CLOSE
+      end
+      send_data(resp.to_s)
+      @response_sent = true
+      unless resp.streaming
+        set_state(persistent ? :state_initial : :state_done)
       end
     end
     
@@ -189,11 +173,11 @@ module ServerSide::HTTP
           if block.call
             streaming_periodically(period, &block)
           else
-            set_state(@persistent ? :state_initial : :state_done)
+            set_state(:state_done)
           end
         end
       else
-        set_state(@persistent ? :state_initial : :state_done)
+        set_state(:state_done)
       end
     end
   end

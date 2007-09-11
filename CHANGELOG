@@ -1,10 +1,14 @@
 === SVN
 
-* Added support for non-standard Content-Type header.
+* Fixed serving of static files.
 
-* Added daemon_stop and server_stop hooks.
+* Changed Request#headers hash to use symbols as keys.
 
-* Fixed XML generator to escape inner text.
+* Implemented caching for Response class.
+
+* Implemented HTTP::Response class.
+
+* Encapsulated request-related data in HTTP::Request class.
 
 * Fixed state transitions when errors are raised.
 

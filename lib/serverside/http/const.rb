@@ -31,6 +31,8 @@ module ServerSide::HTTP
   X_FORWARDED_FOR = 'X-Forwarded-For'.freeze
   DATE = 'Date'.freeze
   LOCATION = 'Location'.freeze
+  ACCEPT = 'Accept'.freeze
+  USER_AGENT = 'User-Agent'.freeze
   
   # caching
   IF_NONE_MATCH = 'If-None-Match'.freeze

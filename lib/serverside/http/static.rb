@@ -13,32 +13,45 @@ module ServerSide::HTTP
     }
     MIME_TYPES.default = 'text/plain'.freeze
     
-    CACHE_AGES = {}
-    CACHE_AGES.default = 86400 # one day
+    CACHE_TTL = {}
+    CACHE_TTL.default = 86400 # one day
+    
+    @@static_root = Dir.pwd
+    
+    def self.static_root
+      @@static_root
+    end
+    
+    def self.static_root=(dir)
+      @@static_root = dir
+    end
     
     INVALID_PATH_RE = /\.\./.freeze
     
     # Serves a static file or directory.
     def serve_static(fn)
+      full_path = @@static_root/fn
+      
       if fn =~ INVALID_PATH_RE
-        raise MalformedRequestError, "Invalid path specified (#{@uri})"
-      elsif !File.exists?(fn)
-        raise FileNotFoundError, "File not found (#{@uri})"
+        raise BadRequestError, "Invalid path specified (#{@uri})"
+      elsif !File.exists?(full_path)
+        raise NotFoundError, "File not found (#{@uri})"
       end
       
-      if File.directory?(fn)
-        send_directory_representation(fn)
+      if File.directory?(full_path)
+        set_directory_representation(full_path, fn)
       else
-        send_file_representation(fn)
+        set_file_representation(full_path, fn)
       end
     end
     
     # Sends a file representation, setting caching-related headers.
-    def send_file_representation(fn)
-      ext = File.extension(fn)
-      expires = Time.now + CACHE_AGES[ext]
-      cache :etag => File.etag(fn), :expires => expires, :last_modified => File.mtime(fn) do
-        send_file(STATUS_OK, MIME_TYPES[ext], fn)
+    def set_file_representation(full_path, fn)
+      ext = File.extension(full_path)
+      ttl = CACHE_TTL[ext]
+      validate_cache :etag => File.etag(full_path), :ttl => CACHE_TTL[ext], :last_modified => File.mtime(full_path) do
+        add_header(CONTENT_TYPE, MIME_TYPES[ext])
+        @body = IO.read(full_path)
       end
     end
     
@@ -46,14 +59,15 @@ module ServerSide::HTTP
     DIR_LISTING = '<li><a href="%s">%s</a><br/></li>'.freeze
 
     # Sends a directory representation.
-    def send_directory_representation(dir)
-      entries = Dir.entries(dir)
-      entries.reject! {|fn| fn =~ /^\./}
-      entries.unshift('..') if dir != './'
+    def set_directory_representation(full_path, fn)
+      entries = Dir.entries(full_path)
+      entries.reject! {|f| f =~ /^\./}
+      entries.unshift('..') if fn != '/'
       
-      list = entries.map {|e| DIR_LISTING % [@uri/e, e]}.join
-      html = DIR_TEMPLATE % [dir, dir, list]
-      send_representation(STATUS_OK, MIME_TYPES[:html], html)
+      list = entries.map {|e| DIR_LISTING % [fn/e, e]}.join
+      html = DIR_TEMPLATE % [fn, fn, list]
+      add_header(CONTENT_TYPE, MIME_TYPES[:html])
+      @body = html
     end
   end
 end

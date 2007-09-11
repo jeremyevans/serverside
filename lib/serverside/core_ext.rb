@@ -13,17 +13,8 @@ class String
     tr('+', ' ').gsub(/((?:%[0-9a-fA-F]{2})+)/n){[$1.delete('%')].pack('H*')}
   end
   
-  HTML_ESCAPEMENT = {
-    '&' => '&amp;',
-    '<' => '&lt;',
-    '>' => '&gt;',
-    "'" => '&apos;',
-    '"' => '&quote;'
-  }
-  ESCAPE_RE = /[&<>'"]/.freeze
-  
   def html_escape
-    gsub(ESCAPE_RE) {|m| HTML_ESCAPEMENT[m]}
+    gsub(/&/, "&amp;").gsub(/\"/, "&quot;").gsub(/>/, "&gt;").gsub(/</, "&lt;")
   end
   
   # Concatenates a path (purely sugar)
@@ -75,6 +66,11 @@ class Symbol
   # Concatenates a path (purely sugar)
   def /(o)
     File.join(self, o.to_s)
+  end
+  
+  # Converts a symbol into an HTTP header name
+  def to_header_name
+    to_s.split('_').map {|p| p.capitalize}.join('-')
   end
 end
 

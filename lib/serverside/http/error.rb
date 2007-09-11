@@ -13,12 +13,17 @@ end
 
 module ServerSide::HTTP
   # This error is raised when a malformed request is encountered.
-  class MalformedRequestError < RuntimeError
+  class BadRequestError < RuntimeError
     set_http_status STATUS_BAD_REQUEST
   end
   
-  # This error is raised when an invalid file is referenced.
-  class FileNotFoundError <  RuntimeError
+  # This error is raised when an invalid resource is referenced.
+  class NotFoundError <  RuntimeError
     set_http_status STATUS_NOT_FOUND
+  end
+  
+  # This error is raised when access is not allowed.
+  class ForbiddenError < RuntimeError
+    set_http_status STATUS_FORBIDDEN
   end
 end

@@ -7,31 +7,46 @@ module ServerSide::HTTP
     def parse_request_line(line)
       if line =~ REQUEST_LINE_RE
         @request_line = line
-        @method, @uri, @query, @http_version = $1.downcase.to_sym, $2, $3, $4
+        @method, @path, @query, @http_version = $1.downcase.to_sym, $2, $3, $4
         @params = @query ? parse_query_parameters(@query) : {}
+        
+        # HTTP 1.1 connections are persistent by default.
+        @persistent = @http_version == VERSION_1_1
       else
-        raise MalformedRequestError, "Invalid request format"
+        raise BadRequestError, "Invalid request format"
       end
     end
 
     HEADER_RE = /([^:]+):\s*(.*)/.freeze
     
+    HYPHEN = '-'.freeze
+    UNDERSCORE = '_'.freeze
+    
+    def header_to_sym(h)
+      h.downcase.gsub(HYPHEN, UNDERSCORE).to_sym
+    end
+    
     # Parses an HTTP header.
     def parse_header(line)
+      # check header count
+      if (@header_count += 1) > MAX_HEADER_COUNT
+        raise BadRequestError, "Too many headers"
+      end
+
       if line =~ HEADER_RE
-        k = $1.freeze
-        if k.size > MAX_HEADER_NAME_SIZE
-          raise MalformedRequestError, "Invalid header size"
+        if $1.size > MAX_HEADER_NAME_SIZE
+          raise BadRequestError, "Invalid header size"
         end
+        k = header_to_sym($1)
         v = $2.freeze
         case k
-        when CONTENT_LENGTH: @content_length = v.to_i
-        when CONNECTION: @persistent = v == KEEP_ALIVE
-        when COOKIE: parse_cookies(v)
+        when :content_length: @content_length = v.to_i
+        when :connection: @persistent = v == KEEP_ALIVE
+        when :cookie: parse_cookies(v)
         end
-        @request_headers[k] = v
+        @headers[k] = v
       else
-        raise MalformedRequestError, "Invalid header format"
+        raise BadRequestError, "Invalid header format"
       end
     end
     
@@ -45,15 +60,15 @@ module ServerSide::HTTP
         if i =~ PARAMETER_RE
           k = $1
           if k.size > MAX_PARAMETER_NAME_SIZE
-            raise MalformedRequestError, "Invalid parameter size"
+            raise BadRequestError, "Invalid parameter size"
           end
           v = $2
           if v.size > MAX_PARAMETER_VALUE_SIZE
-            raise MalformedRequestError, "Invalid parameter size"
+            raise BadRequestError, "Invalid parameter size"
           end
           m[k.to_sym] = v.uri_unescape
         else
-          raise MalformedRequestError, "Invalid parameter format"
+          raise BadRequestError, "Invalid parameter format"
         end
         m
       end
@@ -66,22 +81,19 @@ module ServerSide::HTTP
     def parse_cookies(cookies)
       cookies.split(SEMICOLON).each do |c|
         if c.strip =~ COOKIE_RE
-          @request_cookies[$1.to_sym] = $2.uri_unescape
+          @cookies[$1.to_sym] = $2.uri_unescape
         else
-          raise MalformedRequestError, "Invalid cookie format"
+          raise BadRequestError, "Invalid cookie format"
         end
       end
-    end
-    
-    def content_type
-      get_header_value(CONTENT_TYPE)
     end
     
     BOUNDARY_FIX = '--'.freeze
     
     # Parses the request body.
-    def parse_request_body(body)
-      case content_type
+    def parse_body(body)
+      @body = body
+      case @headers[:content_type]
       when MULTIPART_FORM_DATA_RE:
         parse_multi_part(body, BOUNDARY_FIX + $1) # body.dup so we keep the original request body?
       when FORM_URL_ENCODED:
@@ -121,12 +133,12 @@ module ServerSide::HTTP
             file_type = v
           end
         else
-          raise MalformedRequestError, "Invalid header in part"
+          raise BadRequestError, "Invalid header in part"
         end
       end
       # check if we got the content name
       unless part_name
-        raise MalformedRequestError, "Invalid part content"
+        raise BadRequestError, "Invalid part content"
       end
       # part body
       part_body = part.chomp! # what's left of it
@@ -140,56 +152,6 @@ module ServerSide::HTTP
     def parse_form_url_encoded(body)
       @params ||= {}
       @params.merge!(parse_query_parameters(body))
-    end
-    
-    # Returns the host specified in the Host header.
-    def host
-      parse_host_header unless @host_header_parsed
-      @host
-    end
-    
-    # Returns the port number if specified in the Host header.
-    def port
-      parse_host_header unless @host_header_parsed
-      @port
-    end
-    
-    HOST_PORT_RE = /^([^:]+):(.+)$/.freeze
-
-    # Parses the Host header.
-    def parse_host_header
-      h = @request_headers[HOST]
-      if h =~ HOST_PORT_RE
-        @host = $1
-        @port = $2.to_i
-      else
-        @host = h
-      end
-      @host_header_parsed = true
-    end
-    
-    # Returns the client name. The client name is either the value of the
-    # X-Forwarded-For header, or the result of get_peername.
-    def client_name
-      unless @client_name
-        @client_name = @request_headers[X_FORWARDED_FOR]
-        unless @client_name
-          if addr = get_peername
-            p, @client_name = Socket.unpack_sockaddr_in(addr)
-          end
-        end
-      end
-      @client_name
-    end
-    
-    def get_header_value(key)
-      value = @request_headers[key]
-      if value
-        return value
-      else
-        @request_headers.each {|k, v| return v if k =~ /#{key}/i}
-      end
-      nil
     end
   end
 end
