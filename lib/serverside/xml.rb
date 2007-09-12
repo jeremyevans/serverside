@@ -36,8 +36,6 @@ module ServerSide
       @doc << INSTRUCT_RIGHT
     end
   
-    SPACE = ' '.freeze
-
     def __fmt_atts(atts)
       atts.inject('') {|m, i| m << " #{i[0]}=#{i[1].to_s.inspect}"}
     end
@@ -71,8 +69,10 @@ module ServerSide
       self
     end
 
+    INSTRUCT_DEFAULT = {:version => "1.0", :encoding => "UTF-8"}.freeze
+
     def instruct!(atts = nil)
-      __instruct(atts || {:version => "1.0", :encoding => "UTF-8"})
+      __instruct(atts || INSTRUCT_DEFAULT)
     end
 
     def to_s

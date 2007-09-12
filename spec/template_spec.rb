@@ -1,6 +1,4 @@
-__END__
-
-require File.join(File.dirname(__FILE__), '../lib/serverside')
+require File.join(File.dirname(__FILE__), 'spec_helper')
 require 'stringio'
 require 'fileutils'
 
@@ -25,20 +23,20 @@ include ServerSide
 context "ServerSide::Template.set" do
   specify "should add an consisting of stamp and template to the templates hash" do
     Template.reset
-    Template.templates.should_be_empty
+    Template.templates.should be_empty
     t = Time.now
     Template.set('test', 'hello', t)
-    Template.templates.include?('test').should_be true
+    Template.templates.include?('test').should be_true
     a = Template.templates['test']
-    a.should_be_a_kind_of Array
+    a.should be_a_kind_of(Array)
     a.size.should == 2
-    a.first.should_be t
-    a.last.should_be_a_kind_of Erubis::Eruby
+    a.first.should be(t)
+    a.last.should be_a_kind_of(Erubis::Eruby)
   end
   
   specify "should set stamp to nil by default" do
     Template.set('test', 'hello')
-    Template.templates['test'].first.should_be_nil
+    Template.templates['test'].first.should be_nil
   end
   
   specify "should construct a new Erubis::Eruby instance with the body" do
@@ -50,25 +48,25 @@ end
 context "ServerSide::Template.validate" do
   specify "should return nil for a non-existant template" do
     Template.reset
-    Template.validate('test').should_be_nil
-    Template.validate('invalid_file_ref').should_be_nil
+    Template.validate('test').should be_nil
+    Template.validate('invalid_file_ref').should be_nil
   end
   
   specify "should load a file as template if the name references a file" do
     Template.reset
     t = Template.validate(__FILE__)
-    t.should_be_a_kind_of Erubis::Eruby
+    t.should be_a_kind_of(Erubis::Eruby)
     t.result(binding).should == IO.read(__FILE__)
     Template.templates.size.should == 1
     t = Template.templates[__FILE__]
     t.first.should == File.mtime(__FILE__)
-    t.last.should_be_a_kind_of Erubis::Eruby
+    t.last.should be_a_kind_of(Erubis::Eruby)
   end
   
   specify "should return the Erubis::Eruby instance for an existing template" do
     Template.reset
     t = Template.validate(__FILE__)
-    t.should_be_a_kind_of Erubis::Eruby
+    t.should be_a_kind_of(Erubis::Eruby)
     t.result(binding).should == IO.read(__FILE__)
   end
   
@@ -90,15 +88,15 @@ context "ServerSide::Template.validate" do
     Template.validate('tmp').result(binding).should == '1'
     Template.templates['tmp'].first.should == File.mtime('tmp')
     FileUtils.rm('tmp')
-    Template.validate('tmp').should_be_nil
-    Template.templates['tmp'].should_be_nil
+    Template.validate('tmp').should be_nil
+    Template.templates['tmp'].should be_nil
   end
 end
 
 context "ServerSide::Template.render" do
   specify "should raise a RuntimeError for an invalid template" do
     Template.reset
-    proc {Template.render('invalid', binding)}.should_raise RuntimeError
+    proc {Template.render('invalid', binding)}.should raise_error(RuntimeError)
   end
   
   specify "should render an existing ad-hoc template" do
