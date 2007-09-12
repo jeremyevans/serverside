@@ -3,12 +3,13 @@ module ServerSide::HTTP
     include Caching
     include Static
     
-    attr_accessor :status, :body, :streaming
-    attr_reader :headers
+    attr_accessor :status, :body
+    attr_reader :headers, :stream_period, :stream_proc
     
     def initialize(opts = nil)
       @status = STATUS_OK
       @headers = []
+      @body = ''
       if opts
         opts.each do |k, v|
           case k
@@ -16,19 +17,15 @@ module ServerSide::HTTP
           when :body: @body = v
           when :close: @close = v
           when :request: @request = v
-          when :streaming: @streaming = v
           when :static: serve_static(v)
           else add_header(k.to_header_name, v)
           end
         end
       end
-      unless @body || @streaming
-        @body = ''
-      end
     end
     
     def persistent?
-      !@close && @streaming && @body
+      !@close && !@stream_proc && @body
     end
     
     # Adds a header to the response.
@@ -57,10 +54,24 @@ module ServerSide::HTTP
     end
 
     def to_s
-      if !@streaming && (content_length = @body && @body.size)
+      if !streaming? && (content_length = @body && @body.size)
         add_header(CONTENT_LENGTH, content_length)
       end
       "HTTP/1.1 #{@status}\r\nDate: #{Time.now.httpdate}\r\n#{@headers.join}\r\n#{@body}"
+    end
+    
+    def stream(period, &block)
+      @stream_period = period
+      @stream_proc = block
+      self
+    end
+    
+    def streaming?
+      @stream_proc
+    end
+    
+    def self.blank
+      new(:body => nil)
     end
     
     def self.redirect(location, status = STATUS_FOUND)
@@ -74,6 +85,14 @@ module ServerSide::HTTP
     def self.error(e)
       new(:status => e.http_status, :close => true,
         :body => "#{e.message}\r\n#{e.backtrace.join("\r\n")}")
+    end
+    
+    def self.streaming(opts = nil, &block)
+      new(opts).stream(1, &block)
+    end
+    
+    def content_type=(v)
+      add_header(CONTENT_TYPE, v)
     end
   end
 end

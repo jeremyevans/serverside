@@ -144,7 +144,9 @@ module ServerSide::HTTP
       end
       send_data(resp.to_s)
       @response_sent = true
-      unless resp.streaming
+      if resp.streaming?
+        start_stream_loop(resp.stream_period, resp.stream_proc)
+      else
         set_state(persistent ? :state_initial : :state_done)
       end
     end
@@ -154,28 +156,12 @@ module ServerSide::HTTP
       close_connection_after_writing
     end
     
-    # periodically implements a periodical timer. The timer is invoked until
-    # the supplied block returns false or nil.
-    def periodically(period, &block)
-      EventMachine::add_timer(period) do
-        if block.call
-          periodically(period, &block)
-        end
-      end
-    end
-
-    # periodically implements a periodical timer. The timer is invoked until
-    # the supplied block returns false or nil.
-    def streaming_periodically(period, &block)
+    # starts implements a periodical timer. The timer is invoked until
+    # the supplied block returns false or nil. When the 
+    def start_stream_loop(period, block)
       @streaming = true
-      if block.call # invoke block for the first time
-        EventMachine::add_timer(period) do
-          if block.call
-            streaming_periodically(period, &block)
-          else
-            set_state(:state_done)
-          end
-        end
+      if block.call(self)
+        EventMachine::add_timer(period) {start_stream_loop(period, block)}
       else
         set_state(:state_done)
       end

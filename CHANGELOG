@@ -1,3 +1,9 @@
+=== SVN
+
+* Added Response#content_type method.
+
+* Improved streaming API.
+
 === 0.4.2 (2007-09-11)
 
 * Fixed serving of static files.

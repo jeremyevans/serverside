@@ -25,16 +25,11 @@ context "Response.new" do
     @res.headers[0].should == "Content-Type: text/html\r\n"
   end
   
-  specify "should extract streaming option from options" do
-    @res = Response.new(:streaming => true)
-    @res.streaming.should be_true
-  end
-  
-  specify "should default body to empty string unless streaming" do
+  specify "should default body to empty string" do
     @res = Response.new
     @res.body.should == ''
     
-    @res = Response.new(:streaming => true)
+    @res = Response.new(:body => nil)
     @res.body.should be_nil
   end
 end
@@ -125,20 +120,21 @@ context "Response.to_s" do
     s = r.to_s
     s.should =~ /Content-Length: #{b.size}\r\n\r\n#{b}$/
 
-    r = Response.new(:streaming => true)
+    r = Response.new(:body => nil)
     s = r.to_s
     s.should_not =~ /Content-Length/
   end
   
   specify "should not include a content_length if streaming" do
-    r = Response.new(:body => 'test', :streaming => true)
+    r = Response.new(:body => 'test')
+    r.stream(1) {}
     s = r.to_s
     s.should_not =~ /Content-Length/
     s.should =~ /\r\n\r\ntest$/
   end
   
   specify "should include all headers in the response" do
-    r = Response.new(:streaming => true)
+    r = Response.new(:body => nil)
     r.add_header('ABC', 123)
     r.add_header('DEF', 456)
     s = r.to_s
