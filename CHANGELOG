@@ -1,5 +1,7 @@
 === SVN
 
+* Added Response#set_no_cache method.
+
 * Added Response#content_type method.
 
 * Improved streaming API.

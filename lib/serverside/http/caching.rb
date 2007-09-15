@@ -75,6 +75,10 @@ module ServerSide::HTTP
       add_header(CACHE_CONTROL, directive)
     end
     
+    def set_no_cache
+      set_cache_control(NO_CACHE)
+    end
+    
     def remove_cache_control
       @headers.reject! {|h| h =~ /^#{CACHE_CONTROL}/}
     end

@@ -3,7 +3,7 @@ module ServerSide::HTTP
     include Caching
     include Static
     
-    attr_accessor :status, :body
+    attr_accessor :status, :body, :request
     attr_reader :headers, :stream_period, :stream_proc
     
     def initialize(opts = nil)
