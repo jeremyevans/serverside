@@ -1,5 +1,7 @@
 === SVN
 
+* Added Request#complete hook.
+
 * Added Response#content_type method.
 
 * Improved streaming API.

@@ -12,6 +12,10 @@ module ServerSide::HTTP
       @header_count = 0
       @cookies = {}
     end
+    
+    # called after request is complete
+    def complete
+    end
 
     # Returns the host specified in the Host header.
     def host
