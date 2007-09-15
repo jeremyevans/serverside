@@ -131,7 +131,6 @@ module ServerSide::HTTP
     # error is raised. After the response is sent, the connection is either
     # closed or goes back to the initial state.
     def state_response
-      @request.complete
       unless resp = handle(@request)
         raise "No handler found for this URI (#{@request.url})"
       end

@@ -13,10 +13,6 @@ module ServerSide::HTTP
       @cookies = {}
     end
     
-    # called after request is complete
-    def complete
-    end
-
     # Returns the host specified in the Host header.
     def host
       parse_host_header unless @host_header_parsed
