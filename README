@@ -38,32 +38,6 @@ To run the server without forking, use the 'serve' command:
 
   serverside serve .
 
-=== Serving ERb Templates
-
-ServerSide can render ERb[http://www.ruby-doc.org/stdlib/libdoc/erb/rdoc/] 
-templates in a fashion similar to PHP. You can store templates in .rhtml files, 
-and ServerSide takes care of all the rest. ServerSide is also smart enough to 
-allow you to use nice looking URL's with your templates, and automatically adds 
-the .rhtml extension if the file is there.
- 
-=== Serving Dynamic Content
-
-By default ServerSide serves static files, but you can change the behavior by
-creating custom {routing rules}[classes/ServerSide/Connection/Router.html].
-Here's a simple routing rule:
-
-route :path => '/hello/:name' do
-  send_response(200, 'text', "Hello #{@params[:name]}")
-end
-
-The ServerSide framework also lets you route requests based on any attribute of
-incoming requests, such as host name, path, URL parameters etc.
-
-To run your custom rules, you can either put them in a file called serverside.rb,
-or tell serverside to explicitly load a specific file:
-
-  serverside start ~/myapp/myapp.rb
-
 === Running a Cluster of Servers
 
 ServerSide makes it easy to control a cluster of servers. Just supply a range of
