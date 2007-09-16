@@ -6,7 +6,7 @@ require 'fileutils'
 include FileUtils
 
 NAME = "serverside"
-VERS = "0.4.2"
+VERS = "0.4.3"
 CLEAN.include ['**/.*.sw?', 'pkg/*', '.config', 'doc/*', 'coverage/*']
 RDOC_OPTS = ['--quiet', '--title', "ServerSide: a Fast Ruby Web Framework",
   "--opname", "index.html",
@@ -62,6 +62,11 @@ end
 task :install do
   sh %{rake package}
   sh %{sudo gem install pkg/#{NAME}-#{VERS}}
+end
+
+task :install_no_docs do
+  sh %{rake package}
+  sh %{sudo gem install pkg/#{NAME}-#{VERS} --no-rdoc --no-ri}
 end
 
 task :uninstall => [:clean] do

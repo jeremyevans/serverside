@@ -33,9 +33,9 @@ module ServerSide::HTTP
       full_path = @@static_root/fn
       
       if fn =~ INVALID_PATH_RE
-        raise BadRequestError, "Invalid path specified (#{@uri})"
+        raise BadRequestError, "Invalid path specified (#{fn})"
       elsif !File.exists?(full_path)
-        raise NotFoundError, "File not found (#{@uri})"
+        raise NotFoundError, "File not found (#{fn})"
       end
       
       if File.directory?(full_path)

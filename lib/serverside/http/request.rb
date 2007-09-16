@@ -67,5 +67,9 @@ module ServerSide::HTTP
     def user_agent
       @headers[:user_agent]
     end
+    
+    def content_type
+      @headers[:content_type]
+    end
   end
 end

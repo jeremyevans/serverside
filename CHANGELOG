@@ -1,4 +1,8 @@
-=== SVN
+=== 0.4.3
+
+* Response#add_header now accepts symbols as well.
+
+* Added Response#set_representation and #redirect methods.
 
 * Added Response#set_no_cache method.
 
