@@ -50,7 +50,7 @@ module ServerSide::HTTP
       expires = opts[:expires] || (opts[:ttl] && (Time.now + opts[:ttl])) || \
         (Time.now + 86400) # if no expiry is specified we assume one day
 
-      v = "#{name}=#{value.to_s.uri_escape}; path=#{path}; expires=#{expires.httpdate}"
+      v = "#{name}=#{value.to_s.uri_escape}; path=#{path}; expires=#{expires.rfc2822}"
       if domain = opts[:domain]
         v << "; domain=#{domain}"
       end

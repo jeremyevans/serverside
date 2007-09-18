@@ -1,3 +1,7 @@
+=== SVN
+
+* Fixed Response#set_cookie to use correct time format.
+
 === 0.4.3
 
 * Response#add_header now accepts symbols as well.
