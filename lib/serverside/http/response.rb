@@ -62,11 +62,9 @@ module ServerSide::HTTP
       set_cookie(name, nil, opts.merge(:expires => COOKIE_EXPIRED_TIME))
     end
 
-    EMPTY = ''.freeze
-    
     def to_s
       if @disable_response
-        EMPTY
+        nil
       else
         if !streaming? && (content_length = @body && @body.size)
           add_header(CONTENT_LENGTH, content_length)

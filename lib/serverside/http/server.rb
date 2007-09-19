@@ -142,8 +142,8 @@ module ServerSide::HTTP
       if !persistent
         resp.headers << CONNECTION_CLOSE
       end
-      send_data(resp.to_s)
-      @response_sent = true
+      s = resp.to_s
+      send_data(s) if s
       if resp.streaming?
         start_stream_loop(resp.stream_period, resp.stream_proc)
       else
