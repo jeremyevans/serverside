@@ -55,13 +55,18 @@ module ServerSide::HTTP
     end
 
     def to_s
-      if !streaming? && (content_length = @body && @body.size)
+      if @body && (content_length =  @body.size) && !streaming?
         add_header(CONTENT_LENGTH, content_length)
       end
       "HTTP/1.1 #{@status}\r\nDate: #{Time.now.httpdate}\r\n#{@headers.join}\r\n#{@body}"
     end
     
-    def stream(period, &block)
+    def should_render?
+      !@stream_proc || @stream_render_upfront
+    end
+    
+    def stream(period, render_upfront = false, &block)
+      @stream_render_upfront = render_upfront
       @stream_period = period
       @stream_proc = block
       self

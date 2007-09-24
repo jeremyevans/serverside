@@ -141,10 +141,12 @@ module ServerSide::HTTP
       unless persist = @request.persistent && resp.persistent?
         resp.headers << CONNECTION_CLOSE
       end
+      if resp.should_render?
+        send_data(resp.to_s)
+      end
       if resp.streaming?
         start_stream_loop(resp.stream_period, resp.stream_proc)
       else
-        send_data(resp.to_s)
         set_state(persist ? :state_initial : :state_done)
       end
     end

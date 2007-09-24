@@ -1,5 +1,7 @@
 === SVN
 
+* Changed streaming logic. Needs docs.
+
 * Removed disable_response option. This is not the way.
 
 * Changed server response logic to not send the response at all when streaming.
