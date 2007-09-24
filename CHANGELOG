@@ -1,5 +1,7 @@
 === SVN
 
+* Removed disable_response option. This is not the way.
+
 * Changed server response logic to not send the response at all when streaming.
 
 * Fixed Response#set_cookie to use correct time format.

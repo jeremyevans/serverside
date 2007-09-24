@@ -24,14 +24,6 @@ module ServerSide::HTTP
       end
     end
     
-    def disable_response
-      @disable_response = true
-    end
-    
-    def enable_response
-      @disable_response = false
-    end
-    
     def persistent?
       !@close && !@stream_proc && @body
     end
@@ -63,14 +55,10 @@ module ServerSide::HTTP
     end
 
     def to_s
-      if @disable_response
-        nil
-      else
-        if !streaming? && (content_length = @body && @body.size)
-          add_header(CONTENT_LENGTH, content_length)
-        end
-        "HTTP/1.1 #{@status}\r\nDate: #{Time.now.httpdate}\r\n#{@headers.join}\r\n#{@body}"
+      if !streaming? && (content_length = @body && @body.size)
+        add_header(CONTENT_LENGTH, content_length)
       end
+      "HTTP/1.1 #{@status}\r\nDate: #{Time.now.httpdate}\r\n#{@headers.join}\r\n#{@body}"
     end
     
     def stream(period, &block)
