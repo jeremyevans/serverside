@@ -138,16 +138,14 @@ module ServerSide::HTTP
     end
     
     def send_response(resp)
-      persistent = @request.persistent && resp.persistent?
-      if !persistent
+      unless persist = @request.persistent && resp.persistent?
         resp.headers << CONNECTION_CLOSE
       end
-      s = resp.to_s
-      send_data(s) if s
       if resp.streaming?
         start_stream_loop(resp.stream_period, resp.stream_proc)
       else
-        set_state(persistent ? :state_initial : :state_done)
+        send_data(resp.to_s)
+        set_state(persist ? :state_initial : :state_done)
       end
     end
     

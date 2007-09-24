@@ -171,25 +171,25 @@ context "Response.set_cookie" do
   specify "should add a cookie header" do
     t = Time.now + 1000
     @res.set_cookie(:abc, '2 3 4', :expires => t)
-    @res.headers.should == ["Set-Cookie: abc=2+3+4; path=/; expires=#{t.httpdate}\r\n"]
+    @res.headers.should == ["Set-Cookie: abc=2+3+4; path=/; expires=#{t.rfc2822}\r\n"]
   end
   
   specify "should accept a path option" do
     t = Time.now + 1000
     @res.set_cookie(:abc, '2 3 4', :path => '/def', :expires => t)
-    @res.headers.should == ["Set-Cookie: abc=2+3+4; path=/def; expires=#{t.httpdate}\r\n"]
+    @res.headers.should == ["Set-Cookie: abc=2+3+4; path=/def; expires=#{t.rfc2822}\r\n"]
   end
 
   specify "should accept a domain option" do
     t = Time.now + 1000
     @res.set_cookie(:abc, '2 3 4', :domain => 'test.net', :expires => t)
-    @res.headers.should == ["Set-Cookie: abc=2+3+4; path=/; expires=#{t.httpdate}; domain=test.net\r\n"]
+    @res.headers.should == ["Set-Cookie: abc=2+3+4; path=/; expires=#{t.rfc2822}; domain=test.net\r\n"]
   end
   
   specify "should accept a ttl option" do
     t = Time.now + 1000
     @res.set_cookie(:abc, '2 3 4', :ttl => 1000)
-    @res.headers.should == ["Set-Cookie: abc=2+3+4; path=/; expires=#{t.httpdate}\r\n"]
+    @res.headers.should == ["Set-Cookie: abc=2+3+4; path=/; expires=#{t.rfc2822}\r\n"]
   end
 end
 
