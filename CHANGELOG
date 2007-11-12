@@ -1,5 +1,7 @@
 === SVN
 
+* Fixed support for URI-encoded URL paths.
+
 * Changed streaming logic. Needs docs.
 
 * Removed disable_response option. This is not the way.

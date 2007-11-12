@@ -7,7 +7,7 @@ module ServerSide::HTTP
     def parse_request_line(line)
       if line =~ REQUEST_LINE_RE
         @request_line = line
-        @method, @path, @query, @http_version = $1.downcase.to_sym, $2, $3, $4
+        @method, @path, @query, @http_version = $1.downcase.to_sym, $2.uri_unescape, $3, $4
         @params = @query ? parse_query_parameters(@query) : {}
         
         # HTTP 1.1 connections are persistent by default.
