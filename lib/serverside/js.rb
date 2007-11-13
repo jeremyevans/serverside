@@ -29,7 +29,12 @@ module ServerSide
         value = args.first
         value = value.__content if value.respond_to?(:__content)
       end
-      @stack.last.__add_hash_value(key, value)
+      
+      if key == :__item
+        @stack.last.__add_array_value(value)
+      else
+        @stack.last.__add_hash_value(key, value)
+      end
       self
     end
     

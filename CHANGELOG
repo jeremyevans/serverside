@@ -1,5 +1,7 @@
 === SVN
 
+* Fixed JS#__item method call.
+
 * Fixed support for URI-encoded URL paths.
 
 * Changed streaming logic. Needs docs.
