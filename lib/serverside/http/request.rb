@@ -1,3 +1,5 @@
+require 'socket'
+
 module ServerSide::HTTP
   class Request
     include ServerSide::HTTP::Parsing
