@@ -6,7 +6,7 @@ require 'fileutils'
 include FileUtils
 
 NAME = "serverside"
-VERS = "0.4.4"
+VERS = "0.4.5"
 CLEAN.include ['**/.*.sw?', 'pkg/*', '.config', 'doc/*', 'coverage/*']
 RDOC_OPTS = ['--quiet', '--title', "ServerSide: a Fast Ruby Web Framework",
   "--opname", "index.html",
@@ -109,11 +109,10 @@ task :stats do
 end
 
 ##############################################################################
-# SVN
+# gem and rdoc release
 ##############################################################################
-
-desc "Add new files to subversion"
-task :svn_add do
-   system "svn status | grep '^\?' | sed -e 's/? *//' | sed -e 's/ /\ /g' | xargs svn add"
+task :release => [:package] do
+  sh %{rubyforge login}
+  sh %{rubyforge add_release #{NAME} #{NAME} #{VERS} pkg/#{NAME}-#{VERS}.tgz}
+  sh %{rubyforge add_file #{NAME} #{NAME} #{VERS} pkg/#{NAME}-#{VERS}.gem}
 end
-

@@ -35,14 +35,17 @@ module ServerSide::HTTP
     end
     
     ROOT_PATH = '/'.freeze
+    EXPIRATION_FORMAT = "%a, %d-%b-%Y %H:%M:%S GMT".freeze # according to RFC2109 must be GMT
     
     # Adds a cookie to the response headers.
     def set_cookie(name, value, opts = {})
       path = opts[:path] || ROOT_PATH
-      expires = opts[:expires] || (opts[:ttl] && (Time.now + opts[:ttl])) || \
-        (Time.now + 86400) # if no expiry is specified we assume one day
+      expires = opts[:expires] || (opts[:ttl] && (Time.now + opts[:ttl]))
 
-      v = "#{name}=#{value.to_s.uri_escape}; path=#{path}; expires=#{expires.rfc2822}"
+      v = "#{name}=#{value.to_s.uri_escape}; path=#{path}"
+      if expires
+        v << "; expires=#{expires.strftime(EXPIRATION_FORMAT)}"
+      end
       if domain = opts[:domain]
         v << "; domain=#{domain}"
       end
