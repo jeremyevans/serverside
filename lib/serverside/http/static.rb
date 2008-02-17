@@ -1,6 +1,7 @@
 module ServerSide::HTTP
   module Static
     MIME_TYPES = {
+      :php => 'text/html'.freeze,
       :html => 'text/html'.freeze,
       :css => 'text/css'.freeze,
       :js => 'text/javascript'.freeze,

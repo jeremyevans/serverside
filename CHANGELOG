@@ -1,3 +1,7 @@
+=== 0.4.5.1 (2008-02-17)
+
+* Added MIME type for .php files.
+
 === 0.4.5 (2008-02-05)
 
 * changed Response#set_cookie to make expiry field optional.
