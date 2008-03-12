@@ -1,3 +1,7 @@
+=== 0.4.5.2 (2008-03-12)
+
+* Fixed Request#content_type to work correctly with content-types that specify charset.
+
 === 0.4.5.1 (2008-02-17)
 
 * Added MIME type for .php files.

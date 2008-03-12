@@ -52,7 +52,6 @@ context "A Request" do
   end
   
   MOCK_GET_PARAMS = "GET /?q=state&f=xml HTTP/1.1\r\n\r\n"
-  MOCK_POST_PARAMS = "POST / HTTP/1.1\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 12\r\n\r\nq=state&f=js"
   
   specify "should provide the parameters" do
     @server.receive_data(MOCK_GET1)
@@ -61,12 +60,25 @@ context "A Request" do
     @server.set_state(:state_initial)
     @server.receive_data(MOCK_GET_PARAMS)
     @server.request.params.should == {:q => 'state', :f => 'xml'}
+  end
+  
+  MOCK_POST_PARAMS = "POST / HTTP/1.1\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 12\r\n\r\nq=state&f=js"
 
+  specify "should provide parameters for POST requests with URL-encoded parameters" do
     @server.set_state(:state_initial)
     @server.receive_data(MOCK_POST_PARAMS)
     @server.request.params.should == {:q => 'state', :f => 'js'}
   end
   
+  MOCK_POST_CHARSET_PARAMS = "POST / HTTP/1.1\r\nContent-Type: application/x-www-form-urlencoded; charset=UTF-8\r\nContent-Length: 12\r\n\r\nq=state&f=js"
+
+  specify "should provide parameters for POST requests with URL-encoded parameters and charset" do
+    @server.set_state(:state_initial)
+    @server.receive_data(MOCK_POST_CHARSET_PARAMS)
+    @server.request.content_type.should == 'application/x-www-form-urlencoded'
+    @server.request.params.should == {:q => 'state', :f => 'js'}
+  end
+
   MOCK_GET2 = "GET /xxx HTTP/1.0\r\nHost: reality-scada.net\r\n\r\n"
   MOCK_GET3 = "GET /xxx HTTP/1.0\r\nHost: abc.net:443\r\n\r\n"
   MOCK_GET4 = "GET /xxx HTTP/1.0\r\nHost: xyz.net:3321\r\n\r\n"

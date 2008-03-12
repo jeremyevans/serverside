@@ -71,7 +71,9 @@ module ServerSide::HTTP
     end
     
     def content_type
-      @headers[:content_type]
+      if t = @headers[:content_type]
+        t =~ /(.*);/ ? $1.strip : t
+      end
     end
   end
 end
