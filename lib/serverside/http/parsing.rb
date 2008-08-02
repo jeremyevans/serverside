@@ -48,6 +48,8 @@ module ServerSide::HTTP
       else
         puts "invalid header:"
         p line
+        puts "header so far:"
+        p @headers
         raise BadRequestError, "Invalid header format"
       end
     end
