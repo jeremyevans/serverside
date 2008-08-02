@@ -26,4 +26,8 @@ module ServerSide::HTTP
   class ForbiddenError < RuntimeError
     set_http_status STATUS_FORBIDDEN
   end
+  
+  # This error is raised when a premature content boundary is encountered.
+  class PrematureBoundaryError < RuntimeError
+  end
 end

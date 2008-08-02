@@ -45,11 +45,9 @@ module ServerSide::HTTP
         when :cookie: parse_cookies(v)
         end
         @headers[k] = v
+      elsif line =~ /^--/
+        raise PrematureBoundaryError
       else
-        puts "invalid header:"
-        p line
-        puts "header so far:"
-        p @headers
         raise BadRequestError, "Invalid header format"
       end
     end
