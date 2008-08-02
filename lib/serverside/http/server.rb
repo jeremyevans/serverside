@@ -115,10 +115,10 @@ module ServerSide::HTTP
           @request.parse_header(line)
         end
       end
-    rescue PrematureBoundaryError
-      @in.insert(0, line)
-      expecting_body = @request.content_length.to_i > 0
-      set_state(expecting_body ? :state_request_body : :state_response)
+    # rescue PrematureBoundaryError
+    #   @in.insert(0, line)
+    #   expecting_body = @request.content_length.to_i > 0
+    #   set_state(expecting_body ? :state_request_body : :state_response)
     end
       
     # state_request_body waits for the request body to arrive and then parses
