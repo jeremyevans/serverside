@@ -115,6 +115,9 @@ module ServerSide::HTTP
           @request.parse_header(line)
         end
       end
+    rescue => e
+      puts @in
+      raise e
     end
       
     # state_request_body waits for the request body to arrive and then parses
