@@ -6,7 +6,7 @@ require 'fileutils'
 include FileUtils
 
 NAME = "serverside"
-VERS = "0.4.5.2"
+VERS = "0.4.5.3"
 CLEAN.include ['**/.*.sw?', 'pkg/*', '.config', 'doc/*', 'coverage/*']
 RDOC_OPTS = ['--quiet', '--title', "ServerSide: a Fast Ruby Web Framework",
   "--opname", "index.html",

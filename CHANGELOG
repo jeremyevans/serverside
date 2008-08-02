@@ -1,3 +1,7 @@
+=== 0.4.5.3 (2008-08-01)
+
+* Fixed parsing of multipart requests.
+
 === 0.4.5.2 (2008-03-12)
 
 * Fixed Request#content_type to work correctly with content-types that specify charset.

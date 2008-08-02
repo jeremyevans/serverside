@@ -93,10 +93,10 @@ module ServerSide::HTTP
     # Parses the request body.
     def parse_body(body)
       @body = body
-      case content_type
-      when MULTIPART_FORM_DATA_RE:
+      
+      if @headers[:content_type] =~ MULTIPART_FORM_DATA_RE
         parse_multi_part(body, BOUNDARY_FIX + $1) # body.dup so we keep the original request body?
-      when FORM_URL_ENCODED:
+      elsif content_type == FORM_URL_ENCODED
         parse_form_url_encoded(body)
       end
     end
