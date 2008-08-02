@@ -125,7 +125,6 @@ module ServerSide::HTTP
           when CONTENT_DISPOSITION:
             case v
             when DISPOSITION_FORM_DATA_RE:
-              p [$1, $2, $3]
               part_name = $1.to_sym
               file_name = $3
             end
