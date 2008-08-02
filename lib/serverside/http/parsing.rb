@@ -32,7 +32,7 @@ module ServerSide::HTTP
       if (@header_count += 1) > MAX_HEADER_COUNT
         raise BadRequestError, "Too many headers"
       end
-
+      
       if line =~ HEADER_RE
         if $1.size > MAX_HEADER_NAME_SIZE
           raise BadRequestError, "Invalid header size"
@@ -46,6 +46,8 @@ module ServerSide::HTTP
         end
         @headers[k] = v
       else
+        puts "invalid header:"
+        p line
         raise BadRequestError, "Invalid header format"
       end
     end
